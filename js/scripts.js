@@ -15,7 +15,7 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
 
 var marker = L.marker([-33.90,151.19]).addTo(mymap);
 
-var polygon = L.polygon([]);//.addTo(mymap);
+var polygons = [];//.addTo(mymap);
 var u = [1,0];
 var Iy = [ -1.104, -1.634,-2.054 ,-2.555 ,-2.754 ,-3.143 ];
 var Jy = [ 0.9878,  1.035,1.0231 ,1.0423 ,1.0106 ,1.0148 ];
@@ -26,40 +26,14 @@ var Kz = [ 0.2770, 0.0136,-0.0020,-0.0316,-0.0450,-0.0540];
 
 function onMapClick(e) {
     marker.setLatLng(e.latlng);
-    if ( polygon !== undefined ) { polygon.remove(); }
-    var si = stability.selectedIndex;
-    var plus_vertices = [];
-    var minus_vertices = [];
-    // console.log(e.latlng.lat);
-    var dx = 10
-    var valid = true;
-    var x = 1;
-    var conc = 1e-4;
-    var H = parseFloat(h.value);
-    var z = parseFloat(delta.value);
-    var U = Math.sqrt(u[0]*u[0] + u[1]*u[1]);
-    console.log(H)
-    while ( valid ) {
-        var lnx = Math.log(x);
-        var sigma_y = Math.exp(Iy[si] + Jy[si]*lnx + Ky[si]*lnx*lnx);
-        var sigma_z = Math.exp(Iz[si] + Jz[si]*lnx + Kz[si]*lnx*lnx);
-        x = x + dx;
-        var RHS = conc/parseFloat(q.value)*2*Math.PI*U*sigma_y*sigma_z*(Math.exp(-(z-H)*(z-H)/2/sigma_z/sigma_z) + Math.exp(-(z+H)*(z+H)/2/sigma_z/sigma_z) );
-        y_plus = Math.sqrt(-sigma_y*sigma_y*Math.log(RHS))
-        // console.log(y_plus)
-        if ( isNaN(y_plus) ) { valid = false; console.log('dead')}
-        else {
-            plus_vertices.push([e.latlng.lat + x/1000., e.latlng.lng + y_plus/1000.]);
-            minus_vertices.push([e.latlng.lat + x/1000., e.latlng.lng -y_plus/1000.]);
-        }
-    }
-    console.log(plus_vertices)
-    vertices = [plus_vertices,minus_vertices.reverse()]
-    polygon = L.polygon(vertices).addTo(mymap);
+    redrawContours();
 }
 
 mymap.on('click', onMapClick);
 
+function transpose(a) {
+    return a[0].map(function (_, c) { return a.map(function (r) { return r[c]; }); });
+}
 
 // d3.json("result.geojson", function(error, json) {
 // var polygons1 = [];
@@ -107,7 +81,64 @@ mymap.on('click', onMapClick);
 
 
 function redrawContours() {
-    console.log('hi!');
+    // latlng = marker.
+    console.log();
+    if ( polygons !== undefined ) {
+        for (var i=0; i<polygons.length; i++ ) {
+            polygons[i].remove();
+        }
+        polygons = [];
+    }
+    var si = stability.selectedIndex;
+    var x_vertices = [];
+    var y_plus_vertices = [];
+    var y_minus_vertices = [];
+
+    var x = 0.0;
+    var dx = 1.0;
+    var valid = true;
+    var H = parseFloat(h.value);
+    var z = parseFloat(delta.value);
+    var U = Math.sqrt(u[0]*u[0] + u[1]*u[1]);
+    console.log('vals')
+    console.log(H)
+    console.log(z)
+    console.log(U)
+    var concs = [1e0,1e1,1e2];
+    var colors = ['#ff0000','#00ffff','#ff00ff'];
+    for (var i=0; i<3; i++ ) {
+        var conc = concs[i];
+        var col = colors[i];
+        while ( valid ) {
+            var lnx = Math.log(x);
+            var sigma_y = Math.exp(Iy[si] + Jy[si]*lnx + Ky[si]*lnx*lnx);
+            var sigma_z = Math.exp(Iz[si] + Jz[si]*lnx + Kz[si]*lnx*lnx);
+            x += dx;
+            var RHS = conc/parseFloat(q.value)*2*Math.PI*U*sigma_y*sigma_z*(Math.exp(-(z-H)*(z-H)/2/sigma_z/sigma_z) + Math.exp(-(z+H)*(z+H)/2/sigma_z/sigma_z) );
+            var y_plus = Math.sqrt(-sigma_y*sigma_y*Math.log(RHS))
+            // console.log(y_plus)
+            if ( isNaN(y_plus) && x > 1000 ) { // HACK: SHOULD CHECK FOR MAX VALUE AT GROUND LEVEL INSTEAD USING KNOWN FORMULA
+                valid = false;
+            }
+            else if ( isFinite(y_plus) ) {
+                var lat = marker._latlng.lat + x/1000.; // FIX THIS!!!!
+                var lon_p = marker._latlng.lng + y_plus/1000.; // FIX THIS!!!!
+                var lon_m = marker._latlng.lng - y_plus/1000.; // FIX THIS!!!!
+
+                x_vertices.push(lat);
+                y_plus_vertices.push(lon_p);
+                y_minus_vertices.push(lon_m);
+            }
+        }
+        var x = x_vertices.concat(x_vertices.reverse());
+        var y = y_plus_vertices.concat(y_minus_vertices.reverse());
+        polygons.push(L.polygon(transpose([x,y]), {
+            color: col,
+        }).addTo(mymap));
+        console.log(y_plus_vertices)
+        console.log(y_minus_vertices.reverse())
+        console.log(y)
+}
 }
 
 
@@ -169,7 +200,7 @@ c.addEventListener('click', function(evt) {
     // ux.value = xy[0];
     // uy.value = xy[1];
     u = xy;
-
+    redrawContours();
     // console.log("ux: " + ux + " uy: " + uy + ' ' + U/40.);
     }, false);
 

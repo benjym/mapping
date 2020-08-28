@@ -18,6 +18,17 @@ input[type=text], select {
     color: #363636;
 }
 
+input[type=number], select {
+    width: 100%;
+    padding: 14px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    color: #363636;
+}
+
 
 .div {
     border-radius: 5px;
