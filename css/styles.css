@@ -97,7 +97,7 @@ p {
 
 
 #wrap {
-   width:95%;
+   /* width:95%; */
    margin:0 auto;
    background-color: #FFFFFF;
    display: flex;

@@ -5,7 +5,7 @@
 var mymap = L.map('map').setView([-33.8913388,151.1939964], 17);
 
 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
-    attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+    attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a> | Plume Model by <a href="https://www.benjymarks.com">Benjy Marks</a>',
     maxZoom: 22,
     id: 'benjymarks/ckedsq0fw08kg19pbpiuj5zmn',
     tileSize: 512,
@@ -14,7 +14,8 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
 }).addTo(mymap);
 
 var marker = L.marker([-33.891,151.1935]).addTo(mymap);
-var colors = ['#ff0000','#00ff00','#0000ff','#00ffff','#ff00ff','#ffff00','#ffffff','#000000'];
+// var colors = ['#ff0000','#00ff00','#0000ff','#00ffff','#ff00ff','#ffff00','#ffffff','#000000'];
+var colors = ['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf','#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf','#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf']; // lots of colours :)
 var legend_div;
 var polygons = [];//.addTo(mymap);
 var u = [1,0];
@@ -204,8 +205,8 @@ function draw_bg() {
 
     ctx.font = "30px Arial";
     ctx.fillStyle = 'black';
-    ctx.fillText("N",c.width/2-10,25);
-    ctx.fillText("S",c.width/2-10,c.height-5);
+    ctx.fillText("N",c.width/2-10,22);
+    ctx.fillText("S",c.width/2-10,c.height-0);
     ctx.fillText("W",0,c.height/2+5);
     ctx.fillText("E",c.height-20,c.height/2+5);
 
@@ -303,3 +304,36 @@ function getCursorPosition_d(d, event) {
 // u from wind rose
 // sigma_y and sigma_z from here: http://dii.unipd.it/-paolo.canu/files/FdT/Point%20Source%20Dispersion%20Parameters.pdf
 // need stability criteria from user input
+
+var plasma = [
+    [0.18500126283629117,0.0,0.5300734481832133],
+    [0.28069900692141886,0.0,0.5957607906567519],
+    [0.37169632394652985,0.0,0.6383265475601053],
+    [0.4617056654598785,0.0,0.6611976600287218],
+    [0.5484481027774952,0.0,0.6570196633950978],
+    [0.6285513580399021,0.03197423156761071,0.6228641296151941],
+    [0.6998941469583252,0.14437902230001867,0.5673441858884501],
+    [0.7627520603974456,0.23077446982485766,0.50476878993514],
+    [0.8185825533178849,0.311386513443518,0.4436495949958711],
+    [0.8680923147108822,0.3912774119706224,0.385011298212545],
+    [0.9102863527112363,0.4738069993796045,0.3268087806988829],
+    [0.9425456696997273,0.5615426592562283,0.26718454740444175],
+    [0.9612663555645452,0.656078387432029,0.2057069050257183],
+    [0.9621866932888067,0.7580699614625952,0.1465937236780026],
+    [0.9401426587007371,0.8674491093347713,0.11437731754446762],
+    [0.894058310302958,0.9822535793047805,0.0810687655704728]
+];
+
+function getColor(val) {
+
+    hex = rgbToHex()
+    return hex
+}
+
+// var rgbToHex = function (rgb) {
+//   var hex = Number(rgb).toString(16);
+//   if (hex.length < 2) {
+//        hex = "0" + hex;
+//   }
+//   return hex;
+// };
