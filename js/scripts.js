@@ -4,6 +4,18 @@
 // });
 var mymap = L.map('map').setView([-33.8913388,151.1939964], 17);
 
+var size = 60;
+var customIcon = L.icon({
+    iconUrl: 'marker.png',
+    // shadowUrl: 'leaf-shadow.png',
+
+    iconSize:     [size, size], // size of the icon
+    // shadowSize:   [50, 64], // size of the shadow
+    iconAnchor:   [size/2, size], // point of the icon which will correspond to marker's location
+    // shadowAnchor: [4, 62],  // the same for the shadow
+    // popupAnchor:  [0, -76] // point from which the popup should open relative to the iconAnchor
+});
+
 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
     attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a> | Plume Model by <a href="https://www.benjymarks.com">Benjy Marks</a>',
     maxZoom: 22,
@@ -13,8 +25,10 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
     accessToken: 'pk.eyJ1IjoiYmVuanltYXJrcyIsImEiOiJjand1M3BhanowOGx1NDlzMWs0bG0zNnpyIn0.OLLoUOjLUhcKoAVX1JKVdw'
 }).addTo(mymap);
 
-var marker = L.marker([-33.891,151.1935]).addTo(mymap);
-// var colors = ['#ff0000','#00ff00','#0000ff','#00ffff','#ff00ff','#ffff00','#ffffff','#000000'];
+var marker = L.marker([-33.891,151.1935],{
+    icon:customIcon // tried but didn't make something good - worth continuing with!
+}).addTo(mymap);//.bindPopup("I am an orange leaf.");
+
 var colors = ['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf','#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf','#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf']; // lots of colours :)
 var legend_div;
 var polygons = [];//.addTo(mymap);
