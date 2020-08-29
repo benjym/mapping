@@ -54,6 +54,14 @@ function redrawContours() {
     var buoyancy_flux = 9.81*v_s.value*d_s.value*d_s.value*(T_s.value - T_a.value)/(4*(T_s.value + 273.15));
     var concs = concentration_contours.value.split(';');
 
+    var els = document.querySelectorAll(".buoyancy");
+    if ( buoyancy_flux >= 0 ) { bg_color = '#FFFFFF'; font_color = '#000000' }
+    else { var bg_color = '#363636'; font_color = '#FFFFFF'}
+    for (var j = 0; j < els.length; j++) {
+        els[j].style.backgroundColor = bg_color;
+        els[j].style.color = font_color;
+    }
+
     for (var i=0; i<concs.length; i++ ) {
         var conc = parseFloat(concs[i]);
         var col = colors[i];
@@ -70,12 +78,8 @@ function redrawContours() {
             var sigma_z = Math.exp(Iz[si] + Jz[si]*lnx + Kz[si]*lnx*lnx);
             x += dx;
             var delta_h = 1.6*Math.pow(buoyancy_flux,1./3.)*Math.pow(x,2./3.)/U;
-            if ( isFinite(delta_h) ) {
-                var H = parseFloat(h.value) + delta_h;
-            }
-            else {
-                var H = parseFloat(h.value);
-            }
+            if ( isFinite(delta_h) ) { var H = parseFloat(h.value) + delta_h; }
+            else { var H = parseFloat(h.value); }
 
 
             var RHS = conc/parseFloat(q.value)*2*Math.PI*U*sigma_y*sigma_z/( Math.exp(-(z-H)*(z-H)/2/sigma_z/sigma_z) + Math.exp(-(z+H)*(z+H)/2/sigma_z/sigma_z) );

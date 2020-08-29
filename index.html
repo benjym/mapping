@@ -26,10 +26,10 @@
             Source height above ground (m): <input onchange="redrawContours()" type="number" id="h" value="30" min="0"/>
             Source pollutant emission rate (g/s): <input onchange="redrawContours()" type="number" id="q" value="100" min="0"/>
             Viewing height above ground (m): <input onchange="redrawContours()" type="number" id="delta" value="0" min="0" />
-            Ambient temperature (&deg;C): <input onchange="redrawContours()" type="number" id="T_a" value="25" min="-273"/>
-            Stack temperature (&deg;C): <input onchange="redrawContours()" type="number" id="T_s" value="25" min="-273"/>
-            Stack diameter (m): <input onchange="redrawContours()" type="number" id="d_s" value="5" min="0"/>
-            Stack exit velocity (m/s): <input onchange="redrawContours()" type="number" id="v_s" value="10" min="0"/>
+            Ambient temperature (&deg;C): <input onchange="redrawContours()" class="buoyancy" type="number" id="T_a" value="25" min="-273"/>
+            Stack temperature (&deg;C): <input onchange="redrawContours()" class="buoyancy" type="number" id="T_s" value="25" min="-273"/>
+            Stack diameter (m): <input onchange="redrawContours()" class="buoyancy" type="number" id="d_s" value="5" min="0"/>
+            Stack exit velocity (m/s): <input onchange="redrawContours()" class="buoyancy" type="number" id="v_s" value="10" min="0"/>
             Concentrations, separate with ';' (&micro;g/m<sup>3</sup>): <input onchange="redrawContours()" type="text" id="concentration_contours" value="0.001; 0.01; 0.1" />
             <!-- <div id="grad"></div> -->
             <!-- <p style="text-align:center"><span style="float:left">< 10<sup>0</sup></span> 10<sup>1</sup></span> <span style="float:right">> 10<sup>2</sup></span></p> -->
