@@ -26,12 +26,12 @@
             <option id="F" value="F">F</option>
         </select>
         Source height above ground (m): <input onchange="redrawContours()" type="number" name="h" id="h" value="30" />
-        Source pollutant emission rate (g/s): <input onchange="redrawContours()" type="number" name="q" id="q" value="1" />
+        Source pollutant emission rate (g/s): <input onchange="redrawContours()" type="number" name="q" id="q" value="100" />
         Viewing height above ground (m): <input onchange="redrawContours()" type="number" name="delta" id="delta" value="0" />
         <!-- <input type="submit" value="Run model"> -->
-        Concentration (&micro;g/m<sup>3</sup>):
-        <div id="grad"></div>
-        <p style="text-align:center"><span style="float:left">< 10<sup>0</sup></span> 10<sup>1</sup></span> <span style="float:right">> 10<sup>2</sup></span></p>
+        Concentration contours (&micro;g/m<sup>3</sup>): <input onchange="redrawContours()" type="text" name="concentration_contours" id="concentration_contours" value="0.001; 0.01; 0.1" />
+        <!-- <div id="grad"></div> -->
+        <!-- <p style="text-align:center"><span style="float:left">< 10<sup>0</sup></span> 10<sup>1</sup></span> <span style="float:right">> 10<sup>2</sup></span></p> -->
         Wind speed and direction:
         <br><br>
         <canvas id="wind_rose" width="350" height="350"></canvas>

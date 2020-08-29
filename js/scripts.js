@@ -2,7 +2,7 @@
 //     center: [51.505, -0.09],
 //     zoom: 13,
 // });
-var mymap = L.map('map').setView([-33.8913388,151.1939964], 13);
+var mymap = L.map('map').setView([-33.8913388,151.1939964], 17);
 
 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
     attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
@@ -13,8 +13,9 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
     accessToken: 'pk.eyJ1IjoiYmVuanltYXJrcyIsImEiOiJjand1M3BhanowOGx1NDlzMWs0bG0zNnpyIn0.OLLoUOjLUhcKoAVX1JKVdw'
 }).addTo(mymap);
 
-var marker = L.marker([-33.90,151.19]).addTo(mymap);
-
+var marker = L.marker([-33.891,151.1935]).addTo(mymap);
+var colors = ['#ff0000','#00ff00','#0000ff','#00ffff','#ff00ff','#ffff00','#ffffff','#000000'];
+var legend_div;
 var polygons = [];//.addTo(mymap);
 var u = [1,0];
 var Iy = [ -1.104, -1.634,-2.054 ,-2.555 ,-2.754 ,-3.143 ];
@@ -23,6 +24,8 @@ var Ky = [-0.0076,-0.0096,-0.0076,-0.0087,-0.0064,-0.0070];
 var Iz = [  4.679, -1.999,-2.341 ,-3.186 ,-3.783 ,-4.490 ];
 var Jz = [-1.7172, 0.8752,0.9477 ,1.1737 ,1.3010 ,1.4024 ];
 var Kz = [ 0.2770, 0.0136,-0.0020,-0.0316,-0.0450,-0.0540];
+
+
 
 function onMapClick(e) {
     marker.setLatLng(e.latlng);
@@ -90,25 +93,24 @@ function redrawContours() {
         polygons = [];
     }
     var si = stability.selectedIndex;
-    var x_vertices = [];
-    var y_plus_vertices = [];
-    var y_minus_vertices = [];
-
-    var x = 0.0;
     var dx = 1.0;
-    var valid = true;
     var H = parseFloat(h.value);
     var z = parseFloat(delta.value);
     var U = Math.sqrt(u[0]*u[0] + u[1]*u[1]);
-    console.log('vals')
-    console.log(H)
-    console.log(z)
-    console.log(U)
-    var concs = [1e0,1e1,1e2];
-    var colors = ['#ff0000','#00ffff','#ff00ff'];
-    for (var i=0; i<3; i++ ) {
-        var conc = concs[i];
+    var theta = -Math.atan2(u[1],u[0]);
+    // var concs = [1e-2,1e1,1e0,1e1,1e2];
+    // console.
+    var concs = concentration_contours.value.split(';');
+
+    for (var i=0; i<concs.length; i++ ) {
+        var conc = parseFloat(concs[i]);
         var col = colors[i];
+        var x_p_vertices = [];
+        var x_m_vertices = [];
+        var y_p_vertices = [];
+        var y_m_vertices = [];
+        var x = 0.0;
+        var valid = true;
         while ( valid ) {
             var lnx = Math.log(x);
             var sigma_y = Math.exp(Iy[si] + Jy[si]*lnx + Ky[si]*lnx*lnx);
@@ -121,25 +123,58 @@ function redrawContours() {
                 valid = false;
             }
             else if ( isFinite(y_plus) ) {
-                var lat = marker._latlng.lat + x/1000.; // FIX THIS!!!!
-                var lon_p = marker._latlng.lng + y_plus/1000.; // FIX THIS!!!!
-                var lon_m = marker._latlng.lng - y_plus/1000.; // FIX THIS!!!!
+                lat_p = marker._latlng.lat + (-x*Math.sin(theta) + y_plus*Math.cos(theta))/111111.;
+                lon_p = marker._latlng.lng + ( x*Math.cos(theta) + y_plus*Math.sin(theta))/(111111.*Math.cos(marker._latlng.lat*Math.PI/180.));
 
-                x_vertices.push(lat);
-                y_plus_vertices.push(lon_p);
-                y_minus_vertices.push(lon_m);
+                lat_m = marker._latlng.lat + (-x*Math.sin(theta) - y_plus*Math.cos(theta))/111111.;
+                lon_m = marker._latlng.lng + ( x*Math.cos(theta) - y_plus*Math.sin(theta))/(111111.*Math.cos(marker._latlng.lat*Math.PI/180.));
+                // console.log(lat_p);
+                // console.log(lat_m);
+                // console.log(lon_p);
+                // console.log(lon_m);
+                // var lat = marker._latlng.lat + x/111111.; // approximate conversion factor
+                // var lon_p = marker._latlng.lng + y_plus/(111111.*Math.cos(marker._latlng.lat)); // FIX THIS!!!!
+                // var lon_m = marker._latlng.lng - y_plus/(111111.*Math.cos(marker._latlng.lat)); // FIX THIS!!!!
+
+                x_p_vertices.push(lat_p);
+                x_m_vertices.push(lat_m);
+                y_p_vertices.push(lon_p);
+                y_m_vertices.push(lon_m);
             }
         }
-        var x = x_vertices.concat(x_vertices.reverse());
-        var y = y_plus_vertices.concat(y_minus_vertices.reverse());
-        polygons.push(L.polygon(transpose([x,y]), {
+        // var x_rev =
+        var x_all = x_p_vertices.concat(x_m_vertices.reverse());
+        var y_all = y_p_vertices.concat(y_m_vertices.reverse());
+        polygons.push(L.polygon(transpose([x_all,y_all]), {
             color: col,
         }).addTo(mymap));
-        console.log(y_plus_vertices)
-        console.log(y_minus_vertices.reverse())
-        console.log(y)
+        // console.log(transpose([x_all,y_all]))
+    }
+    legend_div.innerHTML = "<h4>Concentration</h4>";
+    for (var i=0; i<concs.length; i++ ) {
+        legend_div.innerHTML += '<i style="background: ' + colors[i] + '"></i><span>' + concs[i] + ' &micro;g/m<sup>3</sup></span><br>';
+    }
 }
-}
+
+/*Legend specific*/
+var legend = L.control({ position: "topright" });
+
+legend.onAdd = function(map) {
+  legend_div = L.DomUtil.create("div", "legend");
+  var concs = concentration_contours.value.split(';');
+
+  legend_div.innerHTML += "<h4>Concentration</h4>";
+  for (var i=0; i<concs.length; i++ ) {
+      legend_div.innerHTML += '<i style="background: ' + colors[i] + '"></i><span>' + concs[i] + ' &micro;g/m<sup>3</sup></span><br>';
+  }
+
+
+
+  return legend_div;
+};
+
+legend.addTo(mymap);
+
 
 
 // MAKE WIND ROSE ETC BELOW HERE
@@ -193,8 +228,8 @@ c.addEventListener('click', function(evt) {
     ctx.fillStyle = 'rgba(255,0,0,' + alpha + ')';
     // ctx.fillStyle = 'rgba(100,200,0,1)';
     if ( U <= 0.95 ) { ctx.fill(); }
-    xy[0] = (xy[0]-c.width/2.0)/(c.width/2.0)*20.0 ;
-    xy[1] = -(xy[1]-c.height/2.0)/(c.height/2.0)*20.0 ;
+    xy[0] = (xy[0]-c.width/2.0)/(c.width/2.0)*20.0*0.28 ; // in m/s
+    xy[1] = -(xy[1]-c.height/2.0)/(c.height/2.0)*20.0*0.28 ; // in m/s
     // var ux = document.getElementById("ux");
     // var uy = document.getElementById("uy");
     // ux.value = xy[0];
