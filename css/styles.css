@@ -101,10 +101,11 @@ p {
    margin:0 auto;
    background-color: #FFFFFF;
    display: flex;
-
+   align-items: stretch;
+   /* height:100%; */
 }
 .column {
-    flex: 1;
+    /* flex: 1; */
     border: 10px solid #FFFFFF;
 /*    border-radius: 10px;*/
     border-radius: 5px;
@@ -113,12 +114,11 @@ p {
 }
 .left_col {
    order: 1;
-}
-.middle_col {
-   order: 2;
+   flex: 1;
 }
 .right_col {
    order: 3;
+   flex: 3;
 }
 
 input[type=range] {

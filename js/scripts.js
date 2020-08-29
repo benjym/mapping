@@ -6,7 +6,7 @@ var mymap = L.map('map').setView([-33.8913388,151.1939964], 17);
 
 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
     attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-    maxZoom: 18,
+    maxZoom: 22,
     id: 'benjymarks/ckedsq0fw08kg19pbpiuj5zmn',
     tileSize: 512,
     zoomOffset: -1,
@@ -94,10 +94,10 @@ function redrawContours() {
     }
     var si = stability.selectedIndex;
     var dx = 1.0;
-    var H = parseFloat(h.value);
     var z = parseFloat(delta.value);
     var U = Math.sqrt(u[0]*u[0] + u[1]*u[1]);
     var theta = -Math.atan2(u[1],u[0]);
+    var buoyancy_flux = 9.81*v_s.value*d_s.value*d_s.value*(T_s.value - T_a.value)/(4*(T_s.value + 273.15));
     // var concs = [1e-2,1e1,1e0,1e1,1e2];
     // console.
     var concs = concentration_contours.value.split(';');
@@ -116,10 +116,20 @@ function redrawContours() {
             var sigma_y = Math.exp(Iy[si] + Jy[si]*lnx + Ky[si]*lnx*lnx);
             var sigma_z = Math.exp(Iz[si] + Jz[si]*lnx + Kz[si]*lnx*lnx);
             x += dx;
-            var RHS = conc/parseFloat(q.value)*2*Math.PI*U*sigma_y*sigma_z*(Math.exp(-(z-H)*(z-H)/2/sigma_z/sigma_z) + Math.exp(-(z+H)*(z+H)/2/sigma_z/sigma_z) );
+            // console.log(buoyancy_flux)
+            var delta_h = 1.6*Math.pow(buoyancy_flux,1./3.)*Math.pow(x,2./3.)/U;
+            if ( isFinite(delta_h) ) {
+                var H = parseFloat(h.value) + delta_h;
+            }
+            else {
+                var H = parseFloat(h.value);
+            }
+
+
+            var RHS = conc/parseFloat(q.value)*2*Math.PI*U*sigma_y*sigma_z/( Math.exp(-(z-H)*(z-H)/2/sigma_z/sigma_z) + Math.exp(-(z+H)*(z+H)/2/sigma_z/sigma_z) );
             var y_plus = Math.sqrt(-sigma_y*sigma_y*Math.log(RHS))
             // console.log(y_plus)
-            if ( isNaN(y_plus) && x > 1000 ) { // HACK: SHOULD CHECK FOR MAX VALUE AT GROUND LEVEL INSTEAD USING KNOWN FORMULA
+            if ( !isFinite(y_plus) && x > 1000 ) { // HACK: SHOULD CHECK FOR MAX VALUE AT GROUND LEVEL INSTEAD USING KNOWN FORMULA
                 valid = false;
             }
             else if ( isFinite(y_plus) ) {
