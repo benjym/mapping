@@ -1,8 +1,6 @@
-// var map = L.map('map', {
-//     center: [51.505, -0.09],
-//     zoom: 13,
-// });
-var mymap = L.map('map').setView([-33.8913388,151.1939964], 17);
+var map = L.map('map').setView([-33.8913388,151.1939964], 17);
+
+L.control.scale({ position: "bottomright" }).addTo(map); // add scale bar
 
 var size = 60;
 var customIcon = L.icon({
@@ -23,15 +21,15 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
     tileSize: 512,
     zoomOffset: -1,
     accessToken: 'pk.eyJ1IjoiYmVuanltYXJrcyIsImEiOiJjand1M3BhanowOGx1NDlzMWs0bG0zNnpyIn0.OLLoUOjLUhcKoAVX1JKVdw'
-}).addTo(mymap);
+}).addTo(map);
 
 var marker = L.marker([-33.891,151.1935],{
     icon:customIcon // tried but didn't make something good - worth continuing with!
-}).addTo(mymap);//.bindPopup("I am an orange leaf.");
+}).addTo(map);//.bindPopup("I am an orange leaf.");
 
 var colors = ['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf','#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf','#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf']; // lots of colours :)
 var legend_div;
-var polygons = [];//.addTo(mymap);
+var polygons = [];
 var u = [0,0];
 var Iy = [ -1.104, -1.634,-2.054 ,-2.555 ,-2.754 ,-3.143 ];
 var Jy = [ 0.9878,  1.035,1.0231 ,1.0423 ,1.0106 ,1.0148 ];
@@ -47,7 +45,7 @@ function onMapClick(e) {
     redrawContours();
 }
 
-mymap.on('click', onMapClick);
+map.on('click', onMapClick);
 
 function transpose(a) {
     return a[0].map(function (_, c) { return a.map(function (r) { return r[c]; }); });
@@ -77,7 +75,7 @@ function redrawContours() {
     }
 
     for (var i=0; i<concs.length; i++ ) {
-        var conc = parseFloat(concs[i]);
+        var conc = parseFloat(concs[i])*1e-6; // convert to micrograms!
         var col = colors[i];
         var x_p_vertices = [];
         var x_m_vertices = [];
@@ -119,7 +117,7 @@ function redrawContours() {
                     var y_all = y_p_vertices.concat(y_m_vertices.reverse());
                     polygons.push(L.polygon(transpose([x_all,y_all]), {
                         color: col,
-                    }).addTo(mymap));
+                    }).addTo(map));
 
                     var x_p_vertices = [];
                     var x_m_vertices = [];
@@ -133,7 +131,7 @@ function redrawContours() {
         var y_all = y_p_vertices.concat(y_m_vertices.reverse());
         polygons.push(L.polygon(transpose([x_all,y_all]), {
             color: col,
-        }).addTo(mymap));
+        }).addTo(map));
         // console.log(transpose([x_all,y_all]))
     }
     legend_div.innerHTML = "<h4>Concentration</h4>";
@@ -159,7 +157,7 @@ legend.onAdd = function(map) {
   return legend_div;
 };
 
-legend.addTo(mymap);
+legend.addTo(map);
 
 
 
