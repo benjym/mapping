@@ -95,6 +95,20 @@ function redrawContours() {
                 y_p_vertices.push(lon_p);
                 y_m_vertices.push(lon_m);
             }
+            else {
+                if ( x_p_vertices.length > 0 ) { // this was a stroke of genius - never edit this section
+                    var x_all = x_p_vertices.concat(x_m_vertices.reverse());
+                    var y_all = y_p_vertices.concat(y_m_vertices.reverse());
+                    polygons.push(L.polygon(transpose([x_all,y_all]), {
+                        color: col,
+                    }).addTo(mymap));
+
+                    var x_p_vertices = [];
+                    var x_m_vertices = [];
+                    var y_p_vertices = [];
+                    var y_m_vertices = [];
+                }
+            }
         }
         // var x_rev =
         var x_all = x_p_vertices.concat(x_m_vertices.reverse());
