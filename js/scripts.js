@@ -81,7 +81,7 @@ function redrawContours() {
             if ( isFinite(delta_h) ) { var H = parseFloat(h.value) + delta_h; }
             else { var H = parseFloat(h.value); }
 
-
+            // Solve for constant concentration value
             var RHS = conc/parseFloat(q.value)*2*Math.PI*U*sigma_y*sigma_z/( Math.exp(-(z-H)*(z-H)/2/sigma_z/sigma_z) + Math.exp(-(z+H)*(z+H)/2/sigma_z/sigma_z) );
             var y_plus = Math.sqrt(-sigma_y*sigma_y*Math.log(RHS))
             if ( !isFinite(y_plus) && x > 1000 ) { // HACK: SHOULD CHECK FOR MAX VALUE AT GROUND LEVEL INSTEAD USING KNOWN FORMULA
