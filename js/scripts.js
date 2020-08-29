@@ -18,7 +18,7 @@ var marker = L.marker([-33.891,151.1935]).addTo(mymap);
 var colors = ['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf','#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf','#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf']; // lots of colours :)
 var legend_div;
 var polygons = [];//.addTo(mymap);
-var u = [1,0];
+var u = [0,0];
 var Iy = [ -1.104, -1.634,-2.054 ,-2.555 ,-2.754 ,-3.143 ];
 var Jy = [ 0.9878,  1.035,1.0231 ,1.0423 ,1.0106 ,1.0148 ];
 var Ky = [-0.0076,-0.0096,-0.0076,-0.0087,-0.0064,-0.0070];
@@ -39,54 +39,7 @@ function transpose(a) {
     return a[0].map(function (_, c) { return a.map(function (r) { return r[c]; }); });
 }
 
-// d3.json("result.geojson", function(error, json) {
-// var polygons1 = [];
-// json.features.map(function(poly,i){
-//   if(poly.geometry.type=='MultiPolygon')
-//     var polygon = L.multiPolygon(poly.geometry.coordinates.map(function(d){return mapPolygon(d)}), {color: '#f00', weight:'2px'}).addTo(map);
-//   else if(poly.geometry.type=='Polygon')
-//     var polygon = L.polygon(mapPolygon(poly.geometry.coordinates), {color: '#f00', weight:'2px'}).addTo(map);
-//
-//   //overlays["Polygon ("+poly.properties.GEN+")"] = polygon;
-//   polygons1.push(polygon)
-// })
-//
-// overlays["Original Polygons"]=polygons1;
-//
-// function mapPolygon(poly){
-//   return poly.map(function(line){return mapLineString(line)})
-// }
-// function mapLineString(line){
-//   return line.map(function(d){return [d[1],d[0]]})
-// }
-// });
-
-// d3.json("result_smooth_0.1.geojson", function(error, json) {
-// var polygons2 = [];
-// json.features.map(function(poly,i){
-//   if(poly.geometry.type=='MultiPolygon')
-//     var polygon = L.multiPolygon(poly.geometry.coordinates.map(function(d){return mapPolygon(d)}), {color: '#0f0', weight:'1px'}).addTo(map);
-//   else if(poly.geometry.type=='Polygon')
-//     var polygon = L.polygon(mapPolygon(poly.geometry.coordinates), {color: '#0f0', weight:'1px'}).addTo(map);
-//
-//   //overlays["Polygon ("+poly.properties.GEN+")"] = polygon;
-//   polygons2.push(polygon)
-// })
-// overlays["Smoothed Polygons"]=polygons2;
-// L.control.layers(baseLayers, overlays).addTo(map);
-//
-// function mapPolygon(poly){
-//   return poly.map(function(line){return mapLineString(line)})
-// }
-// function mapLineString(line){
-//   return line.map(function(d){return [d[1],d[0]]})
-// }
-// });
-
-
 function redrawContours() {
-    // latlng = marker.
-    console.log();
     if ( polygons !== undefined ) {
         for (var i=0; i<polygons.length; i++ ) {
             polygons[i].remove();
@@ -99,8 +52,6 @@ function redrawContours() {
     var U = Math.sqrt(u[0]*u[0] + u[1]*u[1]);
     var theta = -Math.atan2(u[1],u[0]);
     var buoyancy_flux = 9.81*v_s.value*d_s.value*d_s.value*(T_s.value - T_a.value)/(4*(T_s.value + 273.15));
-    // var concs = [1e-2,1e1,1e0,1e1,1e2];
-    // console.
     var concs = concentration_contours.value.split(';');
 
     for (var i=0; i<concs.length; i++ ) {
@@ -114,10 +65,10 @@ function redrawContours() {
         var valid = true;
         while ( valid ) {
             var lnx = Math.log(x);
+            // sigma_y and sigma_z from here: http://dii.unipd.it/-paolo.canu/files/FdT/Point%20Source%20Dispersion%20Parameters.pdf
             var sigma_y = Math.exp(Iy[si] + Jy[si]*lnx + Ky[si]*lnx*lnx);
             var sigma_z = Math.exp(Iz[si] + Jz[si]*lnx + Kz[si]*lnx*lnx);
             x += dx;
-            // console.log(buoyancy_flux)
             var delta_h = 1.6*Math.pow(buoyancy_flux,1./3.)*Math.pow(x,2./3.)/U;
             if ( isFinite(delta_h) ) {
                 var H = parseFloat(h.value) + delta_h;
@@ -129,7 +80,6 @@ function redrawContours() {
 
             var RHS = conc/parseFloat(q.value)*2*Math.PI*U*sigma_y*sigma_z/( Math.exp(-(z-H)*(z-H)/2/sigma_z/sigma_z) + Math.exp(-(z+H)*(z+H)/2/sigma_z/sigma_z) );
             var y_plus = Math.sqrt(-sigma_y*sigma_y*Math.log(RHS))
-            // console.log(y_plus)
             if ( !isFinite(y_plus) && x > 1000 ) { // HACK: SHOULD CHECK FOR MAX VALUE AT GROUND LEVEL INSTEAD USING KNOWN FORMULA
                 valid = false;
             }
@@ -139,13 +89,6 @@ function redrawContours() {
 
                 lat_m = marker._latlng.lat + (-x*Math.sin(theta) - y_plus*Math.cos(theta))/111111.;
                 lon_m = marker._latlng.lng + ( x*Math.cos(theta) - y_plus*Math.sin(theta))/(111111.*Math.cos(marker._latlng.lat*Math.PI/180.));
-                // console.log(lat_p);
-                // console.log(lat_m);
-                // console.log(lon_p);
-                // console.log(lon_m);
-                // var lat = marker._latlng.lat + x/111111.; // approximate conversion factor
-                // var lon_p = marker._latlng.lng + y_plus/(111111.*Math.cos(marker._latlng.lat)); // FIX THIS!!!!
-                // var lon_m = marker._latlng.lng - y_plus/(111111.*Math.cos(marker._latlng.lat)); // FIX THIS!!!!
 
                 x_p_vertices.push(lat_p);
                 x_m_vertices.push(lat_m);
@@ -204,16 +147,13 @@ function draw_bg() {
     }
 
     ctx.font = "30px Arial";
-    ctx.fillStyle = 'black';
+    ctx.fillStyle = 'white';
     ctx.fillText("N",c.width/2-10,22);
     ctx.fillText("S",c.width/2-10,c.height-0);
     ctx.fillText("W",0,c.height/2+5);
     ctx.fillText("E",c.height-20,c.height/2+5);
 
     ctx.font = "16px Arial";
-    // ctx.fillText("40 km/h",410,c.height-410);
-    // ctx.fillText("30",370,c.height-370);
-    // ctx.fillText("20",330,c.height-330);
     var dx = 0.085;
     ctx.fillText("5",      1*dx*c.width + c.width/2.,-1*dx*c.height + c.height/2.);
     ctx.fillText("10",      2*dx*c.width + c.width/2.,-2*dx*c.height + c.height/2.);
@@ -233,34 +173,19 @@ c.addEventListener('click', function(evt) {
     draw_bg();
     xy = getCursorPosition(c, evt);
     ctx.beginPath();
-    ctx.arc(xy[0],xy[1],10,0,2*Math.PI);
+    ctx.arc(xy[0],xy[1],8,0,2*Math.PI);
     var U = Math.sqrt(Math.pow(xy[0]-(c.width/2.),2)+Math.pow(xy[1]-(c.height/2.),2),0.5)/(c.width/2.);
-    var alpha = U + 0.1;
-    ctx.fillStyle = 'rgba(255,0,0,' + alpha + ')';
+    // var alpha = U + 0.1;
+    // ctx.fillStyle = 'rgba(255,0,0,' + alpha + ')';
     // ctx.fillStyle = 'rgba(100,200,0,1)';
+    ctx.fillStyle = '#FFFFFF';
     if ( U <= 0.95 ) { ctx.fill(); }
     xy[0] = (xy[0]-c.width/2.0)/(c.width/2.0)*20.0*0.28 ; // in m/s
     xy[1] = -(xy[1]-c.height/2.0)/(c.height/2.0)*20.0*0.28 ; // in m/s
-    // var ux = document.getElementById("ux");
-    // var uy = document.getElementById("uy");
-    // ux.value = xy[0];
-    // uy.value = xy[1];
     u = xy;
     redrawContours();
-    // console.log("ux: " + ux + " uy: " + uy + ' ' + U/40.);
     }, false);
 
-// At z=0 (ground surface),
-// c(x,y) = Q*exp( -y^2/(2*sigma_y^2) - H^2/(2*sigma_z^2) )/(pi*sigma_y*sigma_z*u)
-// need parameters Q, u, sigma_y, sigma_z
-// Q from user input
-// u from wind rose
-// sigma_y and sigma_z from here: http://dii.unipd.it/-paolo.canu/files/FdT/Point%20Source%20Dispersion%20Parameters.pdf
-// need stability criteria from user input
-
-// var d = document.getElementById("positional");
-// var dtx = d.getContext("2d");
-// draw_bg_d();
 
 function draw_bg_d() {
     dtx.beginPath();
@@ -277,63 +202,3 @@ function getCursorPosition_d(d, event) {
 
     return [x, y];
 }
-
-// d.addEventListener('click', function(evt) {
-//     dtx.clearRect(0,0,d.width,d.height);
-//     draw_bg_d();
-//     xy = getCursorPosition(d, evt);
-//     if ( (xy[0] > 20) && (xy[0] < d.width - 20) ) {
-//         if ( (xy[1] > 20) && (xy[1] < d.height - 20) ) {
-//             dtx.beginPath();
-//             dtx.arc(xy[0],xy[1],10,0,2*Math.PI);
-//             dtx.fillStyle = 'rgba(255,0,0,1)';
-//             dtx.fill();
-//             xy[0] = (xy[0] - 20)/(d.width - 40); // rescale to the range 0-1
-//             xy[1] = 1.0 - (xy[1] - 20)/(d.height - 40); // rescale to the range 0-1 --- PROBABLY UPSIDE DOWN!
-//             document.getElementById("xc").value = xy[0];
-//             document.getElementById("yc").value = xy[1];
-//             console.log("xc: " + xy[0] + " yc: " + xy[1]);
-//             }
-//         }
-//     }, false);
-
-// At z=0 (ground surface),
-// c(x,y) = Q*exp( -y^2/(2*sigma_y^2) - H^2/(2*sigma_z^2) )/(pi*sigma_y*sigma_z*u)
-// need parameters Q, u, sigma_y, sigma_z
-// Q from user input
-// u from wind rose
-// sigma_y and sigma_z from here: http://dii.unipd.it/-paolo.canu/files/FdT/Point%20Source%20Dispersion%20Parameters.pdf
-// need stability criteria from user input
-
-var plasma = [
-    [0.18500126283629117,0.0,0.5300734481832133],
-    [0.28069900692141886,0.0,0.5957607906567519],
-    [0.37169632394652985,0.0,0.6383265475601053],
-    [0.4617056654598785,0.0,0.6611976600287218],
-    [0.5484481027774952,0.0,0.6570196633950978],
-    [0.6285513580399021,0.03197423156761071,0.6228641296151941],
-    [0.6998941469583252,0.14437902230001867,0.5673441858884501],
-    [0.7627520603974456,0.23077446982485766,0.50476878993514],
-    [0.8185825533178849,0.311386513443518,0.4436495949958711],
-    [0.8680923147108822,0.3912774119706224,0.385011298212545],
-    [0.9102863527112363,0.4738069993796045,0.3268087806988829],
-    [0.9425456696997273,0.5615426592562283,0.26718454740444175],
-    [0.9612663555645452,0.656078387432029,0.2057069050257183],
-    [0.9621866932888067,0.7580699614625952,0.1465937236780026],
-    [0.9401426587007371,0.8674491093347713,0.11437731754446762],
-    [0.894058310302958,0.9822535793047805,0.0810687655704728]
-];
-
-function getColor(val) {
-
-    hex = rgbToHex()
-    return hex
-}
-
-// var rgbToHex = function (rgb) {
-//   var hex = Number(rgb).toString(16);
-//   if (hex.length < 2) {
-//        hex = "0" + hex;
-//   }
-//   return hex;
-// };
