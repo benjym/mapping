@@ -59,7 +59,7 @@ function redrawContours() {
         polygons = [];
     }
     var si = stability.selectedIndex;
-    var dx = 1.0;
+    var dx;
     var z = parseFloat(delta.value);
     var U = Math.sqrt(u[0]*u[0] + u[1]*u[1]);
     var theta = -Math.atan2(u[1],u[0]);
@@ -84,6 +84,12 @@ function redrawContours() {
         var x = 0.0;
         var valid = true;
         while ( valid ) {
+            if ( x < 100 ) { dx = 1.0; }
+            else if ( x < 1e3 ) { dx = 1e0; }
+            else if ( x < 1e4 ) { dx = 1e1; }
+            else if ( x < 1e5 ) { dx = 1e2; }
+            // else if ( x < 1e6 ) { dx = 1e3; }
+            else { valid = false; }
             var lnx = Math.log(x);
             // sigma_y and sigma_z from here: http://dii.unipd.it/-paolo.canu/files/FdT/Point%20Source%20Dispersion%20Parameters.pdf
             var sigma_y = Math.exp(Iy[si] + Jy[si]*lnx + Ky[si]*lnx*lnx);
