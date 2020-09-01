@@ -15,23 +15,21 @@
 <body>
     <div id="wrap">
         <div class="column left_col">
-            Stability classification:
+            Model
             <select id="stability" onchange="redrawContours()">
-                <option id="A" value="A" selected>A</option>
-                <option id="B" value="B">B</option>
-                <option id="C" value="C">C</option>
-                <option id="D" value="D">D</option>
-                <option id="E" value="E">E</option>
-                <option id="F" value="F">F</option>
+                <option id="IS" selected>Infinite slope</option>
+                <option id="Cullman">Cullman's model</option>
+                <option id="Taylor">Taylor charts</option>
+                <option id="Taylor-BAD">Taylor charts forgetting to iterate (BAD)</option>
             </select>
-            Source height above ground (m): <input onchange="redrawContours()" type="number" id="h" value="30" min="0"/>
-            Source pollutant emission rate (g/s): <input onchange="redrawContours()" type="number" id="q" value="1" min="0"/>
-            Viewing height above ground (m): <input onchange="redrawContours()" type="number" id="delta" value="0" min="0" />
-            Ambient temperature (&deg;C): <input onchange="redrawContours()" class="buoyancy" type="number" id="T_a" value="25" min="-273"/>
-            Stack temperature (&deg;C): <input onchange="redrawContours()" class="buoyancy" type="number" id="T_s" value="25" min="-273"/>
-            Stack diameter (m): <input onchange="redrawContours()" class="buoyancy" type="number" id="d_s" value="5" min="0"/>
-            Stack exit velocity (m/s): <input onchange="redrawContours()" class="buoyancy" type="number" id="v_s" value="10" min="0"/>
-            Concentrations, separate with ';' (&micro;g/m<sup>3</sup>): <input onchange="redrawContours()" type="text" id="concentration_contours" value="0.1; 1; 10" />
+            Specific weight &gamma; (kN.m<sup>3</sup>)
+            <div>0 <input type="range" id="G_s" value="20" min="0" max="50" step="1" oninput="Gs_out.value = G_s.value;"> <output id="Gs_out">20</output> </div><br>
+            Cohesion c (kN.m<sup>2</sup>)
+            <div>0 <input type="range" id="c" value="5" min="0" max="50" oninput="c_out.value = c.value;"> <output id="c_out"> 5</output> </div> <br>
+            Friction angle &phi; (degree)
+            <div>0 <input type="range" id="phi" value="30" min="0" max="90" oninput="phi_out.value = phi.value;"> <output id="phi_out"> 30</output></div> <br>
+            Rock depth d (infinite slope) or DH (Taylor TSA) (m)
+            <div>0 <input type="range" id="H" value="10" min="0" max="100" oninput="H_out.value = H.value"> <output id="H_out">10 </output></div> <br>
         </div>
 
         <div id="map" class="column right_col"></div>

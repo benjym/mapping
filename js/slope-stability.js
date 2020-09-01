@@ -57,6 +57,7 @@ var Kz = [ 0.2770, 0.0136,-0.0020,-0.0316,-0.0450,-0.0540];
 
 function onLeftMapClick(e) {
     top_marker.setLatLng(e.latlng);
+    console.log(e)
     redrawContours();
 }
 function onRightMapClick(e) {
