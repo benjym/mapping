@@ -1,4 +1,4 @@
-# pollution-map
+# mapping
 Visualise the dispersion of a plume on top of a map. [Try it out here](https://benjym.github.io/pollution-map/).
 
 ## Instructions
