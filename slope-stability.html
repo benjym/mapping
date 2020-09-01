@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>Pollution map</title>
+    <title>Slope stability</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
@@ -32,16 +32,11 @@
             Stack diameter (m): <input onchange="redrawContours()" class="buoyancy" type="number" id="d_s" value="5" min="0"/>
             Stack exit velocity (m/s): <input onchange="redrawContours()" class="buoyancy" type="number" id="v_s" value="10" min="0"/>
             Concentrations, separate with ';' (&micro;g/m<sup>3</sup>): <input onchange="redrawContours()" type="text" id="concentration_contours" value="0.1; 1; 10" />
-            <!-- <div id="grad"></div> -->
-            <!-- <p style="text-align:center"><span style="float:left">< 10<sup>0</sup></span> 10<sup>1</sup></span> <span style="float:right">> 10<sup>2</sup></span></p> -->
-            Wind speed and direction:
-            <br><br>
-            <canvas id="wind_rose" width="350" height="350"></canvas>
         </div>
 
         <div id="map" class="column right_col"></div>
     </div>
-    <script src="js/pollution.js" type="text/javascript"></script>
+    <script src="js/slope-stability.js" type="text/javascript"></script>
 
 </body>
 </html>
