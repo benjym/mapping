@@ -7,17 +7,17 @@ L.control.scale({ position: "bottomright" }).addTo(map); // add scale bar
 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
     attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a> | Brought together by <a href="https://www.benjymarks.com">Benjy Marks</a>',
     maxZoom: 22,
-    id: 'benjymarks/ckedsq0fw08kg19pbpiuj5zmn',
+    id: 'benjymarks/ckekrzken0dfj19nt7y93p671',
     tileSize: 512,
     zoomOffset: -1,
     accessToken: 'pk.eyJ1IjoiYmVuanltYXJrcyIsImEiOiJjand1M3BhanowOGx1NDlzMWs0bG0zNnpyIn0.OLLoUOjLUhcKoAVX1JKVdw'
 }).addTo(map);
 
-var wmsLayer = L.tileLayer.wms('http://services.ga.gov.au/gis/services/DEM_LiDAR_5m/MapServer/WMSServer?', {
-    layers: 'Image',
-    opacity: 0.5,
-    transparency: 'true',
-}).addTo(map);
+// var wmsLayer = L.tileLayer.wms('http://services.ga.gov.au/gis/services/DEM_LiDAR_5m/MapServer/WMSServer?', {
+//     layers: 'Image',
+//     opacity: 0.5,
+//     transparency: 'true',
+// }).addTo(map);
 // var wmsLayer = L.tileLayer.wms('http://gaservices.ga.gov.au/site_9/services/DEM_SRTM_1Second_Hydro_Enforced/MapServer/WMSServer?request=GetCapabilities&service=WMS').addTo(map);
 // var wmsLayer = L.tileLayer.wms('http://ows.mundialis.de/services/service?', {
 //     layers: 'TOPO-WMS'
@@ -38,23 +38,33 @@ var top_marker_color = '#894dff';
 var bottom_marker_color = '#ffcfff';
 
 var top_marker = L.marker([-33.891,151.1935],{
-    icon:top_icon // tried but didn't make something good - worth continuing with!
-}).addTo(map);//.bindPopup("I am an orange leaf.");
+    icon:top_icon
+}).addTo(map);
 var bottom_marker = L.marker([-33.891,151.198],{
-    icon:bottom_icon // tried but didn't make something good - worth continuing with!
-}).addTo(map);//.bindPopup("I am an orange leaf.");
+    icon:bottom_icon
+}).addTo(map);
 
-
+var polyline = L.polyline([[-33.891,151.1935],[-33.891,151.198]], {
+    color: '#363636',
+    weight: 5,
+    // stroke: true,
+    // opacity: 1.0,
+    // fill: true,
+    // className: 'fake_class'
+}).addTo(map);
 
 var colors = ['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf','#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf','#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf']; // lots of colours :)
 var legend_div;
 
 function onLeftMapClick(e) {
     top_marker.setLatLng(e.latlng);
+    polyline.setLatLngs([top_marker.getLatLng(),bottom_marker.getLatLng()]);
+    console.log(polyline);
     redrawSection();
 }
 function onRightMapClick(e) {
     bottom_marker.setLatLng(e.latlng);
+    polyline.setLatLngs([top_marker.getLatLng(),bottom_marker.getLatLng()]);
     redrawSection();
 }
 
@@ -87,11 +97,16 @@ var margin = {top: 10, right: 30, bottom: 20, left: 20}
 var width = document.getElementById("section").clientWidth - margin.left - margin.right - 40;
 var height = document.getElementById("section").clientHeight - margin.top - margin.bottom - 40;
 
+var svg = d3.select("#section").append("svg").attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 redrawSection(); // do it once
 
 function redrawSection() {
-    d3.select('svg').remove();
-
+    d3.select('path.line').remove();
+    d3.select('.xaxis').remove();
+    d3.select('.yaxis').remove();
+    // d3.select('g').remove();
     // The number of datapoints
     var n = Math.floor(Math.random()*50);
     var dataset = d3.range(n).map(function(d) { return {"y": d3.randomUniform(50)() } })
@@ -113,14 +128,11 @@ function redrawSection() {
         // .curve(d3.curveMonotoneX) // apply smoothing to the line
 
 
-    var svg = d3.select("#section")
-        .append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
     // 3. Call the x axis in a group tag
     svg.append("g")
-        .attr("class", "x axis")
+        .attr("class", "xaxis")
         .attr("transform", "translate("+margin.left+"," + height + ")")
         .call(d3.axisBottom(xScale)); // Create an axis component with d3.axisBottom
 
@@ -136,7 +148,7 @@ function redrawSection() {
     // 4. Call the y axis in a group tag
     svg.append("g")
         .attr("transform", "translate("+margin.left+",0)")
-        .attr("class", "y axis")
+        .attr("class", "yaxis")
         .call(d3.axisLeft(yScale)); // Create an axis component with d3.axisLeft
 
     // text label for the y axis
