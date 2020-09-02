@@ -172,3 +172,11 @@ function redrawSection() {
         .attr("d", line); // 11. Calls the line generator
 
 }
+
+function updateWindow(){
+    var x = document.getElementById("section").clientWidth - margin.left - margin.right - 40;
+    var y = document.getElementById("section").clientHeight - margin.top - margin.bottom - 40;
+
+    svg.attr("width", x).attr("height", y);
+}
+d3.select(window).on('resize.updatesvg', updateWindow);
