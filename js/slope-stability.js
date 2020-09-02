@@ -1,15 +1,26 @@
 var map = L.map('map', {
-    crs: L.CRS.EPSG4326,
+    // crs: L.CRS.EPSG4326,
 }).setView([-33.8913388,151.1939964], 13);
 
 L.control.scale({ position: "bottomright" }).addTo(map); // add scale bar
 
+L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+    attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a> | Brought together by <a href="https://www.benjymarks.com">Benjy Marks</a>',
+    maxZoom: 22,
+    id: 'benjymarks/ckedsq0fw08kg19pbpiuj5zmn',
+    tileSize: 512,
+    zoomOffset: -1,
+    accessToken: 'pk.eyJ1IjoiYmVuanltYXJrcyIsImEiOiJjand1M3BhanowOGx1NDlzMWs0bG0zNnpyIn0.OLLoUOjLUhcKoAVX1JKVdw'
+}).addTo(map);
+
 var wmsLayer = L.tileLayer.wms('http://services.ga.gov.au/gis/services/DEM_LiDAR_5m/MapServer/WMSServer?', {
-    layers: 'Image'
+    layers: 'Image',
+    opacity: 0.5,
+    transparency: 'true',
 }).addTo(map);
 // var wmsLayer = L.tileLayer.wms('http://gaservices.ga.gov.au/site_9/services/DEM_SRTM_1Second_Hydro_Enforced/MapServer/WMSServer?request=GetCapabilities&service=WMS').addTo(map);
 // var wmsLayer = L.tileLayer.wms('http://ows.mundialis.de/services/service?', {
-    // layers: 'TOPO-WMS'
+//     layers: 'TOPO-WMS'
 // }).addTo(map);
 
 var size = 60;
@@ -23,15 +34,8 @@ var bottom_icon = L.icon({
     iconSize:     [size, size], // size of the icon
     iconAnchor:   [size/2, size], // point of the icon which will
 });
-
-L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
-    attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a> | <a href="https://www.tandfonline.com/doi/pdf/10.1080/00022470.1978.10470720">Gaussian Plume Model</a> | Brought together by <a href="https://www.benjymarks.com">Benjy Marks</a>',
-    maxZoom: 22,
-    id: 'benjymarks/ckedsq0fw08kg19pbpiuj5zmn',
-    tileSize: 512,
-    zoomOffset: -1,
-    accessToken: 'pk.eyJ1IjoiYmVuanltYXJrcyIsImEiOiJjand1M3BhanowOGx1NDlzMWs0bG0zNnpyIn0.OLLoUOjLUhcKoAVX1JKVdw'
-})//;.addTo(map);
+var top_marker_color = '#894dff';
+var bottom_marker_color = '#ffcfff';
 
 var top_marker = L.marker([-33.891,151.1935],{
     icon:top_icon // tried but didn't make something good - worth continuing with!
@@ -44,25 +48,14 @@ var bottom_marker = L.marker([-33.891,151.198],{
 
 var colors = ['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf','#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf','#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf']; // lots of colours :)
 var legend_div;
-var polygons = [];
-var u = [0,0];
-var Iy = [ -1.104, -1.634,-2.054 ,-2.555 ,-2.754 ,-3.143 ];
-var Jy = [ 0.9878,  1.035,1.0231 ,1.0423 ,1.0106 ,1.0148 ];
-var Ky = [-0.0076,-0.0096,-0.0076,-0.0087,-0.0064,-0.0070];
-var Iz = [  4.679, -1.999,-2.341 ,-3.186 ,-3.783 ,-4.490 ];
-var Jz = [-1.7172, 0.8752,0.9477 ,1.1737 ,1.3010 ,1.4024 ];
-var Kz = [ 0.2770, 0.0136,-0.0020,-0.0316,-0.0450,-0.0540];
-
-
 
 function onLeftMapClick(e) {
     top_marker.setLatLng(e.latlng);
-    console.log(e)
-    redrawContours();
+    redrawSection();
 }
 function onRightMapClick(e) {
     bottom_marker.setLatLng(e.latlng);
-    redrawContours();
+    redrawSection();
 }
 
 map.on('click', onLeftMapClick);
@@ -72,116 +65,121 @@ function transpose(a) {
     return a[0].map(function (_, c) { return a.map(function (r) { return r[c]; }); });
 }
 
-function redrawContours() {
-    if ( polygons !== undefined ) {
-        for (var i=0; i<polygons.length; i++ ) {
-            polygons[i].remove();
-        }
-        polygons = [];
-    }
-    var si = stability.selectedIndex;
-    var dx;
-    var z = parseFloat(delta.value);
-    var U = Math.sqrt(u[0]*u[0] + u[1]*u[1]);
-    var theta = -Math.atan2(u[1],u[0]);
-    var buoyancy_flux = 9.81*v_s.value*d_s.value*d_s.value*(T_s.value - T_a.value)/(4*(T_s.value + 273.15));
-    var concs = concentration_contours.value.split(';');
-
-    var els = document.querySelectorAll(".buoyancy");
-    if ( buoyancy_flux >= 0 ) { bg_color = '#FFFFFF'; font_color = '#000000' }
-    else { var bg_color = '#363636'; font_color = '#FFFFFF'}
-    for (var j = 0; j < els.length; j++) {
-        els[j].style.backgroundColor = bg_color;
-        els[j].style.color = font_color;
-    }
-
-    for (var i=0; i<concs.length; i++ ) {
-        var conc = parseFloat(concs[i])*1e-6; // convert to micrograms!
-        var col = colors[i];
-        var x_p_vertices = [];
-        var x_m_vertices = [];
-        var y_p_vertices = [];
-        var y_m_vertices = [];
-        var x = 0.0;
-        var valid = true;
-        while ( valid ) {
-            if ( x < 100 ) { dx = 1.0; }
-            else if ( x < 1e3 ) { dx = 1e0; }
-            else if ( x < 1e4 ) { dx = 1e1; }
-            else if ( x < 1e5 ) { dx = 1e2; }
-            // else if ( x < 1e6 ) { dx = 1e3; }
-            else { valid = false; }
-            var lnx = Math.log(x);
-            // sigma_y and sigma_z from here: http://dii.unipd.it/-paolo.canu/files/FdT/Point%20Source%20Dispersion%20Parameters.pdf
-            var sigma_y = Math.exp(Iy[si] + Jy[si]*lnx + Ky[si]*lnx*lnx);
-            var sigma_z = Math.exp(Iz[si] + Jz[si]*lnx + Kz[si]*lnx*lnx);
-            x += dx;
-            var delta_h = 1.6*Math.pow(buoyancy_flux,1./3.)*Math.pow(x,2./3.)/U;
-            if ( isFinite(delta_h) ) { var H = parseFloat(h.value) + delta_h; }
-            else { var H = parseFloat(h.value); }
-
-            // Solve for constant concentration value
-            var RHS = conc/parseFloat(q.value)*2*Math.PI*U*sigma_y*sigma_z/( Math.exp(-(z-H)*(z-H)/2/sigma_z/sigma_z) + Math.exp(-(z+H)*(z+H)/2/sigma_z/sigma_z) );
-            var y_plus = Math.sqrt(-sigma_y*sigma_y*Math.log(RHS))
-            if ( !isFinite(y_plus) && x > 1000 ) { // HACK: SHOULD CHECK FOR MAX VALUE AT GROUND LEVEL INSTEAD USING KNOWN FORMULA
-                valid = false;
-            }
-            else if ( isFinite(y_plus) ) {
-                lat_p = top_marker._latlng.lat + (-x*Math.sin(theta) + y_plus*Math.cos(theta))/111111.;
-                lon_p = top_marker._latlng.lng + ( x*Math.cos(theta) + y_plus*Math.sin(theta))/(111111.*Math.cos(top_marker._latlng.lat*Math.PI/180.));
-
-                lat_m = top_marker._latlng.lat + (-x*Math.sin(theta) - y_plus*Math.cos(theta))/111111.;
-                lon_m = top_marker._latlng.lng + ( x*Math.cos(theta) - y_plus*Math.sin(theta))/(111111.*Math.cos(top_marker._latlng.lat*Math.PI/180.));
-
-                x_p_vertices.push(lat_p);
-                x_m_vertices.push(lat_m);
-                y_p_vertices.push(lon_p);
-                y_m_vertices.push(lon_m);
-            }
-            else {
-                if ( x_p_vertices.length > 0 ) { // this was a stroke of genius - never edit this section
-                    var x_all = x_p_vertices.concat(x_m_vertices.reverse());
-                    var y_all = y_p_vertices.concat(y_m_vertices.reverse());
-                    polygons.push(L.polygon(transpose([x_all,y_all]), {
-                        color: col,
-                    }).addTo(map));
-
-                    var x_p_vertices = [];
-                    var x_m_vertices = [];
-                    var y_p_vertices = [];
-                    var y_m_vertices = [];
-                }
-            }
-        }
-        // var x_rev =
-        var x_all = x_p_vertices.concat(x_m_vertices.reverse());
-        var y_all = y_p_vertices.concat(y_m_vertices.reverse());
-        polygons.push(L.polygon(transpose([x_all,y_all]), {
-            color: col,
-        }).addTo(map));
-        // console.log(transpose([x_all,y_all]))
-    }
-    legend_div.innerHTML = "<h4>Concentration</h4>";
-    for (var i=0; i<concs.length; i++ ) {
-        legend_div.innerHTML += '<i style="background: ' + colors[i] + '"></i><span>' + concs[i] + ' &micro;g/m<sup>3</sup></span><br>';
-    }
-}
 
 /*Legend specific*/
 var legend = L.control({ position: "topright" });
 
 legend.onAdd = function(map) {
   legend_div = L.DomUtil.create("div", "legend");
-  var concs = concentration_contours.value.split(';');
 
-  legend_div.innerHTML += "<h4>Concentration</h4>";
-  for (var i=0; i<concs.length; i++ ) {
-      legend_div.innerHTML += '<i style="background: ' + colors[i] + '"></i><span>' + concs[i] + ' &micro;g/m<sup>3</sup></span><br>';
-  }
-
-
-
+  legend_div.innerHTML += "<h4>Legend</h4>";
+  legend_div.innerHTML += '<i style="background: ' + top_marker_color + '"></i><span>Top of slope</span><br>';
+  legend_div.innerHTML += '<i style="background: ' + bottom_marker_color + '"></i><span>Bottom of slope</span><br>';
   return legend_div;
 };
 
 legend.addTo(map);
+
+
+
+// 2. Use the margin convention practice
+var margin = {top: 10, right: 10, bottom: 10, left: 10}
+var width = document.getElementById("section").offsetWidth - margin.left - margin.right - 60 // Use the window's width
+var height = document.getElementById("section").offsetHeight - margin.top - margin.bottom; // Use the window's height
+
+// The number of datapoints
+var n = 21;
+
+// 5. X scale will use the index of our data
+var xScale = d3.scaleLinear()
+    .domain([0, n-1]) // input
+    .range([0, width]); // output
+
+// 6. Y scale will use the randomly generate number
+var yScale = d3.scaleLinear()
+    .domain([0, 1]) // input
+    .range([height, 0]); // output
+
+// 7. d3's line generator
+var line = d3.line()
+    .x(function(d, i) { return xScale(i); }) // set the x values for the line generator
+    .y(function(d) { return yScale(d.y); }) // set the y values for the line generator
+    .curve(d3.curveMonotoneX) // apply smoothing to the line
+
+// 8. An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
+var dataset = d3.range(n).map(function(d) { return {"y": d3.randomUniform(1)() } })
+
+// 1. Add the SVG to the page and employ #2
+var svg = d3.select("#section").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+// 3. Call the x axis in a group tag
+svg.append("g")
+    .attr("class", "x axis")
+    .attr("transform", "translate(0," + height + ")")
+    .call(d3.axisBottom(xScale)); // Create an axis component with d3.axisBottom
+
+// 4. Call the y axis in a group tag
+svg.append("g")
+    .attr("class", "y axis")
+    .call(d3.axisLeft(yScale)); // Create an axis component with d3.axisLeft
+
+// 9. Append the path, bind the data, and call the line generator
+svg.append("path")
+    .datum(dataset) // 10. Binds data to the line
+    .attr("class", "line") // Assign a class for styling
+    .attr('fill', 'none')
+    .attr('stroke','white')
+    .attr('stroke-width','3px')
+    .attr("d", line); // 11. Calls the line generator
+
+// // 12. Appends a circle for each datapoint
+// svg.selectAll(".dot")
+//     .data(dataset)
+//   .enter().append("circle") // Uses the enter().append() method
+//     .attr("class", "dot") // Assign a class for styling
+//     .attr("cx", function(d, i) { return xScale(i) })
+//     .attr("cy", function(d) { return yScale(d.y) })
+//     .attr("r", 5)
+//       .on("mouseover", function(a, b, c) {
+//   			console.log(a)
+//         this.attr('class', 'focus')
+// 		})
+//       .on("mouseout", function() {  })
+//       .on("mousemove", mousemove);
+
+//   var focus = svg.append("g")
+//       .attr("class", "focus")
+//       .style("display", "none");
+
+//   focus.append("circle")
+//       .attr("r", 4.5);
+
+//   focus.append("text")
+//       .attr("x", 9)
+//       .attr("dy", ".35em");
+
+//   svg.append("rect")
+//       .attr("class", "overlay")
+//       .attr("width", width)
+//       .attr("height", height)
+//       .on("mouseover", function() { focus.style("display", null); })
+//       .on("mouseout", function() { focus.style("display", "none"); })
+//       .on("mousemove", mousemove);
+
+//   function mousemove() {
+//     var x0 = x.invert(d3.mouse(this)[0]),
+//         i = bisectDate(data, x0, 1),
+//         d0 = data[i - 1],
+//         d1 = data[i],
+//         d = x0 - d0.date > d1.date - x0 ? d1 : d0;
+//     focus.attr("transform", "translate(" + x(d.date) + "," + y(d.close) + ")");
+//     focus.select("text").text(d);
+//   }
+
+function redrawSection() {
+
+}

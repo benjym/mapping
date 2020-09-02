@@ -1,0 +1,71 @@
+#wrap {
+   /* width:95%; */
+   margin:0 auto;
+   background-color: #FFFFFF;
+   display: flex;
+   align-items: stretch;
+   /* height:100%; */
+}
+.column {
+    /* flex: 1; */
+    border: 10px solid #FFFFFF;
+/*    border-radius: 10px;*/
+    border-radius: 5px;
+    background-color: #363636;
+    padding: 20px;
+}
+.left_col {
+   order: 1;
+   flex: 1;
+}
+.right_col {
+   order: 3;
+   flex: 3;
+}
+
+canvas {
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
+
+#grad {
+    height: 50px;
+    background: linear-gradient(to right, hsl(0,100%,50%),hsl(60,100%,50%),hsl(120,100%,50%),hsl(180,100%,50%),hsl(240,100%,50%),hsl(300,100%,50%));
+}
+
+/*Legend specific*/
+.legend {
+  padding: 6px 8px;
+  /* font: 14px Arial, Helvetica, sans-serif; */
+  /* background: white; */
+  background: rgba(55, 55, 55, 0.8);
+  /*box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);*/
+  /*border-radius: 5px;*/
+  line-height: 24px;
+}
+.legend h4 {
+  text-align: center;
+  font-size: 16px;
+  margin: 2px 12px 8px;
+}
+
+.legend span {
+  position: relative;
+  bottom: 3px;
+}
+
+.legend i {
+  width: 18px;
+  height: 18px;
+  float: left;
+  margin: 0 8px 0 0;
+  opacity: 0.7;
+}
+
+.legend i.icon {
+  background-size: 18px;
+  background-color: rgba(255, 255, 255, 1);
+}
