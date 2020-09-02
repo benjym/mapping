@@ -23,6 +23,7 @@
 .bottom_row {
     order: 4;
     flex: 1;
+    height: 200px;
 }
 .break {
     border: 0px;

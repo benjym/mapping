@@ -83,54 +83,72 @@ legend.addTo(map);
 
 
 // 2. Use the margin convention practice
-var margin = {top: 10, right: 10, bottom: 10, left: 20}
-var width = document.getElementById("section").offsetWidth - margin.left - margin.right - 60 // Use the window's width
-var height = 2*document.getElementById("section").offsetHeight - margin.top - margin.bottom; // Use the window's height
+var margin = {top: 10, right: 30, bottom: 20, left: 20}
+var width = document.getElementById("section").clientWidth - margin.left - margin.right - 40;
+var height = document.getElementById("section").clientHeight - margin.top - margin.bottom - 40;
 
-// The number of datapoints
-var n = 21;
-
-// 5. X scale will use the index of our data
-var xScale = d3.scaleLinear()
-    .domain([0, n-1]) // input
-    .range([0, width]); // output
-
-// 6. Y scale will use the randomly generate number
-var yScale = d3.scaleLinear()
-    .domain([0, 1]) // input
-    .range([height, 0]); // output
-
-// 7. d3's line generator
-var line = d3.line()
-    .x(function(d, i) { return xScale(i); }) // set the x values for the line generator
-    .y(function(d) { return yScale(d.y); }) // set the y values for the line generator
-    .curve(d3.curveMonotoneX) // apply smoothing to the line
-
-var svg = d3.select("#section").append("svg")
-// 8. An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
+redrawSection(); // do it once
 
 function redrawSection() {
-    d3.select('path.line').remove();
+    d3.select('svg').remove();
 
-    var dataset = d3.range(n).map(function(d) { return {"y": d3.randomUniform(1)() } })
+    // The number of datapoints
+    var n = Math.floor(Math.random()*50);
+    var dataset = d3.range(n).map(function(d) { return {"y": d3.randomUniform(50)() } })
 
-    // 1. Add the SVG to the page and employ #2
-    svg.attr("width", width + margin.left + margin.right)
+    // 5. X scale will use the index of our data
+    var xScale = d3.scaleLinear()
+        .domain([0, n-1]) // input
+        .range([0, width]); // output
+
+    // 6. Y scale will use the randomly generate number
+    var yScale = d3.scaleLinear()
+        // .domain([0, 1]) // input
+        // .range([height, 0]); // output
+
+    // 7. d3's line generator
+    var line = d3.line()
+        .x(function(d, i) { return xScale(i); }) // set the x values for the line generator
+        .y(function(d) { return yScale(d.y); }) // set the y values for the line generator
+        // .curve(d3.curveMonotoneX) // apply smoothing to the line
+
+
+    var svg = d3.select("#section")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
-      .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
     // 3. Call the x axis in a group tag
     svg.append("g")
         .attr("class", "x axis")
-        .attr("transform", "translate(0," + height + ")")
+        .attr("transform", "translate("+margin.left+"," + height + ")")
         .call(d3.axisBottom(xScale)); // Create an axis component with d3.axisBottom
+
+    svg.append("text")
+        .attr("transform",
+                "translate(" + (width/2 + margin.left) + " ," +
+                               (height + margin.top + 20) + ")")
+        .style("text-anchor", "middle")
+        .style("fill", "white")
+        .style("font-size", "12px")
+        .text("Distance (m)");
 
     // 4. Call the y axis in a group tag
     svg.append("g")
+        .attr("transform", "translate("+margin.left+",0)")
         .attr("class", "y axis")
         .call(d3.axisLeft(yScale)); // Create an axis component with d3.axisLeft
 
+    // text label for the y axis
+    svg.append("text")
+        .attr("x",-height/2.)
+        .attr("y",-10)
+        .attr("transform", "rotate(-90)")
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .style("fill", "white")
+        .style("font-size", "12px")
+        .text("Elevation (m)");
     // 9. Append the path, bind the data, and call the line generator
     svg.append("path")
         .datum(dataset) // 10. Binds data to the line
@@ -138,6 +156,7 @@ function redrawSection() {
         .attr('fill', 'none')
         .attr('stroke','white')
         .attr('stroke-width','3px')
+        .attr("transform", "translate("+margin.left+",0)")
         .attr("d", line); // 11. Calls the line generator
 
 }
