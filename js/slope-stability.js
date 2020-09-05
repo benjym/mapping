@@ -93,33 +93,34 @@ legend.addTo(map);
 
 
 // 2. Use the margin convention practice
-var margin = {top: 10, right: 30, bottom: 20, left: 20}
-var width = document.getElementById("section").clientWidth - margin.left - margin.right - 40;
-var height = document.getElementById("section").clientHeight - margin.top - margin.bottom - 40;
-
-var svg = d3.select("#section").append("svg").attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+var margin = {top: 10, right: 30, bottom: 40, left: 45}
+var width, height, svg, n, dataset;
+width = document.getElementById("section").clientWidth - 40;
+height = document.getElementById("section").clientHeight - 40;
+updateWindow();
 redrawSection(); // do it once
 
+
 function redrawSection() {
-    d3.select('path.line').remove();
-    d3.select('.xaxis').remove();
-    d3.select('.yaxis').remove();
+
+    // d3.select('path.line').remove();
+    // d3.select('.xaxis').remove();
+    // d3.select('.yaxis').remove();
     // d3.select('g').remove();
     // The number of datapoints
-    var n = Math.floor(Math.random()*50);
-    var dataset = d3.range(n).map(function(d) { return {"y": d3.randomUniform(50)() } })
+    n = Math.floor(Math.random()*50);
+    dataset = d3.range(n).map(function(d) { return {"y": d3.randomUniform(1)() } })
+}
 
     // 5. X scale will use the index of our data
     var xScale = d3.scaleLinear()
         .domain([0, n-1]) // input
-        .range([0, width]); // output
+        .range([0, width-margin.left-margin.right]); // output
 
     // 6. Y scale will use the randomly generate number
     var yScale = d3.scaleLinear()
-        // .domain([0, 1]) // input
-        // .range([height, 0]); // output
+        .domain([0, 1]) // input
+        .range([height-margin.top-margin.bottom, 0]); // output
 
     // 7. d3's line generator
     var line = d3.line()
@@ -127,56 +128,52 @@ function redrawSection() {
         .y(function(d) { return yScale(d.y); }) // set the y values for the line generator
         // .curve(d3.curveMonotoneX) // apply smoothing to the line
 
+    svg.select(".axes")
+        .attr("transform", "translate("+margin.left+"," + margin.top + ")");
 
+    svg.select(".x-axis")
+        .call(d3.axisBottom(xScale)) // Create an axis component with d3.axisBottom
+        .attr("transform", "translate(0," + (height - margin.top - margin.bottom) + ")");
 
+    svg.select(".y-axis")
+        .call(d3.axisLeft(yScale)) // Create an axis component with d3.axisLeft
+        // .attr("transform", "translate(0," + (-margin.bottom-margin.top) + ")");
 
-    // 3. Call the x axis in a group tag
-    svg.append("g")
-        .attr("class", "xaxis")
-        .attr("transform", "translate("+margin.left+"," + height + ")")
-        .call(d3.axisBottom(xScale)); // Create an axis component with d3.axisBottom
-
-    svg.append("text")
+    svg.select(".x-label")
         .attr("transform",
-                "translate(" + (width/2 + margin.left) + " ," +
-                               (height + margin.top + 20) + ")")
+                "translate(" + (width/2 - margin.right) + " ," +
+                               (height - margin.top - 2) + ")")
         .style("text-anchor", "middle")
         .style("fill", "white")
         .style("font-size", "12px")
-        .text("Distance (m)");
-
-    // 4. Call the y axis in a group tag
-    svg.append("g")
-        .attr("transform", "translate("+margin.left+",0)")
-        .attr("class", "yaxis")
-        .call(d3.axisLeft(yScale)); // Create an axis component with d3.axisLeft
 
     // text label for the y axis
-    svg.append("text")
-        .attr("x",-height/2.)
-        .attr("y",-10)
+    svg.select(".y-label")
+        .attr("x",-height/2.+margin.bottom-margin.top)
+        .attr("y",-margin.left)
         .attr("transform", "rotate(-90)")
         .attr("dy", "1em")
         .style("text-anchor", "middle")
         .style("fill", "white")
         .style("font-size", "12px")
         .text("Elevation (m)");
-    // 9. Append the path, bind the data, and call the line generator
-    svg.append("path")
+
+
+    svg.select(".elevation-profile")
         .datum(dataset) // 10. Binds data to the line
         .attr("class", "line") // Assign a class for styling
         .attr('fill', 'none')
         .attr('stroke','white')
         .attr('stroke-width','3px')
-        .attr("transform", "translate("+margin.left+",0)")
+        .attr("transform", "translate(0,"+-margin.top+")")
         .attr("d", line); // 11. Calls the line generator
 
-}
+
 
 function updateWindow(){
-    var x = document.getElementById("section").clientWidth - margin.left - margin.right - 40;
-    var y = document.getElementById("section").clientHeight - margin.top - margin.bottom - 40;
+    width = document.getElementById("section").clientWidth - 40;
+    height = document.getElementById("section").clientHeight - 40;
 
-    svg.attr("width", x).attr("height", y);
+    svg = d3.select("svg.d3canvas").attr("width", width).attr("height", height);
 }
 d3.select(window).on('resize.updatesvg', updateWindow);

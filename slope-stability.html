@@ -38,7 +38,17 @@
 
         <div class="column break"></div> <!-- break -->
 
-        <div id="section" class="column bottom_row"></div>
+        <div id="section" class="column bottom_row">
+            <svg class="d3canvas">
+                <g class="axes">
+                    <g class="x-axis"></g>
+                    <g class="y-axis"></g>
+                    <text class="x-label">Distance (m)</text>
+                    <text class="y-label">Elevation (m)</text>
+                    <path class="elevation-profile"></path>
+                </g>
+            </svg>
+        </div>
     </div>
     <script src="js/slope-stability.js" type="text/javascript"></script>
 </body>
