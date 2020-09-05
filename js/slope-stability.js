@@ -101,7 +101,22 @@ updateWindow();
 redrawSection(); // do it once
 
 
+function getElevationData(lats,lngs) {
+    var locs = ''
+    for ( var i=0; i<lats.length; i++ ) {
+        locs = locs + String(lats[i]) + ',' + String(lngs[i]) + '|'
+    }
+    fetch('https://api.opentopodata.org/v1/test-dataset?locations='+locs)
+    .then(function(response) {
+        console.log(response)
+    })
+    .then(data => console.log(data));
+}
+
 function redrawSection() {
+    var lats = linspace(top_marker._latlng.lat,bottom_marker._latlng.lat,50)
+    var lngs = linspace(top_marker._latlng.lng,bottom_marker._latlng.lng,50)
+    getElevationData(lats,lngs);
 
     // d3.select('path.line').remove();
     // d3.select('.xaxis').remove();
@@ -112,61 +127,61 @@ function redrawSection() {
     dataset = d3.range(n).map(function(d) { return {"y": d3.randomUniform(1)() } })
 }
 
-    // 5. X scale will use the index of our data
-    var xScale = d3.scaleLinear()
-        .domain([0, n-1]) // input
-        .range([0, width-margin.left-margin.right]); // output
+// 5. X scale will use the index of our data
+var xScale = d3.scaleLinear()
+    .domain([0, n-1]) // input
+    .range([0, width-margin.left-margin.right]); // output
 
-    // 6. Y scale will use the randomly generate number
-    var yScale = d3.scaleLinear()
-        .domain([0, 1]) // input
-        .range([height-margin.top-margin.bottom, 0]); // output
+// 6. Y scale will use the randomly generate number
+var yScale = d3.scaleLinear()
+    .domain([0, 1]) // input
+    .range([height-margin.top-margin.bottom, 0]); // output
 
-    // 7. d3's line generator
-    var line = d3.line()
-        .x(function(d, i) { return xScale(i); }) // set the x values for the line generator
-        .y(function(d) { return yScale(d.y); }) // set the y values for the line generator
-        // .curve(d3.curveMonotoneX) // apply smoothing to the line
+// 7. d3's line generator
+var line = d3.line()
+    .x(function(d, i) { return xScale(i); }) // set the x values for the line generator
+    .y(function(d) { return yScale(d.y); }) // set the y values for the line generator
+    // .curve(d3.curveMonotoneX) // apply smoothing to the line
 
-    svg.select(".axes")
-        .attr("transform", "translate("+margin.left+"," + margin.top + ")");
+svg.select(".axes")
+    .attr("transform", "translate("+margin.left+"," + margin.top + ")");
 
-    svg.select(".x-axis")
-        .call(d3.axisBottom(xScale)) // Create an axis component with d3.axisBottom
-        .attr("transform", "translate(0," + (height - margin.top - margin.bottom) + ")");
+svg.select(".x-axis")
+    .call(d3.axisBottom(xScale)) // Create an axis component with d3.axisBottom
+    .attr("transform", "translate(0," + (height - margin.top - margin.bottom) + ")");
 
-    svg.select(".y-axis")
-        .call(d3.axisLeft(yScale)) // Create an axis component with d3.axisLeft
-        // .attr("transform", "translate(0," + (-margin.bottom-margin.top) + ")");
+svg.select(".y-axis")
+    .call(d3.axisLeft(yScale)) // Create an axis component with d3.axisLeft
+    // .attr("transform", "translate(0," + (-margin.bottom-margin.top) + ")");
 
-    svg.select(".x-label")
-        .attr("transform",
-                "translate(" + (width/2 - margin.right) + " ," +
-                               (height - margin.top - 2) + ")")
-        .style("text-anchor", "middle")
-        .style("fill", "white")
-        .style("font-size", "12px")
+svg.select(".x-label")
+    .attr("transform",
+            "translate(" + (width/2 - margin.right) + " ," +
+                           (height - margin.top - 2) + ")")
+    .style("text-anchor", "middle")
+    .style("fill", "white")
+    .style("font-size", "12px")
 
-    // text label for the y axis
-    svg.select(".y-label")
-        .attr("x",-height/2.+margin.bottom-margin.top)
-        .attr("y",-margin.left)
-        .attr("transform", "rotate(-90)")
-        .attr("dy", "1em")
-        .style("text-anchor", "middle")
-        .style("fill", "white")
-        .style("font-size", "12px")
-        .text("Elevation (m)");
+// text label for the y axis
+svg.select(".y-label")
+    .attr("x",-height/2.+margin.bottom-margin.top)
+    .attr("y",-margin.left)
+    .attr("transform", "rotate(-90)")
+    .attr("dy", "1em")
+    .style("text-anchor", "middle")
+    .style("fill", "white")
+    .style("font-size", "12px")
+    .text("Elevation (m)");
 
 
-    svg.select(".elevation-profile")
-        .datum(dataset) // 10. Binds data to the line
-        .attr("class", "line") // Assign a class for styling
-        .attr('fill', 'none')
-        .attr('stroke','white')
-        .attr('stroke-width','3px')
-        .attr("transform", "translate(0,"+-margin.top+")")
-        .attr("d", line); // 11. Calls the line generator
+svg.select(".elevation-profile")
+    .datum(dataset) // 10. Binds data to the line
+    .attr("class", "line") // Assign a class for styling
+    .attr('fill', 'none')
+    .attr('stroke','white')
+    .attr('stroke-width','3px')
+    .attr("transform", "translate(0,"+-margin.top+")")
+    .attr("d", line); // 11. Calls the line generator
 
 
 
@@ -177,3 +192,12 @@ function updateWindow(){
     svg = d3.select("svg.d3canvas").attr("width", width).attr("height", height);
 }
 d3.select(window).on('resize.updatesvg', updateWindow);
+
+function linspace(startValue, stopValue, cardinality) {
+  var arr = [];
+  var step = (stopValue - startValue) / (cardinality - 1);
+  for (var i = 0; i < cardinality; i++) {
+    arr.push(startValue + (step * i));
+  }
+  return arr;
+}
