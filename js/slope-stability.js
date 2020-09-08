@@ -1,6 +1,9 @@
+// var topo_server = 'https://api.opentopodata.org/v1/srtm30m/';
+var topo_server = 'http://localhost:5000/v1/srtm30m/'
+
 var map = L.map('map', {
     // crs: L.CRS.EPSG4326,
-}).setView([-33.8913388,151.1939964], 13);
+});
 
 L.control.scale({ position: "bottomright" }).addTo(map); // add scale bar
 
@@ -34,17 +37,20 @@ var bottom_icon = L.icon({
     iconSize:     [size, size], // size of the icon
     iconAnchor:   [size/2, size], // point of the icon which will
 });
+
 var top_marker_color = '#894dff';
 var bottom_marker_color = '#ffcfff';
 
-var top_marker = L.marker([-33.891,151.1935],{
+var top_marker = L.marker([-34.33606548328852,150.88733074376404],{
     icon:top_icon
 }).addTo(map);
-var bottom_marker = L.marker([-33.891,151.198],{
+var bottom_marker = L.marker([-34.33680965830653,150.88973520047998],{
     icon:bottom_icon
 }).addTo(map);
 
-var polyline = L.polyline([[-33.891,151.1935],[-33.891,151.198]], {
+map.setView([(top_marker._latlng.lat + bottom_marker._latlng.lat)/2.,(top_marker._latlng.lng + bottom_marker._latlng.lng)/2.], 13)
+
+var polyline = L.polyline([top_marker._latlng,bottom_marker._latlng], {
     color: '#363636',
     weight: 5,
     // stroke: true,
@@ -59,7 +65,7 @@ var legend_div;
 function onLeftMapClick(e) {
     top_marker.setLatLng(e.latlng);
     polyline.setLatLngs([top_marker.getLatLng(),bottom_marker.getLatLng()]);
-    console.log(polyline);
+    // console.log(polyline);
     redrawSection();
 }
 function onRightMapClick(e) {
@@ -106,25 +112,27 @@ function getElevationData(lats,lngs) {
     for ( var i=0; i<lats.length; i++ ) {
         locs = locs + String(lats[i]) + ',' + String(lngs[i]) + '|'
     }
-    fetch('https://api.opentopodata.org/v1/test-dataset?locations='+locs)
+    fetch(topo_server + "?locations="+locs)
+    // fetch('https://api.opentopodata.org/v1/test-dataset?locations='+locs)
     .then(function(response) {
-        console.log(response)
+        // console.log(response);
     })
-    .then(data => console.log(data));
+    .then(function(data) {
+        console.log(data);
+        var data2 = JSON.parse(data);
+        console.log(data2)
+        // dataset = data2.results.map(function(d) { return {"y": d.elevation } })
+    });
 }
 
 function redrawSection() {
-    var lats = linspace(top_marker._latlng.lat,bottom_marker._latlng.lat,50)
-    var lngs = linspace(top_marker._latlng.lng,bottom_marker._latlng.lng,50)
-    getElevationData(lats,lngs);
+    n = 5;
+    var lats = linspace(top_marker._latlng.lat,bottom_marker._latlng.lat,n)
+    var lngs = linspace(top_marker._latlng.lng,bottom_marker._latlng.lng,n)
+    // elev = getElevationData(lats,lngs);
 
-    // d3.select('path.line').remove();
-    // d3.select('.xaxis').remove();
-    // d3.select('.yaxis').remove();
-    // d3.select('g').remove();
-    // The number of datapoints
-    n = Math.floor(Math.random()*50);
     dataset = d3.range(n).map(function(d) { return {"y": d3.randomUniform(1)() } })
+    // console.log(dataset)
 }
 
 // 5. X scale will use the index of our data
