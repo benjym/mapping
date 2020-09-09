@@ -186,7 +186,7 @@ function updateElevationGraph(l) {
 var line, xScale, yScale;
 
 function initialiseElevationGraph() {
-
+    updateWindow();
     // 5. X scale will use the index of our data
     xScale = d3.scaleLinear()
         .domain([0, 1]) // input
@@ -204,29 +204,18 @@ function initialiseElevationGraph() {
         // .curve(d3.curveMonotoneX) // apply smoothing to the line
 
 
-    svg.select(".axes")
-        .attr("transform", "translate("+margin.left+"," + margin.top + ")");
-
     svg.select(".x-axis")
         .call(d3.axisBottom(xScale)) // Create an axis component with d3.axisBottom
-        .attr("transform", "translate(0," + (height - margin.top - margin.bottom) + ")");
 
     svg.select(".y-axis")
         .call(d3.axisLeft(yScale)) // Create an axis component with d3.axisLeft
-        // .attr("transform", "translate(0," + (-margin.bottom-margin.top) + ")");
 
     svg.select(".x-label")
-        .attr("transform",
-                "translate(" + (width/2 - margin.right) + " ," +
-                               (height - margin.top - 2) + ")")
         .style("text-anchor", "middle")
         .style("fill", "white")
         .style("font-size", "12px")
 
-    // text label for the y axis
     svg.select(".y-label")
-        .attr("x",-height/2.+margin.bottom-margin.top)
-        .attr("y",-margin.left)
         .attr("transform", "rotate(-90)")
         .attr("dy", "1em")
         .style("text-anchor", "middle")
@@ -253,7 +242,19 @@ function updateWindow(){
     height = document.getElementById("section").clientHeight - 40;
 
     svg = d3.select("svg.d3canvas").attr("width", width).attr("height", height);
+    svg.select(".axes")
+        .attr("transform", "translate("+margin.left+"," + margin.top + ")");
+    svg.select(".x-axis")
+        .attr("transform", "translate(0," + (height - margin.top - margin.bottom) + ")");
+    svg.select(".x-label")
+        .attr("transform",
+                "translate(" + (width/2 - margin.right) + " ," +
+                               (height - margin.top - 2) + ")")
+    svg.select(".y-label")
+        .attr("x",-height/2.+margin.bottom-margin.top)
+        .attr("y",-margin.left)
 }
+
 d3.select(window).on('resize.updatesvg', updateWindow);
 
 function linspace(startValue, stopValue, cardinality) {
