@@ -1,5 +1,6 @@
-// var topo_server = 'https://api.opentopodata.org/v1/srtm30m/';
-var topo_server = 'http://localhost:5000/v1/srtm30m/'
+var topo_server = 'https://api.opentopodata.org/v1/srtm30m?';
+// var topo_server = 'http://localhost:5000/v1/srtm30m/?'
+var proxy_server = 'https://cors-anywhere.herokuapp.com/';
 
 var map = L.map('map', {
     // crs: L.CRS.EPSG4326,
@@ -48,7 +49,7 @@ var bottom_marker = L.marker([-34.33680965830653,150.88973520047998],{
     icon:bottom_icon
 }).addTo(map);
 
-map.setView([(top_marker._latlng.lat + bottom_marker._latlng.lat)/2.,(top_marker._latlng.lng + bottom_marker._latlng.lng)/2.], 13)
+map.setView([(top_marker._latlng.lat + bottom_marker._latlng.lat)/2.,(top_marker._latlng.lng + bottom_marker._latlng.lng)/2.], 15)
 
 var polyline = L.polyline([top_marker._latlng,bottom_marker._latlng], {
     color: '#363636',
@@ -107,90 +108,119 @@ updateWindow();
 redrawSection(); // do it once
 
 
-function getElevationData(lats,lngs) {
+async function getElevationData(lats,lngs) {
     var locs = ''
     for ( var i=0; i<lats.length; i++ ) {
         locs = locs + String(lats[i]) + ',' + String(lngs[i]) + '|'
     }
-    fetch(topo_server + "?locations="+locs)
-    // fetch('https://api.opentopodata.org/v1/test-dataset?locations='+locs)
-    .then(function(response) {
-        // console.log(response);
+    locs = locs.substring(0, locs.length - 1); // remove trailing |
+    // fetch(topo_server + "locations="+locs )
+    const response = fetch( proxy_server + topo_server + "locations=" + locs, {
+        headers: {
+      'Content-Type': 'application/json'
+    },
+    } )
+    .then( r => r.json() )
+    .then(data => {
+      var l = data.results;
+      updateElevationGraph(l);
+      // console.log(l)
     })
-    .then(function(data) {
-        console.log(data);
-        var data2 = JSON.parse(data);
-        console.log(data2)
-        // dataset = data2.results.map(function(d) { return {"y": d.elevation } })
-    });
+
 }
 
 function redrawSection() {
-    n = 5;
+    n = 15;
     var lats = linspace(top_marker._latlng.lat,bottom_marker._latlng.lat,n)
     var lngs = linspace(top_marker._latlng.lng,bottom_marker._latlng.lng,n)
-    // elev = getElevationData(lats,lngs);
-
-    dataset = d3.range(n).map(function(d) { return {"y": d3.randomUniform(1)() } })
-    // console.log(dataset)
+    getElevationData(lats,lngs)
 }
 
-// 5. X scale will use the index of our data
-var xScale = d3.scaleLinear()
-    .domain([0, n-1]) // input
-    .range([0, width-margin.left-margin.right]); // output
+function updateElevationGraph(l) {
+    var t = d3.transition().duration(1000).ease(d3.easeLinear);
 
-// 6. Y scale will use the randomly generate number
-var yScale = d3.scaleLinear()
-    .domain([0, 1]) // input
-    .range([height-margin.top-margin.bottom, 0]); // output
+    console.log(l)
+    elev = l.map(function(d) { return {"x": Math.sqrt(Math.pow(d.location.lat - l[0].location.lat, 2) + Math.pow(d.location.lng - l[0].location.lng, 2)) , "y": d.elevation } });
+    console.log(elev);
+    d3.select(".line").transition(t).attr("d", line(elev));
 
-// 7. d3's line generator
-var line = d3.line()
-    .x(function(d, i) { return xScale(i); }) // set the x values for the line generator
-    .y(function(d) { return yScale(d.y); }) // set the y values for the line generator
-    // .curve(d3.curveMonotoneX) // apply smoothing to the line
+    xScale.domain([getMinX(elev),getMaxX(elev)]).range([0, width-margin.left-margin.right]);
+    yScale.domain([getMinY(elev),getMaxY(elev)]).range([height-margin.top-margin.bottom, 0]);
 
-svg.select(".axes")
-    .attr("transform", "translate("+margin.left+"," + margin.top + ")");
+    d3.select(".x-axis")
+    .transition(t)
+    .call(d3.axisBottom(xScale))
+    d3.select(".y-axis")
+    .transition(t)
+    .call(d3.axisLeft(yScale))
+}
 
-svg.select(".x-axis")
-    .call(d3.axisBottom(xScale)) // Create an axis component with d3.axisBottom
-    .attr("transform", "translate(0," + (height - margin.top - margin.bottom) + ")");
+var line, xScale, yScale;
 
-svg.select(".y-axis")
-    .call(d3.axisLeft(yScale)) // Create an axis component with d3.axisLeft
-    // .attr("transform", "translate(0," + (-margin.bottom-margin.top) + ")");
+function initialiseElevationGraph() {
+    n = 5;
+    elev = [500,400,300,200,100].map(function(d) { return {"x": 0, "y": d } });
+    console.log(elev)
 
-svg.select(".x-label")
-    .attr("transform",
-            "translate(" + (width/2 - margin.right) + " ," +
-                           (height - margin.top - 2) + ")")
-    .style("text-anchor", "middle")
-    .style("fill", "white")
-    .style("font-size", "12px")
+    // 5. X scale will use the index of our data
+    xScale = d3.scaleLinear()
+        .domain([0, n-1]) // input
+        .range([0, width-margin.left-margin.right]); // output
 
-// text label for the y axis
-svg.select(".y-label")
-    .attr("x",-height/2.+margin.bottom-margin.top)
-    .attr("y",-margin.left)
-    .attr("transform", "rotate(-90)")
-    .attr("dy", "1em")
-    .style("text-anchor", "middle")
-    .style("fill", "white")
-    .style("font-size", "12px")
-    .text("Elevation (m)");
+    // 6. Y scale will use the randomly generate number
+    yScale = d3.scaleLinear()
+        .domain([0, 1000]) // input
+        .range([height-margin.top-margin.bottom, 0]); // output
+
+    // 7. d3's line generator
+    line = d3.line()
+        .x(function(d) { return xScale(d.x); }) // set the x values for the line generator
+        .y(function(d) { return yScale(d.y); }) // set the y values for the line generator
+        // .curve(d3.curveMonotoneX) // apply smoothing to the line
 
 
-svg.select(".elevation-profile")
-    .datum(dataset) // 10. Binds data to the line
-    .attr("class", "line") // Assign a class for styling
-    .attr('fill', 'none')
-    .attr('stroke','white')
-    .attr('stroke-width','3px')
-    .attr("transform", "translate(0,"+-margin.top+")")
-    .attr("d", line); // 11. Calls the line generator
+    svg.select(".axes")
+        .attr("transform", "translate("+margin.left+"," + margin.top + ")");
 
+    svg.select(".x-axis")
+        .call(d3.axisBottom(xScale)) // Create an axis component with d3.axisBottom
+        .attr("transform", "translate(0," + (height - margin.top - margin.bottom) + ")");
+
+    svg.select(".y-axis")
+        .call(d3.axisLeft(yScale)) // Create an axis component with d3.axisLeft
+        // .attr("transform", "translate(0," + (-margin.bottom-margin.top) + ")");
+
+    svg.select(".x-label")
+        .attr("transform",
+                "translate(" + (width/2 - margin.right) + " ," +
+                               (height - margin.top - 2) + ")")
+        .style("text-anchor", "middle")
+        .style("fill", "white")
+        .style("font-size", "12px")
+
+    // text label for the y axis
+    svg.select(".y-label")
+        .attr("x",-height/2.+margin.bottom-margin.top)
+        .attr("y",-margin.left)
+        .attr("transform", "rotate(-90)")
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .style("fill", "white")
+        .style("font-size", "12px")
+        .text("Elevation (m)");
+
+
+    svg.select(".elevation-profile")
+        .datum(elev) // 10. Binds data to the line
+        .attr("class", "line") // Assign a class for styling
+        .attr('fill', 'none')
+        .attr('stroke','white')
+        .attr('stroke-width','3px')
+        .attr("transform", "translate(0,"+-margin.top+")")
+        .attr("d", line); // 11. Calls the line generator
+
+}
+initialiseElevationGraph()
 
 
 function updateWindow(){
@@ -208,4 +238,17 @@ function linspace(startValue, stopValue, cardinality) {
     arr.push(startValue + (step * i));
   }
   return arr;
+}
+
+function getMinX(data) {
+  return data.reduce((min, p) => p.x < min ? p.x : min, data[0].x);
+}
+function getMaxX(data) {
+  return data.reduce((max, p) => p.x > max ? p.x : max, data[0].x);
+}
+function getMinY(data) {
+  return data.reduce((min, p) => p.y < min ? p.y : min, data[0].y);
+}
+function getMaxY(data) {
+  return data.reduce((max, p) => p.y > max ? p.y : max, data[0].y);
 }
