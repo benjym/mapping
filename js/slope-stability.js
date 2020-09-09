@@ -31,6 +31,7 @@ function update_FoS() {
     import("./slope-models/"+stability.value+".js").then(module => {
         slope_stab_model = module;
         fos = slope_stab_model.calculateFoS(elev);
+        console.log(fos)
         document.getElementById("FoS").innerHTML = fos.toString();
     })
 }
@@ -158,6 +159,7 @@ function redrawSection() {
     .then( data => {
         if ( slope_stab_model !== undefined ) {
             fos = slope_stab_model.calculateFoS(elev);
+            document.getElementById("FoS").innerHTML = fos.toString();
         }
 
     });
