@@ -17,6 +17,28 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
     accessToken: 'pk.eyJ1IjoiYmVuanltYXJrcyIsImEiOiJjand1M3BhanowOGx1NDlzMWs0bG0zNnpyIn0.OLLoUOjLUhcKoAVX1JKVdw'
 }).addTo(map);
 
+// document.querySelector('#stability').addEventListener('change', (event) => {
+  // redrawSection();
+// });
+// document.querySelector('.updater').addEventListener('change', (event) => {
+//   redrawSection();
+// });
+
+var slope_stab_model;
+update_FoS();
+
+function update_FoS() {
+    import("./slope-models/"+stability.value+".js").then(module => {
+        slope_stab_model = module;
+        fos = slope_stab_model.calculateFoS(elev);
+        document.getElementById("FoS").innerHTML = fos.toString();
+    })
+}
+var elements = document.getElementsByClassName("updater");
+Array.from(elements).forEach(function(element) {
+      element.addEventListener('change', update_FoS);
+    });
+
 // var wmsLayer = L.tileLayer.wms('http://services.ga.gov.au/gis/services/DEM_LiDAR_5m/MapServer/WMSServer?', {
 //     layers: 'Image',
 //     opacity: 0.5,
@@ -82,7 +104,6 @@ function transpose(a) {
     return a[0].map(function (_, c) { return a.map(function (r) { return r[c]; }); });
 }
 
-
 /*Legend specific*/
 var legend = L.control({ position: "topright" });
 
@@ -98,10 +119,11 @@ legend.onAdd = function(map) {
 legend.addTo(map);
 
 
-
+var elev = new Array(50).fill(0).map(function(d, i) { return {"x": i, "y": d } });
 var n = 50; // number of points on elevation graph
 var margin = {top: 10, right: 30, bottom: 40, left: 45}
 var width, height, svg, dataset;
+var fos = 1;
 width = document.getElementById("section").clientWidth - 40;
 height = document.getElementById("section").clientHeight - 40;
 updateWindow();
@@ -133,6 +155,12 @@ function redrawSection() {
     var lats = linspace(top_marker._latlng.lat,bottom_marker._latlng.lat,n)
     var lngs = linspace(top_marker._latlng.lng,bottom_marker._latlng.lng,n)
     getElevationData(lats,lngs)
+    .then( data => {
+        if ( slope_stab_model !== undefined ) {
+            fos = slope_stab_model.calculateFoS(elev);
+        }
+
+    });
 }
 
 function updateElevationGraph(l) {
@@ -158,9 +186,6 @@ function updateElevationGraph(l) {
 var line, xScale, yScale;
 
 function initialiseElevationGraph() {
-    var pos = new Array(50).fill(0);
-    elev = pos.map(function(d, i) { return {"x": i, "y": d } });
-    // console.log(elev)
 
     // 5. X scale will use the index of our data
     xScale = d3.scaleLinear()
