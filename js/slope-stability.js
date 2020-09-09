@@ -99,9 +99,9 @@ legend.addTo(map);
 
 
 
-// 2. Use the margin convention practice
+var n = 50; // number of points on elevation graph
 var margin = {top: 10, right: 30, bottom: 40, left: 45}
-var width, height, svg, n, dataset;
+var width, height, svg, dataset;
 width = document.getElementById("section").clientWidth - 40;
 height = document.getElementById("section").clientHeight - 40;
 updateWindow();
@@ -130,7 +130,6 @@ async function getElevationData(lats,lngs) {
 }
 
 function redrawSection() {
-    n = 15;
     var lats = linspace(top_marker._latlng.lat,bottom_marker._latlng.lat,n)
     var lngs = linspace(top_marker._latlng.lng,bottom_marker._latlng.lng,n)
     getElevationData(lats,lngs)
@@ -139,10 +138,9 @@ function redrawSection() {
 function updateElevationGraph(l) {
     var t = d3.transition().duration(1000).ease(d3.easeLinear);
 
-    console.log(l)
-    elev = l.map(function(d) { return {"x": Math.sqrt(Math.pow(d.location.lat - l[0].location.lat, 2) + Math.pow(d.location.lng - l[0].location.lng, 2)) , "y": d.elevation } });
-    console.log(elev);
-    d3.select(".line").transition(t).attr("d", line(elev));
+    // console.log(l)
+    elev = l.map(function(d) { return {"x": haversine(d.location.lat,d.location.lng,l[0].location.lat,l[0].location.lng) , "y": d.elevation } });
+    // console.log(elev);
 
     xScale.domain([getMinX(elev),getMaxX(elev)]).range([0, width-margin.left-margin.right]);
     yScale.domain([getMinY(elev),getMaxY(elev)]).range([height-margin.top-margin.bottom, 0]);
@@ -153,18 +151,20 @@ function updateElevationGraph(l) {
     d3.select(".y-axis")
     .transition(t)
     .call(d3.axisLeft(yScale))
+
+    d3.select(".line").transition(t).attr("d", line(elev));
 }
 
 var line, xScale, yScale;
 
 function initialiseElevationGraph() {
-    n = 5;
-    elev = [500,400,300,200,100].map(function(d) { return {"x": 0, "y": d } });
-    console.log(elev)
+    var pos = new Array(50).fill(0);
+    elev = pos.map(function(d, i) { return {"x": i, "y": d } });
+    // console.log(elev)
 
     // 5. X scale will use the index of our data
     xScale = d3.scaleLinear()
-        .domain([0, n-1]) // input
+        .domain([0, 1]) // input
         .range([0, width-margin.left-margin.right]); // output
 
     // 6. Y scale will use the randomly generate number
@@ -216,7 +216,7 @@ function initialiseElevationGraph() {
         .attr('fill', 'none')
         .attr('stroke','white')
         .attr('stroke-width','3px')
-        .attr("transform", "translate(0,"+-margin.top+")")
+        // .attr("transform", "translate(0,"+-margin.top+")")
         .attr("d", line); // 11. Calls the line generator
 
 }
@@ -251,4 +251,19 @@ function getMinY(data) {
 }
 function getMaxY(data) {
   return data.reduce((max, p) => p.y > max ? p.y : max, data[0].y);
+}
+function haversine(lat1,lon1,lat2,lon2) {
+    const R = 6371e3; // metres
+    const φ1 = lat1 * Math.PI/180; // φ, λ in radians
+    const φ2 = lat2 * Math.PI/180;
+    const Δφ = (lat2-lat1) * Math.PI/180;
+    const Δλ = (lon2-lon1) * Math.PI/180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    const d = R * c; // in metres
+    return d
 }
