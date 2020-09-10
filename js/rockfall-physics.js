@@ -34,11 +34,21 @@ async function init() {
 	light.shadow.camera.zoom = 2;
 	scene.add( light );
 
-	var floor = new THREE.Mesh(
-		new THREE.BoxBufferGeometry( 10, 5, 10 ),
-		new THREE.ShadowMaterial( { color: 0x000000 } )
+
+    var nx = 100;
+    var ny = 100;
+    var floor = new THREE.Mesh(
+        //     new THREE.PlaneGeometry(10,10,nx,ny),
+		new THREE.BoxBufferGeometry( 10,2,10, nx, 2, ny ),
+		// new THREE.ShadowMaterial( { color: 0x000000 } )
+        new THREE.MeshStandardMaterial( { color: 0x111111 } )
 	);
-	floor.position.y = - 2.5;
+    floor.material.displacementMap = new THREE.TextureLoader().load('../marker.png');
+    floor.material.displacementScale = 1.;
+	floor.position.y = - 1;
+
+    // floor.rotation.x = - Math.PI/2.;
+
 	floor.receiveShadow = true;
 	scene.add( floor );
 	physics.addMesh( floor );
