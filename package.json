@@ -1,0 +1,22 @@
+{
+  "name": "mapping",
+  "version": "1.0.0",
+  "description": "The mapping toolbox currently contains:   - pollution module, for modelling the spread of pollutants in the air using a gaussian plume model   - slope stability module (work in progress)",
+  "main": "pollution.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/benjym/pollution-map.git"
+  },
+  "author": "Benjy Marks",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/benjym/pollution-map/issues"
+  },
+  "homepage": "https://github.com/benjym/pollution-map#readme",
+  "dependencies": {
+    "three": "^0.120.1"
+  }
+}

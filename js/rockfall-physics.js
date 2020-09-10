@@ -1,7 +1,8 @@
-import * as THREE from '../build/three.module.js';
-import { OrbitControls } from './jsm/controls/OrbitControls.js';
-import { AmmoPhysics } from './jsm/physics/AmmoPhysics.js';
-import Stats from './jsm/libs/stats.module.js';
+// import * as THREE from '../build/three.module.js';
+import * as THREE from "https://cdnjs.cloudflare.com/ajax/libs/three.js/r120/build/three.module.js";
+import { OrbitControls } from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r120//jsm/controls/OrbitControls.js';
+import { AmmoPhysics } from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r120/jsm/physics/AmmoPhysics.js';
+import Stats from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r120/jsm/libs/stats.module.js';
 
 var camera, scene, renderer, stats;
 var physics, position;
