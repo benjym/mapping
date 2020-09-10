@@ -24,6 +24,17 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
 //   redrawSection();
 // });
 
+document.getElementById('stability').addEventListener('change', (event) => {
+    console.log(stability.value)
+  if ( stability.value === 'infinite' )  {
+      var text = 'Rock depth d (m)';
+  }
+  else {
+      var text = 'DH (m)';
+  }
+  document.getElementById('rock-depth').innerHTML = text;
+});
+
 var slope_stab_model;
 var marker_size = 60;
 var top_icon = L.icon({
