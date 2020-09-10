@@ -26,6 +26,8 @@
     order: 4;
     flex: 1;
     height: 200px;
+    padding: 0px;
+    margin: 0px;
 }
 .break {
     border: 0px;

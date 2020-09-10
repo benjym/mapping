@@ -1,8 +1,7 @@
-// import * as THREE from '../build/three.module.js';
-import * as THREE from "https://cdnjs.cloudflare.com/ajax/libs/three.js/r120/build/three.module.js";
-import { OrbitControls } from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r120//jsm/controls/OrbitControls.js';
-import { AmmoPhysics } from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r120/jsm/physics/AmmoPhysics.js';
-import Stats from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r120/jsm/libs/stats.module.js';
+import * as THREE from '../node_modules/three/build/three.module.js';
+import { OrbitControls } from '../node_modules/three/examples/jsm/controls/OrbitControls.js';
+import { AmmoPhysics } from '../node_modules/three/examples/jsm/physics/AmmoPhysics.js';
+import Stats from '../node_modules/three/examples/jsm/libs/stats.module.js';
 
 var camera, scene, renderer, stats;
 var physics, position;
@@ -18,12 +17,12 @@ async function init() {
 
 	//
 
-	camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 100 );
+	camera = new THREE.PerspectiveCamera( 50, document.getElementById("three").clientWidth / document.getElementById("three").clientHeight, 0.1, 100 );
 	camera.position.set( - 1, 1.5, 2 );
 	camera.lookAt( 0, 0.5, 0 );
 
 	scene = new THREE.Scene();
-	scene.background = new THREE.Color( 0x666666 );
+	scene.background = new THREE.Color( 0x363636 );
 
 	var light = new THREE.HemisphereLight();
 	light.intensity = 0.35;
@@ -37,7 +36,7 @@ async function init() {
 
 	var floor = new THREE.Mesh(
 		new THREE.BoxBufferGeometry( 10, 5, 10 ),
-		new THREE.ShadowMaterial( { color: 0x111111 } )
+		new THREE.ShadowMaterial( { color: 0x000000 } )
 	);
 	floor.position.y = - 2.5;
 	floor.receiveShadow = true;
@@ -91,13 +90,13 @@ async function init() {
 
 	renderer = new THREE.WebGLRenderer( { antialias: true } );
 	renderer.setPixelRatio( window.devicePixelRatio );
-	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.setSize( document.getElementById("three").clientWidth, document.getElementById("three").clientHeight );
 	renderer.shadowMap.enabled = true;
 	renderer.outputEncoding = THREE.sRGBEncoding;
-	document.body.appendChild( renderer.domElement );
+	document.getElementById('three').appendChild( renderer.domElement );
 
 	stats = new Stats();
-	document.body.appendChild( stats.dom );
+	document.getElementById('three').appendChild( stats.dom );
 
 	//
 

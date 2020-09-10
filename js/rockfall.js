@@ -61,38 +61,19 @@ var n = 50; // number of points on elevation graph
 var margin = {top: 10, right: 30, bottom: 40, left: 45}
 var svg, dataset;
 var fos = 1;
-var width = document.getElementById("section").clientWidth - 40;
-var height = document.getElementById("section").clientHeight - 40;
+// var width = document.getElementById("section").clientWidth - 40;
+// var height = document.getElementById("section").clientHeight - 40;
 
 var elements = document.getElementsByClassName("updater");
 Array.from(elements).forEach(function(element) {
-      element.addEventListener('change', update_FoS);
+      // element.addEventListener('change', update_FoS);
     });
-document.getElementById("download").addEventListener('click', download_data);
-
-
-function download_data() {
-    var csv = elev.map(function(d){
-                                return d.x.toString()+','+d.y.toString()
-                            }).join('\n');
-    console.log(csv);
-    // var encodedUri =
-    // window.open( encodeURI(csv) );
-    var link = document.getElementById("download");
-    link.setAttribute("href", "data:text/csv;charset=utf-8,Distance (m),Elevation (m)\n"+csv);
-    // link.setAttribute("download", "my_data.csv");
-    // document.body.appendChild(link); // Required for FF
-    // link.click(); // This will download the data file named "my_data.csv".
-
-}
-
-// console.log(link)
 
 
 async function init() {
-    updateWindow();
-    redrawSection();
-    initialiseElevationGraph();
+    // updateWindow();
+    // redrawSection();
+    // initialiseElevationGraph();
     // getElevationData();
     // return await "initialised";
 }
@@ -100,19 +81,11 @@ async function init() {
 window.onload = function() {
     init().then(e => {
         // console.log(e)
-        update_FoS();
+        // update_FoS();
     });
 }
 
 
-function update_FoS() {
-    import("./slope-models/"+stability.value+".js").then(module => {
-        slope_stab_model = module;
-        fos = slope_stab_model.calculateFoS(elev);
-        // console.log(fos)
-        document.getElementById("FoS").innerHTML = fos.toFixed(2).toString();
-    })
-}
 
 
 
@@ -131,8 +104,6 @@ function update_FoS() {
 
 function onLeftMapClick(e) {
     top_marker.setLatLng(e.latlng);
-    polyline.setLatLngs([top_marker.getLatLng(),bottom_marker.getLatLng()]);
-    // console.log(polyline);
     redrawSection();
 }
 
@@ -148,9 +119,9 @@ var legend = L.control({ position: "topright" });
 legend.onAdd = function(map) {
   legend_div = L.DomUtil.create("div", "legend");
 
-  legend_div.innerHTML += "<h4>Legend</h4>";
+  // legend_div.innerHTML += "<h4>Legend</h4>";
   legend_div.innerHTML += '<i style="background: ' + top_marker_color + '"></i><span>Top of slope</span><br>';
-  legend_div.innerHTML += '<i style="background: ' + bottom_marker_color + '"></i><span>Bottom of slope</span><br>';
+  // legend_div.innerHTML += '<i style="background: ' + bottom_marker_color + '"></i><span>Bottom of slope</span><br>';
   return legend_div;
 };
 
@@ -193,96 +164,7 @@ function redrawSection() {
     });
 }
 
-function updateElevationGraph(l) {
-    var t = d3.transition().duration(1000).ease(d3.easeLinear);
 
-    // console.log(l)
-    elev = l.map(function(d) { return {"x": haversine(d.location.lat,d.location.lng,l[0].location.lat,l[0].location.lng) , "y": d.elevation } });
-    // console.log(elev);
-    // console.log(elev.map( function(d) {return d.y.toString() }).join())
-    xScale.domain([getMinX(elev),getMaxX(elev)]).range([0, width-margin.left-margin.right]);
-    yScale.domain([getMinY(elev),getMaxY(elev)]).range([height-margin.top-margin.bottom, 0]);
-
-    d3.select(".x-axis")
-    .transition(t)
-    .call(d3.axisBottom(xScale))
-    d3.select(".y-axis")
-    .transition(t)
-    .call(d3.axisLeft(yScale))
-
-    d3.select(".line").transition(t).attr("d", line(elev));
-}
-
-function initialiseElevationGraph() {
-    updateWindow();
-    // 5. X scale will use the index of our data
-    xScale = d3.scaleLinear()
-        .domain([getMinX(elev),getMaxX(elev)]) // input
-        .range([0, width-margin.left-margin.right]); // output
-
-    // 6. Y scale will use the randomly generate number
-    yScale = d3.scaleLinear()
-        .domain([getMinY(elev),getMaxY(elev)]) // input
-        .range([height-margin.top-margin.bottom, 0]); // output
-
-    // 7. d3's line generator
-    line = d3.line()
-        .x(function(d) { return xScale(d.x); }) // set the x values for the line generator
-        .y(function(d) { return yScale(d.y); }) // set the y values for the line generator
-        // .curve(d3.curveMonotoneX) // apply smoothing to the line
-
-
-    svg.select(".x-axis")
-        .call(d3.axisBottom(xScale)) // Create an axis component with d3.axisBottom
-
-    svg.select(".y-axis")
-        .call(d3.axisLeft(yScale)) // Create an axis component with d3.axisLeft
-
-    svg.select(".x-label")
-        .style("text-anchor", "middle")
-        .style("fill", "white")
-        .style("font-size", "12px")
-
-    svg.select(".y-label")
-        .attr("transform", "rotate(-90)")
-        .attr("dy", "1em")
-        .style("text-anchor", "middle")
-        .style("fill", "white")
-        .style("font-size", "12px")
-        .text("Elevation (m)");
-
-
-    svg.select(".elevation-profile")
-        .datum(elev) // 10. Binds data to the line
-        .attr("class", "line") // Assign a class for styling
-        .attr('fill', 'none')
-        .attr('stroke','white')
-        .attr('stroke-width','3px')
-        // .attr("transform", "translate(0,"+-margin.top+")")
-        .attr("d", line); // 11. Calls the line generator
-
-}
-
-
-function updateWindow(){
-    width = document.getElementById("section").clientWidth - 40;
-    height = document.getElementById("section").clientHeight - 40;
-
-    svg = d3.select("svg.d3canvas").attr("width", width).attr("height", height);
-    svg.select(".axes")
-        .attr("transform", "translate("+margin.left+"," + margin.top + ")");
-    svg.select(".x-axis")
-        .attr("transform", "translate(0," + (height - margin.top - margin.bottom) + ")");
-    svg.select(".x-label")
-        .attr("transform",
-                "translate(" + (width/2 - margin.right) + " ," +
-                               (height - margin.top - 2) + ")")
-    svg.select(".y-label")
-        .attr("x",-height/2.+margin.bottom-margin.top)
-        .attr("y",-margin.left)
-}
-
-d3.select(window).on('resize.updatesvg', updateWindow);
 
 function linspace(startValue, stopValue, cardinality) {
   var arr = [];
