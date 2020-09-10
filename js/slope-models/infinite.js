@@ -1,5 +1,4 @@
 function calculateFoS(elev) {
-    console.log(elev)
     var G_s = parseFloat(Gs_out.value);
     var c   = parseFloat(c_out.value);
     var phi = parseFloat(phi_out.value);

@@ -61,7 +61,10 @@ var polyline = L.polyline([top_marker._latlng,bottom_marker._latlng], {
 var colors = ['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf','#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf','#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf']; // lots of colours :)
 var legend_div;
 var line, xScale, yScale;
-var elev = new Array(50).fill(0).map(function(d, i) { return {"x": i, "y": d } });
+var x_initial = [0,4.81166613515711,9.623331503700316,14.434996111070838,19.246659954547116,24.058323033851217,28.869985347093472,33.68164689888321,38.49330768677618,43.304967710494424,48.1166269681483,52.928285464347134,57.73994319636933,62.55160016476889,67.36325636682425,72.17491180714474,76.98656648384065,81.79822039419047,86.60987354280351,91.42152592779006,96.23317754887228,101.04482840360583,105.85647849660009,110.66812782596533,115.47977639142367,120.29142419025352,125.10307122789612,129.91471750162995,134.72636301117697,139.5380077546476,144.34965173665114,149.16129495474334,153.97293740864623,158.7845790964702,163.59622002282453,168.4078601849877,173.21949958107004,178.03113821568084,182.84277608609847,187.65441319287706,192.466049533295,197.27768511196155,202.08931992698712,206.90095397809364,211.712587262837,216.52421978582652,221.3358515451724,226.14748254059685,230.95911276937824,235.77074223695774];
+var y_initial = [352,351,351,351,351,350,350,349,347,346,344,341,338,336,333,330,327,325,322,320,318,315,313,311,309,307,305,303,301,299,296,294,292,289,286,284,281,278,276,273,271,269,267,265,264,262,261,260,258,257];
+var elev = x_initial.map(function(d, i) { return {"x": d, "y": y_initial[i] } });
+
 var n = 50; // number of points on elevation graph
 var margin = {top: 10, right: 30, bottom: 40, left: 45}
 var svg, dataset;
@@ -210,7 +213,7 @@ function updateElevationGraph(l) {
     // console.log(l)
     elev = l.map(function(d) { return {"x": haversine(d.location.lat,d.location.lng,l[0].location.lat,l[0].location.lng) , "y": d.elevation } });
     // console.log(elev);
-
+    // console.log(elev.map( function(d) {return d.y.toString() }).join())
     xScale.domain([getMinX(elev),getMaxX(elev)]).range([0, width-margin.left-margin.right]);
     yScale.domain([getMinY(elev),getMaxY(elev)]).range([height-margin.top-margin.bottom, 0]);
 
@@ -228,12 +231,12 @@ function initialiseElevationGraph() {
     updateWindow();
     // 5. X scale will use the index of our data
     xScale = d3.scaleLinear()
-        .domain([0, 1]) // input
+        .domain([getMinX(elev),getMaxX(elev)]) // input
         .range([0, width-margin.left-margin.right]); // output
 
     // 6. Y scale will use the randomly generate number
     yScale = d3.scaleLinear()
-        .domain([0, 1000]) // input
+        .domain([getMinY(elev),getMaxY(elev)]) // input
         .range([height-margin.top-margin.bottom, 0]); // output
 
     // 7. d3's line generator
