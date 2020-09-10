@@ -1,0 +1,52 @@
+<html>
+<head>
+    <title>Slope stability</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/rockfall.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+    integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+    crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
+    integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
+    crossorigin=""></script>
+    <link rel="icon" href="favicon.ico" type="image/png" sizes="16x16">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r120/three.min.js"></script>
+    <script src="js/rockfall.js" type="module"></script>
+    <script src="https://kit.fontawesome.com/ac7cd0e05d.js" crossorigin="anonymous"></script>
+    <script src="js/libs/ammo.wasm.js"></script>
+    <script src="js/rockfall-physics.js" type="module"></script>
+</head>
+
+<body>
+    <div id="wrap">
+        <div class="column left_col">
+            Boulder shape
+            <select id="stability" class="updater">
+                <option value="sphere" selected>Sphere</option>
+                <option value="cube">Cube</option>
+                <option value="taylor">Taylor charts</option>
+                <option value="taylor-BAD">Taylor charts forgetting to iterate (BAD)</option>
+            </select>
+            Specific weight &gamma; (kN.m<sup>3</sup>)
+            <div class="slider">0 <input type="range" id="G_s" value="20" min="0" max="50" step="1" oninput="Gs_out.value = G_s.value" class="updater"> <output id="Gs_out">20</output> </div><br>
+            Cohesion c (kN.m<sup>2</sup>)
+            <div class="slider">0 <input type="range" id="c" value="5" min="0" max="50" oninput="c_out.value = c.value" class="updater"> <output id="c_out"> 5</output> </div> <br>
+            Friction angle &phi; (degree)
+            <div class="slider">0 <input type="range" id="phi" value="30" min="0" max="90" oninput="phi_out.value = phi.value" class="updater"> <output id="phi_out"> 30</output></div> <br>
+            <span id="rock-depth">Rock depth d (m)</span></a>
+            <div class="slider">0 <input type="range" id="H" value="10" min="0" max="100" oninput="H_out.value = H.value" class="updater"> <output id="H_out">10 </output></div> <br>
+            <div> Factor of safety: <span id="FoS">Unknown</span></div>
+        </div>
+
+        <div id="map" class="column right_col"></div>
+
+        <div class="column break"></div> <!-- break -->
+
+        <div id="section" class="column bottom_row">
+            <iframe></iframe>
+        </div>
+    </div>
+</body>
+</html>
