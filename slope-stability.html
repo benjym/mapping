@@ -14,7 +14,7 @@
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <!-- <script src="https://code.jquery.com/jquery-3.5.1.min.js" crossorigin="anonymous"></script> -->
     <script src="js/slope-stability.js" type="module"></script>
-
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
 </head>
 
 <body>
@@ -43,6 +43,10 @@
         <div class="column break"></div> <!-- break -->
 
         <div id="section" class="column bottom_row">
+            <!-- <a id="download" href="#" style="color:white"> -->
+            <a id="download" style="color:white" href='#' download="elevation-profile.csv">
+                <i class="fa fa-download fa-2x download_button"></i>
+            </a>
             <svg class="d3canvas">
                 <g class="axes">
                     <g class="x-axis"></g>

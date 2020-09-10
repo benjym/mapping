@@ -25,41 +25,16 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
 // });
 
 var slope_stab_model;
-update_FoS();
-
-function update_FoS() {
-    import("./slope-models/"+stability.value+".js").then(module => {
-        slope_stab_model = module;
-        fos = slope_stab_model.calculateFoS(elev);
-        console.log(fos)
-        document.getElementById("FoS").innerHTML = fos.toFixed(2).toString();
-    })
-}
-var elements = document.getElementsByClassName("updater");
-Array.from(elements).forEach(function(element) {
-      element.addEventListener('change', update_FoS);
-    });
-
-// var wmsLayer = L.tileLayer.wms('http://services.ga.gov.au/gis/services/DEM_LiDAR_5m/MapServer/WMSServer?', {
-//     layers: 'Image',
-//     opacity: 0.5,
-//     transparency: 'true',
-// }).addTo(map);
-// var wmsLayer = L.tileLayer.wms('http://gaservices.ga.gov.au/site_9/services/DEM_SRTM_1Second_Hydro_Enforced/MapServer/WMSServer?request=GetCapabilities&service=WMS').addTo(map);
-// var wmsLayer = L.tileLayer.wms('http://ows.mundialis.de/services/service?', {
-//     layers: 'TOPO-WMS'
-// }).addTo(map);
-
-var size = 60;
+var marker_size = 60;
 var top_icon = L.icon({
     iconUrl: 'marker2.png',
-    iconSize:     [size, size], // size of the icon
-    iconAnchor:   [size/2, size], // point of the icon which will
+    iconSize:     [marker_size, marker_size], // size of the icon
+    iconAnchor:   [marker_size/2, marker_size], // point of the icon which will
 });
 var bottom_icon = L.icon({
     iconUrl: 'marker3.png',
-    iconSize:     [size, size], // size of the icon
-    iconAnchor:   [size/2, size], // point of the icon which will
+    iconSize:     [marker_size, marker_size], // size of the icon
+    iconAnchor:   [marker_size/2, marker_size], // point of the icon which will
 });
 
 var top_marker_color = '#894dff';
@@ -85,6 +60,79 @@ var polyline = L.polyline([top_marker._latlng,bottom_marker._latlng], {
 
 var colors = ['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf','#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf','#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf']; // lots of colours :)
 var legend_div;
+var line, xScale, yScale;
+var elev = new Array(50).fill(0).map(function(d, i) { return {"x": i, "y": d } });
+var n = 50; // number of points on elevation graph
+var margin = {top: 10, right: 30, bottom: 40, left: 45}
+var svg, dataset;
+var fos = 1;
+var width = document.getElementById("section").clientWidth - 40;
+var height = document.getElementById("section").clientHeight - 40;
+
+var elements = document.getElementsByClassName("updater");
+Array.from(elements).forEach(function(element) {
+      element.addEventListener('change', update_FoS);
+    });
+document.getElementById("download").addEventListener('click', download_data);
+
+
+function download_data() {
+    var csv = elev.map(function(d){
+                                return d.x.toString()+','+d.y.toString()
+                            }).join('\n');
+    console.log(csv);
+    // var encodedUri =
+    // window.open( encodeURI(csv) );
+    var link = document.getElementById("download");
+    link.setAttribute("href", "data:text/csv;charset=utf-8,Distance (m),Elevation (m)\n"+csv);
+    // link.setAttribute("download", "my_data.csv");
+    // document.body.appendChild(link); // Required for FF
+    // link.click(); // This will download the data file named "my_data.csv".
+
+}
+
+// console.log(link)
+
+
+async function init() {
+    updateWindow();
+    redrawSection();
+    initialiseElevationGraph();
+    // getElevationData();
+    // return await "initialised";
+}
+
+window.onload = function() {
+    init().then(e => {
+        // console.log(e)
+        update_FoS();
+    });
+}
+
+
+function update_FoS() {
+    import("./slope-models/"+stability.value+".js").then(module => {
+        slope_stab_model = module;
+        fos = slope_stab_model.calculateFoS(elev);
+        // console.log(fos)
+        document.getElementById("FoS").innerHTML = fos.toFixed(2).toString();
+    })
+}
+
+
+
+
+// var wmsLayer = L.tileLayer.wms('http://services.ga.gov.au/gis/services/DEM_LiDAR_5m/MapServer/WMSServer?', {
+//     layers: 'Image',
+//     opacity: 0.5,
+//     transparency: 'true',
+// }).addTo(map);
+// var wmsLayer = L.tileLayer.wms('http://gaservices.ga.gov.au/site_9/services/DEM_SRTM_1Second_Hydro_Enforced/MapServer/WMSServer?request=GetCapabilities&service=WMS').addTo(map);
+// var wmsLayer = L.tileLayer.wms('http://ows.mundialis.de/services/service?', {
+//     layers: 'TOPO-WMS'
+// }).addTo(map);
+
+
 
 function onLeftMapClick(e) {
     top_marker.setLatLng(e.latlng);
@@ -120,15 +168,6 @@ legend.onAdd = function(map) {
 legend.addTo(map);
 
 
-var elev = new Array(50).fill(0).map(function(d, i) { return {"x": i, "y": d } });
-var n = 50; // number of points on elevation graph
-var margin = {top: 10, right: 30, bottom: 40, left: 45}
-var width, height, svg, dataset;
-var fos = 1;
-width = document.getElementById("section").clientWidth - 40;
-height = document.getElementById("section").clientHeight - 40;
-updateWindow();
-redrawSection(); // do it once
 
 
 async function getElevationData(lats,lngs) {
@@ -185,8 +224,6 @@ function updateElevationGraph(l) {
     d3.select(".line").transition(t).attr("d", line(elev));
 }
 
-var line, xScale, yScale;
-
 function initialiseElevationGraph() {
     updateWindow();
     // 5. X scale will use the index of our data
@@ -236,7 +273,6 @@ function initialiseElevationGraph() {
         .attr("d", line); // 11. Calls the line generator
 
 }
-initialiseElevationGraph()
 
 
 function updateWindow(){
