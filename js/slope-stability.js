@@ -98,7 +98,8 @@ function download_data() {
     // var encodedUri =
     // window.open( encodeURI(csv) );
     var link = document.getElementById("download");
-    link.setAttribute("href", "data:text/csv;charset=utf-8,Distance (m),Elevation (m)\n"+csv);
+    link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8,Distance (m),Elevation (m)\n"+csv));
+    console.log(link) ;
     // link.setAttribute("download", "my_data.csv");
     // document.body.appendChild(link); // Required for FF
     // link.click(); // This will download the data file named "my_data.csv".
