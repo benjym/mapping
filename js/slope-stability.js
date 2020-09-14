@@ -35,6 +35,17 @@ document.getElementById('stability').addEventListener('change', (event) => {
   document.getElementById('rock-depth').innerHTML = text;
 });
 
+
+/*function assumptions()
+{
+  var model = document.getElementById("stability").value
+  if (value=="infinite")
+    {
+      alert("Assumes: \n - Slope is calculated from the full length \n - Dry and water-saturated densities are the same") ;
+    }
+}*/
+
+
 var slope_stab_model;
 var marker_size = 60;
 var top_icon = L.icon({
@@ -133,9 +144,6 @@ function update_FoS() {
         document.getElementById("FoS").innerHTML = fos.toFixed(2).toString();
     })
 }
-
-
-
 
 // var wmsLayer = L.tileLayer.wms('http://services.ga.gov.au/gis/services/DEM_LiDAR_5m/MapServer/WMSServer?', {
 //     layers: 'Image',
