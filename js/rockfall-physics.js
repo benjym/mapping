@@ -1,120 +1,348 @@
+// <script src="../node_modules/three/examples/js/libs/ammo.wasm.js"></script>
+
 import * as THREE from '../node_modules/three/build/three.module.js';
-import { OrbitControls } from '../node_modules/three/examples/jsm/controls/OrbitControls.js';
-import { AmmoPhysics } from '../node_modules/three/examples/jsm/physics/AmmoPhysics.js';
+
 import Stats from '../node_modules/three/examples/jsm/libs/stats.module.js';
 
-var camera, scene, renderer, stats;
-var physics, position;
+import { OrbitControls } from '../node_modules/three/examples/jsm/controls/OrbitControls.js';
 
-var boxes, spheres;
+// Heightfield parameters
+var terrainWidthExtents = 100;
+var terrainDepthExtents = 100;
+var terrainWidth = 128;
+var terrainDepth = 128;
+var terrainHalfWidth = terrainWidth / 2;
+var terrainHalfDepth = terrainDepth / 2;
+var terrainMaxHeight = 8;
+var terrainMinHeight = - 2;
 
-init();
+// Graphics variables
+var container, stats;
+var camera, scene, renderer;
+var terrainMesh;
+var clock = new THREE.Clock();
 
-async function init() {
+// Physics variables
+var collisionConfiguration;
+var dispatcher;
+var broadphase;
+var solver;
+var physicsWorld;
+var dynamicObjects = [];
+var transformAux1;
 
-	physics = await AmmoPhysics();
-	position = new THREE.Vector3();
+var colGroupPlane = 1;
+var colGroupParticles = 2;
 
-	//
+var heightData = null;
+var ammoHeightData = null;
 
-	camera = new THREE.PerspectiveCamera( 50, document.getElementById("three").clientWidth / document.getElementById("three").clientHeight, 0.1, 100 );
-	camera.position.set( - 1, 1.5, 2 );
-	camera.lookAt( 0, 0.5, 0 );
+var time = 0;
+var objectTimePeriod = 0.1;
+var timeNextSpawn = time + objectTimePeriod;
+var maxNumObjects = 100;
 
-	scene = new THREE.Scene();
-	scene.background = new THREE.Color( 0x363636 );
+var restitution = 0.7;
+var friction = 0.5;
 
-	var light = new THREE.HemisphereLight();
-	light.intensity = 0.35;
-	scene.add( light );
+Ammo().then( function ( AmmoLib ) {
 
-	var light = new THREE.DirectionalLight();
-	light.position.set( 5, 5, 5 );
-	light.castShadow = true;
-	light.shadow.camera.zoom = 2;
-	scene.add( light );
+	Ammo = AmmoLib;
 
+	init();
+	animate();
 
-    var nx = 100;
-    var ny = 100;
-    var floor = new THREE.Mesh(
-        //     new THREE.PlaneGeometry(10,10,nx,ny),
-		new THREE.BoxBufferGeometry( 10,2,10, nx, 2, ny ),
-		// new THREE.ShadowMaterial( { color: 0x000000 } )
-        new THREE.MeshStandardMaterial( { color: 0x111111 } )
-	);
-    floor.material.displacementMap = new THREE.TextureLoader().load('../marker.png');
-    floor.material.displacementScale = 1.;
-	floor.position.y = - 1;
+} );
 
-    // floor.rotation.x = - Math.PI/2.;
+function init() {
 
-	floor.receiveShadow = true;
-	scene.add( floor );
-	physics.addMesh( floor );
+	heightData = generateHeight( terrainWidth, terrainDepth, terrainMinHeight, terrainMaxHeight );
 
-	//
+	initGraphics();
 
-	var material = new THREE.MeshLambertMaterial();
+	initPhysics();
 
-	var matrix = new THREE.Matrix4();
-	var color = new THREE.Color();
+}
 
-	// Boxes
+function initGraphics() {
 
-	var geometry = new THREE.BoxBufferGeometry( 0.1, 0.1, 0.1 );
-	boxes = new THREE.InstancedMesh( geometry, material, 100 );
-	boxes.castShadow = true;
-	boxes.receiveShadow = true;
-	scene.add( boxes );
+	container = document.getElementById( 'three' );
 
-	for ( var i = 0; i < boxes.count; i ++ ) {
-
-		matrix.setPosition( Math.random() - 0.5, Math.random() * 2, Math.random() - 0.5 );
-		boxes.setMatrixAt( i, matrix );
-		boxes.setColorAt( i, color.setHex( 0xffffff * Math.random() ) );
-
-	}
-
-	physics.addMesh( boxes, 1 );
-
-	// Spheres
-
-	var geometry = new THREE.IcosahedronBufferGeometry( 0.075, 2 );
-	spheres = new THREE.InstancedMesh( geometry, material, 100 );
-	spheres.castShadow = true;
-	spheres.receiveShadow = true;
-	scene.add( spheres );
-
-	for ( var i = 0; i < spheres.count; i ++ ) {
-
-		matrix.setPosition( Math.random() - 0.5, Math.random() * 2, Math.random() - 0.5 );
-		spheres.setMatrixAt( i, matrix );
-		spheres.setColorAt( i, color.setHex( 0xffffff * Math.random() ) );
-
-	}
-
-	physics.addMesh( spheres, 1 );
-
-	//
-
-	renderer = new THREE.WebGLRenderer( { antialias: true } );
+	renderer = new THREE.WebGLRenderer();
 	renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( document.getElementById("three").clientWidth, document.getElementById("three").clientHeight );
 	renderer.shadowMap.enabled = true;
-	renderer.outputEncoding = THREE.sRGBEncoding;
-	document.getElementById('three').appendChild( renderer.domElement );
+	container.appendChild( renderer.domElement );
 
 	stats = new Stats();
-	document.getElementById('three').appendChild( stats.dom );
+	stats.domElement.style.position = 'absolute';
+	stats.domElement.style.top = '0px';
+	container.appendChild( stats.domElement );
 
-	//
+	camera = new THREE.PerspectiveCamera( 60, document.getElementById("three").clientWidth / document.getElementById("three").clientHeight, 0.2, 2000 );
+
+	scene = new THREE.Scene();
+	scene.background = new THREE.Color( 0xbfd1e5 );
+
+	camera.position.y = heightData[ terrainHalfWidth + terrainHalfDepth * terrainWidth ] * ( terrainMaxHeight - terrainMinHeight ) + 5;
+
+	camera.position.z = terrainDepthExtents / 2;
+	camera.lookAt( 0, 0, 0 );
 
 	var controls = new OrbitControls( camera, renderer.domElement );
-	controls.target.y = 0.5;
-	controls.update();
+	controls.enableZoom = false;
 
-	animate();
+	var geometry = new THREE.PlaneBufferGeometry( terrainWidthExtents, terrainDepthExtents, terrainWidth - 1, terrainDepth - 1 );
+	geometry.rotateX( - Math.PI / 2 );
+
+	var vertices = geometry.attributes.position.array;
+
+	for ( var i = 0, j = 0, l = vertices.length; i < l; i ++, j += 3 ) {
+
+		// j + 1 because it is the y component that we modify
+		vertices[ j + 1 ] = heightData[ i ];
+
+	}
+
+	geometry.computeVertexNormals();
+
+	var groundMaterial = new THREE.MeshPhongMaterial( { color: 0xC7C7C7 } );
+	terrainMesh = new THREE.Mesh( geometry, groundMaterial );
+	terrainMesh.receiveShadow = true;
+	terrainMesh.castShadow = true;
+
+	scene.add( terrainMesh );
+
+	// var textureLoader = new THREE.TextureLoader();
+	// textureLoader.load( "textures/grid.png", function ( texture ) {
+    //
+	// 	texture.wrapS = THREE.RepeatWrapping;
+	// 	texture.wrapT = THREE.RepeatWrapping;
+	// 	texture.repeat.set( terrainWidth - 1, terrainDepth - 1 );
+	// 	groundMaterial.map = texture;
+	// 	groundMaterial.needsUpdate = true;
+    //
+	// } );
+
+	var light = new THREE.DirectionalLight( 0xffffff, 1 );
+	light.position.set( 100, 100, 50 );
+	light.castShadow = true;
+	var dLight = 200;
+	var sLight = dLight * 0.25;
+	light.shadow.camera.left = - sLight;
+	light.shadow.camera.right = sLight;
+	light.shadow.camera.top = sLight;
+	light.shadow.camera.bottom = - sLight;
+
+	light.shadow.camera.near = dLight / 30;
+	light.shadow.camera.far = dLight;
+
+	light.shadow.mapSize.x = 1024 * 2;
+	light.shadow.mapSize.y = 1024 * 2;
+
+	scene.add( light );
+
+
+	window.addEventListener( 'resize', onWindowResize, false );
+
+}
+
+function onWindowResize() {
+
+	camera.aspect = document.getElementById("three").clientWidth / document.getElementById("three").clientHeight;
+	camera.updateProjectionMatrix();
+
+	renderer.setSize( document.getElementById("three").clientWidth, document.getElementById("three").clientHeight );
+
+}
+
+function initPhysics() {
+
+	// Physics configuration
+
+	collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
+	dispatcher = new Ammo.btCollisionDispatcher( collisionConfiguration );
+	broadphase = new Ammo.btDbvtBroadphase();
+	solver = new Ammo.btSequentialImpulseConstraintSolver();
+	physicsWorld = new Ammo.btDiscreteDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration );
+	physicsWorld.setGravity( new Ammo.btVector3( 0, - 6, 0 ) );
+
+	// Create the terrain body
+
+	var groundShape = createTerrainShape();
+	var groundTransform = new Ammo.btTransform();
+	groundTransform.setIdentity();
+	// Shifts the terrain, since bullet re-centers it on its bounding box.
+	groundTransform.setOrigin( new Ammo.btVector3( 0, ( terrainMaxHeight + terrainMinHeight ) / 2, 0 ) );
+	var groundMass = 0;
+	var groundLocalInertia = new Ammo.btVector3( 0, 0, 0 );
+	var groundMotionState = new Ammo.btDefaultMotionState( groundTransform );
+	var groundBody = new Ammo.btRigidBody( new Ammo.btRigidBodyConstructionInfo( groundMass, groundMotionState, groundShape, groundLocalInertia ) );
+    groundBody.setRestitution(restitution);
+    groundBody.setFriction(friction);
+	physicsWorld.addRigidBody( groundBody, colGroupPlane, colGroupParticles );
+
+	transformAux1 = new Ammo.btTransform();
+
+}
+
+function generateHeight( width, depth, minHeight, maxHeight ) {
+
+	// Generates the height data (a sinus wave)
+
+	var size = width * depth;
+	var data = new Float32Array( size );
+
+	var hRange = maxHeight - minHeight;
+	var w2 = width / 2;
+	var d2 = depth / 2;
+	var phaseMult = 12;
+
+	var p = 0;
+	for ( var j = 0; j < depth; j ++ ) {
+
+		for ( var i = 0; i < width; i ++ ) {
+
+			var radius = Math.sqrt(
+				Math.pow( ( i - w2 ) / w2, 2.0 ) +
+					Math.pow( ( j - d2 ) / d2, 2.0 ) );
+
+			var height = ( Math.sin( radius * phaseMult ) + 1 ) * 0.5 * hRange + minHeight;
+
+			data[ p ] = height;
+
+			p ++;
+
+		}
+
+	}
+
+	return data;
+
+}
+
+function createTerrainShape() {
+
+	// This parameter is not really used, since we are using PHY_FLOAT height data type and hence it is ignored
+	var heightScale = 1;
+
+	// Up axis = 0 for X, 1 for Y, 2 for Z. Normally 1 = Y is used.
+	var upAxis = 1;
+
+	// hdt, height data type. "PHY_FLOAT" is used. Possible values are "PHY_FLOAT", "PHY_UCHAR", "PHY_SHORT"
+	var hdt = "PHY_FLOAT";
+
+	// Set this to your needs (inverts the triangles)
+	var flipQuadEdges = false;
+
+	// Creates height data buffer in Ammo heap
+	ammoHeightData = Ammo._malloc( 4 * terrainWidth * terrainDepth );
+
+	// Copy the javascript height data array to the Ammo one.
+	var p = 0;
+	var p2 = 0;
+	for ( var j = 0; j < terrainDepth; j ++ ) {
+
+		for ( var i = 0; i < terrainWidth; i ++ ) {
+
+			// write 32-bit float data to memory
+			Ammo.HEAPF32[ ammoHeightData + p2 >> 2 ] = heightData[ p ];
+
+			p ++;
+
+			// 4 bytes/float
+			p2 += 4;
+
+		}
+
+	}
+
+	// Creates the heightfield physics shape
+	var heightFieldShape = new Ammo.btHeightfieldTerrainShape(
+		terrainWidth,
+		terrainDepth,
+		ammoHeightData,
+		heightScale,
+		terrainMinHeight,
+		terrainMaxHeight,
+		upAxis,
+		hdt,
+		flipQuadEdges
+	);
+
+	// Set horizontal scale
+	var scaleX = terrainWidthExtents / ( terrainWidth - 1 );
+	var scaleZ = terrainDepthExtents / ( terrainDepth - 1 );
+	heightFieldShape.setLocalScaling( new Ammo.btVector3( scaleX, 1, scaleZ ) );
+
+	heightFieldShape.setMargin( 0.05 );
+
+	return heightFieldShape;
+
+}
+
+function generateObject() {
+
+	var numTypes = 4;
+	// var objectType = Math.ceil( Math.random() * numTypes );
+    var objectType = stability.value;
+    console.log(objectType)
+
+	var threeObject = null;
+	var shape = null;
+
+	var objectSize = 3;
+	var margin = 0.05;
+
+    if ( stability.value === 'sphere') {
+		// Sphere
+		var radius = 1 + Math.random() * objectSize;
+		threeObject = new THREE.Mesh( new THREE.SphereBufferGeometry( radius, 20, 20 ), createObjectMaterial() );
+		shape = new Ammo.btSphereShape( radius );
+		shape.setMargin( margin );
+    }
+    else if ( stability.value === 'cube' ) {
+        var sx = 1 + Math.random() * objectSize;
+        var sy = 1 + Math.random() * objectSize;
+        var sz = 1 + Math.random() * objectSize;
+        threeObject = new THREE.Mesh( new THREE.BoxBufferGeometry( sx, sy, sz, 1, 1, 1 ), createObjectMaterial() );
+        shape = new Ammo.btBoxShape( new Ammo.btVector3( sx * 0.5, sy * 0.5, sz * 0.5 ) );
+        shape.setMargin( margin );
+    }
+
+	threeObject.position.set( ( Math.random() - 0.5 ) * terrainWidth * 0.6, terrainMaxHeight + objectSize + 2, ( Math.random() - 0.5 ) * terrainDepth * 0.6 );
+
+	var mass = objectSize * 5;
+	var localInertia = new Ammo.btVector3( 0, 0, 0 );
+	shape.calculateLocalInertia( mass, localInertia );
+	var transform = new Ammo.btTransform();
+	transform.setIdentity();
+	var pos = threeObject.position;
+	transform.setOrigin( new Ammo.btVector3( pos.x, pos.y, pos.z ) );
+	var motionState = new Ammo.btDefaultMotionState( transform );
+	var rbInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, shape, localInertia );
+	var body = new Ammo.btRigidBody( rbInfo );
+    body.setRestitution(restitution);
+    body.setFriction(friction);
+
+	threeObject.userData.physicsBody = body;
+
+	threeObject.receiveShadow = true;
+	threeObject.castShadow = true;
+
+	scene.add( threeObject );
+	dynamicObjects.push( threeObject );
+
+	physicsWorld.addRigidBody( body, colGroupParticles, colGroupPlane );
+
+
+
+}
+
+function createObjectMaterial() {
+
+	var c = Math.floor( Math.random() * ( 1 << 24 ) );
+	return new THREE.MeshPhongMaterial( { color: c } );
 
 }
 
@@ -122,22 +350,50 @@ function animate() {
 
 	requestAnimationFrame( animate );
 
-	//
+	render();
+	stats.update();
 
-	var index = Math.floor( Math.random() * boxes.count );
+}
 
-	position.set( 0, Math.random() + 1, 0 );
-	physics.setMeshPosition( boxes, position, index );
+function render() {
 
-	//
+	var deltaTime = clock.getDelta();
 
-	var index = Math.floor( Math.random() * spheres.count );
+	if ( dynamicObjects.length < maxNumObjects && time > timeNextSpawn ) {
 
-	position.set( 0, Math.random() + 1, 0 );
-	physics.setMeshPosition( spheres, position, index );
+		generateObject();
+		timeNextSpawn = time + objectTimePeriod;
+
+	}
+
+	updatePhysics( deltaTime );
 
 	renderer.render( scene, camera );
 
-	stats.update();
+	time += deltaTime;
+
+}
+
+function updatePhysics( deltaTime ) {
+
+	physicsWorld.stepSimulation( deltaTime, 10 );
+
+	// Update objects
+	for ( var i = 0, il = dynamicObjects.length; i < il; i ++ ) {
+
+		var objThree = dynamicObjects[ i ];
+		var objPhys = objThree.userData.physicsBody;
+		var ms = objPhys.getMotionState();
+		if ( ms ) {
+
+			ms.getWorldTransform( transformAux1 );
+			var p = transformAux1.getOrigin();
+			var q = transformAux1.getRotation();
+			objThree.position.set( p.x(), p.y(), p.z() );
+			objThree.quaternion.set( q.x(), q.y(), q.z(), q.w() );
+
+		}
+
+	}
 
 }
