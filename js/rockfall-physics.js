@@ -9,11 +9,11 @@ import { OrbitControls } from '../node_modules/three/examples/jsm/controls/Orbit
 // Heightfield parameters
 var terrainWidthExtents = 100;
 var terrainDepthExtents = 100;
-var terrainWidth = 128;
-var terrainDepth = 128;
+var terrainWidth = 16;//128;
+var terrainDepth = 16;//128;
 var terrainHalfWidth = terrainWidth / 2;
 var terrainHalfDepth = terrainDepth / 2;
-var terrainMaxHeight = 8;
+var terrainMaxHeight = 40;
 var terrainMinHeight = - 2;
 
 // Graphics variables
@@ -43,7 +43,7 @@ var timeNextSpawn = time + objectTimePeriod;
 var maxNumObjects = 100;
 
 var restitution = 0.7;
-var friction = 0.5;
+// var friction = 0.5;
 
 Ammo().then( function ( AmmoLib ) {
 
@@ -84,13 +84,13 @@ function initGraphics() {
 	scene = new THREE.Scene();
 	scene.background = new THREE.Color( 0xbfd1e5 );
 
-	camera.position.y = heightData[ terrainHalfWidth + terrainHalfDepth * terrainWidth ] * ( terrainMaxHeight - terrainMinHeight ) + 5;
+	camera.position.y = 50; //heightData[ terrainHalfWidth + terrainHalfDepth * terrainWidth ] * ( terrainMaxHeight - terrainMinHeight );
 
-	camera.position.z = terrainDepthExtents / 2;
+	camera.position.z = 40; //terrainDepthExtents / 2;
 	camera.lookAt( 0, 0, 0 );
 
 	var controls = new OrbitControls( camera, renderer.domElement );
-	controls.enableZoom = false;
+	// controls.enableZoom = false;
 
 	var geometry = new THREE.PlaneBufferGeometry( terrainWidthExtents, terrainDepthExtents, terrainWidth - 1, terrainDepth - 1 );
 	geometry.rotateX( - Math.PI / 2 );
@@ -178,8 +178,8 @@ function initPhysics() {
 	var groundLocalInertia = new Ammo.btVector3( 0, 0, 0 );
 	var groundMotionState = new Ammo.btDefaultMotionState( groundTransform );
 	var groundBody = new Ammo.btRigidBody( new Ammo.btRigidBodyConstructionInfo( groundMass, groundMotionState, groundShape, groundLocalInertia ) );
-    groundBody.setRestitution(restitution);
-    groundBody.setFriction(friction);
+    // groundBody.setRestitution(restitution);
+    // groundBody.setFriction(friction);
 	physicsWorld.addRigidBody( groundBody, colGroupPlane, colGroupParticles );
 
 	transformAux1 = new Ammo.btTransform();
@@ -203,12 +203,13 @@ function generateHeight( width, depth, minHeight, maxHeight ) {
 
 		for ( var i = 0; i < width; i ++ ) {
 
-			var radius = Math.sqrt(
-				Math.pow( ( i - w2 ) / w2, 2.0 ) +
-					Math.pow( ( j - d2 ) / d2, 2.0 ) );
+			// var radius = Math.sqrt(
+			// 	Math.pow( ( i - w2 ) / w2, 2.0 ) +
+			// 		Math.pow( ( j - d2 ) / d2, 2.0 ) );
+            //
+			// var height = ( Math.sin( radius * phaseMult ) + 1 ) * 0.5 * hRange + minHeight;
 
-			var height = ( Math.sin( radius * phaseMult ) + 1 ) * 0.5 * hRange + minHeight;
-
+            var height = 4*(Math.random()-0.5) + i/width*hRange + minHeight;
 			data[ p ] = height;
 
 			p ++;
@@ -310,7 +311,9 @@ function generateObject() {
         shape.setMargin( margin );
     }
 
-	threeObject.position.set( ( Math.random() - 0.5 ) * terrainWidth * 0.6, terrainMaxHeight + objectSize + 2, ( Math.random() - 0.5 ) * terrainDepth * 0.6 );
+	// threeObject.position.set( ( Math.random() - 0.5 ) * terrainWidth * 0.6, terrainMaxHeight + objectSize + 2, ( Math.random() - 0.5 ) * terrainDepth * 0.6 );
+    // threeObject.position.set(0,terrainMaxHeight + objectSize);
+    threeObject.position.set(0,(terrainMaxHeight + terrainMinHeight)/2 + objectSize);
 
 	var mass = objectSize * 5;
 	var localInertia = new Ammo.btVector3( 0, 0, 0 );
@@ -323,7 +326,7 @@ function generateObject() {
 	var rbInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, shape, localInertia );
 	var body = new Ammo.btRigidBody( rbInfo );
     body.setRestitution(restitution);
-    body.setFriction(friction);
+    body.setFriction(phi.value);
 
 	threeObject.userData.physicsBody = body;
 
@@ -337,6 +340,12 @@ function generateObject() {
 
 
 
+}
+
+export function reset_physics() {
+    for (var i = 0; i<dynamicObjects.length; i++) {
+        physicsWorld.removeBody(i+1);
+    }
 }
 
 function createObjectMaterial() {

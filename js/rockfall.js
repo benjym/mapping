@@ -1,3 +1,6 @@
+import { reset_physics } from './rockfall-physics.js';
+
+
 var topo_server = 'https://api.opentopodata.org/v1/srtm30m?';
 // var topo_server = 'http://localhost:5000/v1/srtm30m/?'
 var proxy_server = 'https://cors-anywhere.herokuapp.com/';
@@ -66,7 +69,7 @@ var fos = 1;
 
 var elements = document.getElementsByClassName("updater");
 Array.from(elements).forEach(function(element) {
-      // element.addEventListener('change', update_FoS);
+      element.addEventListener('change', reset_physics);
     });
 
 

@@ -24,8 +24,8 @@
         <div class="column left_col">
             Boulder shape
             <select id="stability" class="updater">
-                <option value="sphere" selected>Sphere</option>
-                <option value="cube">Cube</option>
+                <option value="cube" selected>Cube</option>
+                <option value="sphere">Sphere</option>
                 <option value="taylor">Taylor charts</option>
                 <option value="taylor-BAD">Taylor charts forgetting to iterate (BAD)</option>
             </select>
@@ -34,7 +34,7 @@
             Cohesion c (kN.m<sup>2</sup>)
             <div class="slider">0 <input type="range" id="c" value="5" min="0" max="50" oninput="c_out.value = c.value" class="updater"> <output id="c_out"> 5</output> </div> <br>
             Friction angle &phi; (degree)
-            <div class="slider">0 <input type="range" id="phi" value="30" min="0" max="90" oninput="phi_out.value = phi.value" class="updater"> <output id="phi_out"> 30</output></div> <br>
+            <div class="slider">0 <input type="range" id="phi" value="20" min="0" max="90" oninput="phi_out.value = phi.value" class="updater"> <output id="phi_out"> 30</output></div> <br>
             <span id="rock-depth">Rock depth d (m)</span></a>
             <div class="slider">0 <input type="range" id="H" value="10" min="0" max="100" oninput="H_out.value = H.value" class="updater"> <output id="H_out">10 </output></div> <br>
             <div> Factor of safety: <span id="FoS">Unknown</span></div>
