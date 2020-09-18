@@ -27,10 +27,25 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
 document.getElementById('stability').addEventListener('change', (event) => {
     console.log(stability.value)
   if ( stability.value === 'infinite' )  {
+      document.getElementById('rock-depth').hidden=false ;
+      document.getElementById('rock-depth-slider').hidden=false ;
       var text = 'Rock depth d (m)';
+      document.getElementById('watertable').hidden=false ;
+      document.getElementById('watertable-slider').hidden=false ;
   }
-  else {
-      var text = 'DH (m)';
+  else if ( stability.value === 'cullman' )
+  {
+      document.getElementById('rock-depth').hidden=true ;
+      document.getElementById('rock-depth-slider').hidden=true ;
+      document.getElementById('watertable').hidden=true ;
+      document.getElementById('watertable-slider').hidden=true ;
+  }
+  else { //TAYLOR
+      document.getElementById('rock-depth').hidden=false ;
+      document.getElementById('rock-depth-slider').hidden=false ;
+      var text = 'Rock depth (from slope bottom) (m)';
+      document.getElementById('watertable').hidden=true ;
+      document.getElementById('watertable-slider').hidden=true ;
   }
   document.getElementById('rock-depth').innerHTML = text;
 });
@@ -142,6 +157,12 @@ function update_FoS() {
         fos = slope_stab_model.calculateFoS(elev);
         // console.log(fos)
         document.getElementById("FoS").innerHTML = fos.toFixed(2).toString();
+        if (fos<1)
+          document.getElementById("FoSIndicator").style.color='red'
+        else if (fos>1 && fos<2)
+          document.getElementById("FoSIndicator").style.color='yellow'
+        else
+          document.getElementById("FoSIndicator").style.color='green'
     })
 }
 
