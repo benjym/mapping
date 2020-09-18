@@ -204,8 +204,8 @@ legend.onAdd = function(map) {
   legend_div = L.DomUtil.create("div", "legend");
 
   legend_div.innerHTML += "<h4>Legend</h4>";
-  legend_div.innerHTML += '<i style="background: ' + top_marker_color + '"></i><span>Top of slope</span><br>';
-  legend_div.innerHTML += '<i style="background: ' + bottom_marker_color + '"></i><span>Bottom of slope</span><br>';
+  legend_div.innerHTML += '<i style="background: ' + top_marker_color + '"></i><span>Top of slope (left click)</span><br>';
+  legend_div.innerHTML += '<i style="background: ' + bottom_marker_color + '"></i><span>Bottom of slope (right click) </span><br>';
   return legend_div;
 };
 
