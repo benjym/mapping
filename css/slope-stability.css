@@ -7,6 +7,7 @@
    flex-wrap: wrap;
    /* height:100%; */
 }
+
 .column {
     border: 10px solid #FFFFFF;
     background-color: #363636;
@@ -54,7 +55,8 @@ canvas {
 .slider {
     text-align: center;
     /* vertical-align:; */
-    margin-top: 10px;
+    margin-top: 5px;
+    margin-bottom: 5px;
 }
 
 input[type=range] {

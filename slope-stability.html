@@ -21,25 +21,26 @@
 <body>
     <div id="wrap">
         <div class="column left_col">
-            Model
-            <select id="stability" class="updater">
+            Location: <input id="latitude" type="number" step=0.00001 min=-90 max=90 style="width:35%;" class="mapupdater" value="-34.33644" />
+                      <input id="longitude" type="number" step=0.00001 min=-180 max=180 style="width:35%;" class="mapupdater" value="150.88853"/><br><br>
+            Model:
+            <select id="stability" class="updater" style="width:50%;">
                 <option value="infinite" selected>Infinite slope</option>
                 <option value="cullman">Cullman's model</option>
                 <option value="taylor">Taylor charts</option>
-            </select>
+            </select><br>
             Specific weight &gamma; (kN.m<sup>3</sup>)
-            <div class="slider">0 <input type="range" id="G_s" value="20" min="0" max="50" step="1" oninput="Gs_out.value = G_s.value" class="updater"> <output id="Gs_out">20</output> </div><br>
+            <div class="slider">0 <input type="range" id="G_s" value="20" min="0" max="50" step="1" oninput="Gs_out.value = G_s.value" class="updater"> <output id="Gs_out">20</output> </div>
             Cohesion c (kN.m<sup>2</sup>)
-            <div class="slider">0 <input type="range" id="c" value="5" min="0" max="50" oninput="c_out.value = c.value" class="updater"> <output id="c_out"> 5</output> </div> <br>
+            <div class="slider">0 <input type="range" id="c" value="5" min="0" max="50" oninput="c_out.value = c.value" class="updater"> <output id="c_out"> 5</output> </div> 
             Friction angle &phi; (degree)
-            <div class="slider">0 <input type="range" id="phi" value="30" min="0" max="90" oninput="phi_out.value = phi.value" class="updater"> <output id="phi_out"> 30</output></div> <br>
+            <div class="slider">0 <input type="range" id="phi" value="30" min="0" max="90" oninput="phi_out.value = phi.value" class="updater"> <output id="phi_out"> 30</output></div> 
             <span id="rock-depth">Rock depth d (m)</span></a>
-            <span id="rock-depth-slider"><div class="slider">0 <input type="range" id="H" value="10" min="0" max="100" oninput="H_out.value = H.value" class="updater"> <output id="H_out">10 </output></div></span> <br>
+            <span id="rock-depth-slider"><div class="slider">0 <input type="range" id="H" value="10" min="0" max="100" oninput="H_out.value = H.value" class="updater"> <output id="H_out">10 </output></div></span> 
             <span id="watertable">Water table depth dw (m)</span></a>
-            <span id="watertable-slider"><div class="slider">0 <input type="range" id="dw" value="10" min="0" max="100" oninput="dw_out.value = dw.value" class="updater"> <output id="dw_out">10 </output></div></span> <br>
+            <span id="watertable-slider"><div class="slider">0 <input type="range" id="dw" value="10" min="0" max="100" oninput="dw_out.value = dw.value" class="updater"> <output id="dw_out">10 </output></div></span> <br><br>
 
-            <br><br><br><img src='info.png' /><br></br>
-            <div> Factor of safety: <span id="FoS">Unknown</span> &nbsp; <span id="FoSIndicator" style="color:green">&#11044;</span></div>
+            <div style="border:solid;border-color:#ce3d20;padding-bottom:10px;padding-top:10px;"> Factor of safety: <span id="FoS">Unknown</span> &nbsp; <span id="FoSIndicator" style="color:green;">&#11044;</span></div>
 
             <!--<br><br>
             <div onclick="assumptions();"> ? </div>-->
@@ -52,6 +53,7 @@
 
         <div id="section" class="column bottom_row">
             <!-- <a id="download" href="#" style="color:white"> -->
+            <span id="waiting">reloading ...</span>
             <a id="download" style="color:white" href='#' download="elevation-profile.csv">
                 <i class="fas fa-download fa-2x download_button"></i>
             </a>

@@ -113,6 +113,10 @@ var elements = document.getElementsByClassName("updater");
 Array.from(elements).forEach(function(element) {
       element.addEventListener('change', update_FoS);
     });
+var mapelements = document.getElementsByClassName("mapupdater");
+Array.from(mapelements).forEach(function(mapelement) {
+      mapelement.addEventListener('change', update_map);
+    });
 document.getElementById("download").addEventListener('click', download_data);
 
 
@@ -150,6 +154,12 @@ window.onload = function() {
     });
 }
 
+function update_map ()
+{
+    var lat=document.getElementById("latitude").value ;
+    var long=document.getElementById("longitude").value ;
+    map.setView([lat, long])
+}
 
 function update_FoS() {
     import("./slope-models/"+stability.value+".js").then(module => {
@@ -192,6 +202,11 @@ function onRightMapClick(e) {
 
 map.on('click', onLeftMapClick);
 map.on('contextmenu', onRightMapClick);
+map.on('moveend',function(e){
+  var location=map.getCenter() ; 
+  document.getElementById("latitude").value = location.lat.toFixed(5).toString() ;
+  document.getElementById("longitude").value = location.lng.toFixed(5).toString() ;
+});
 
 function transpose(a) {
     return a[0].map(function (_, c) { return a.map(function (r) { return r[c]; }); });
@@ -216,6 +231,7 @@ legend.addTo(map);
 
 async function getElevationData(lats,lngs) {
     var locs = ''
+    document.getElementById("waiting").hidden=false 
     for ( var i=0; i<lats.length; i++ ) {
         locs = locs + String(lats[i]) + ',' + String(lngs[i]) + '|'
     }
@@ -230,6 +246,8 @@ async function getElevationData(lats,lngs) {
     .then(data => {
       var l = data.results;
       updateElevationGraph(l);
+      update_FoS() ;
+      document.getElementById("waiting").hidden=true 
       // console.log(l)
     })
 
