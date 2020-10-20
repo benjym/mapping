@@ -101,7 +101,7 @@ input[type=range] {
     /* background-color:#0C9; */
     /* border-radius:50px; */
     font-size: 300px;
-    position: fixed;
+    position: absolute;
     /* width: 40px; */
 	/* height:40px; */
     right: 40px;
