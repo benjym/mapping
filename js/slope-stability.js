@@ -231,7 +231,7 @@ legend.addTo(map);
 
 async function getElevationData(lats,lngs) {
     var locs = ''
-    // document.getElementById("waiting").hidden=false
+    document.getElementById("waiting").hidden=false
     for ( var i=0; i<lats.length; i++ ) {
         locs = locs + String(lats[i]) + ',' + String(lngs[i]) + '|'
     }
@@ -247,7 +247,7 @@ async function getElevationData(lats,lngs) {
       var l = data.results;
       updateElevationGraph(l);
       update_FoS() ;
-      // document.getElementById("waiting").hidden=true 
+      document.getElementById("waiting").hidden=true
       // console.log(l)
     })
 
@@ -334,11 +334,13 @@ function initialiseElevationGraph() {
         // .attr("transform", "translate(0,"+-margin.top+")")
         .attr("d", line); // 11. Calls the line generator
 
+    updateElevationGraph();
 }
 
 
 function updateWindow(){
-    width = document.getElementById("section").clientWidth - 40;
+    // console.log('resizing d3 chart')
+    width = document.getElementById("wrap").clientWidth - 40 - 40;
     height = document.getElementById("section").clientHeight - 40;
 
     svg = d3.select("svg.d3canvas").attr("width", width).attr("height", height);
