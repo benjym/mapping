@@ -203,7 +203,7 @@ function onRightMapClick(e) {
 map.on('click', onLeftMapClick);
 map.on('contextmenu', onRightMapClick);
 map.on('moveend',function(e){
-  var location=map.getCenter() ; 
+  var location=map.getCenter() ;
   document.getElementById("latitude").value = location.lat.toFixed(5).toString() ;
   document.getElementById("longitude").value = location.lng.toFixed(5).toString() ;
 });
@@ -231,7 +231,7 @@ legend.addTo(map);
 
 async function getElevationData(lats,lngs) {
     var locs = ''
-    document.getElementById("waiting").hidden=false 
+    // document.getElementById("waiting").hidden=false
     for ( var i=0; i<lats.length; i++ ) {
         locs = locs + String(lats[i]) + ',' + String(lngs[i]) + '|'
     }
@@ -247,7 +247,7 @@ async function getElevationData(lats,lngs) {
       var l = data.results;
       updateElevationGraph(l);
       update_FoS() ;
-      document.getElementById("waiting").hidden=true 
+      // document.getElementById("waiting").hidden=true 
       // console.log(l)
     })
 
