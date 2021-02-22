@@ -27,16 +27,6 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
 //   redrawSection();
 // });
 
-document.getElementById('stability').addEventListener('change', (event) => {
-    console.log(stability.value)
-  if ( stability.value === 'infinite' )  {
-      var text = 'Rock depth d (m)';
-  }
-  else {
-      var text = 'DH (m)';
-  }
-  document.getElementById('rock-depth').innerHTML = text;
-});
 
 var slope_stab_model;
 var marker_size = 60;
@@ -48,7 +38,7 @@ var top_icon = L.icon({
 
 var top_marker_color = '#894dff';
 
-var top_marker = L.marker([-34.33606548328852,150.88733074376404],{
+window.top_marker = L.marker([-34.33606548328852,150.88733074376404],{
     icon:top_icon
 }).addTo(map);
 
@@ -123,7 +113,7 @@ legend.onAdd = function(map) {
   legend_div = L.DomUtil.create("div", "legend");
 
   // legend_div.innerHTML += "<h4>Legend</h4>";
-  legend_div.innerHTML += '<i style="background: ' + top_marker_color + '"></i><span>Top of slope</span><br>';
+  legend_div.innerHTML += '<i style="background: ' + top_marker_color + '"></i><span>Middle of rockfall slope</span><br>';
   // legend_div.innerHTML += '<i style="background: ' + bottom_marker_color + '"></i><span>Bottom of slope</span><br>';
   return legend_div;
 };
@@ -155,16 +145,16 @@ async function getElevationData(lats,lngs) {
 }
 
 function redrawSection() {
-    var lats = linspace(top_marker._latlng.lat,bottom_marker._latlng.lat,n)
-    var lngs = linspace(top_marker._latlng.lng,bottom_marker._latlng.lng,n)
-    getElevationData(lats,lngs)
-    .then( data => {
-        if ( slope_stab_model !== undefined ) {
-            fos = slope_stab_model.calculateFoS(elev);
-            document.getElementById("FoS").innerHTML = fos.toFixed(2).toString();
-        }
+    // var lats = linspace(top_marker._latlng.lat,bottom_marker._latlng.lat,n)
+    // var lngs = linspace(top_marker._latlng.lng,bottom_marker._latlng.lng,n)
+    // getElevationData(lats,lngs)
+    // .then( data => {
+        // if ( slope_stab_model !== undefined ) {
+            // fos = slope_stab_model.calculateFoS(elev);
+            // document.getElementById("FoS").innerHTML = fos.toFixed(2).toString();
+        // }
 
-    });
+    // });
 }
 
 

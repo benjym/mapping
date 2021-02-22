@@ -42,7 +42,7 @@ var objectTimePeriod = 0.1;
 var timeNextSpawn = time + objectTimePeriod;
 var maxNumObjects = 100;
 
-var restitution = 0.7;
+// var restitution = 0.7;
 // var friction = 0.5;
 
 Ammo().then( function ( AmmoLib ) {
@@ -55,8 +55,16 @@ Ammo().then( function ( AmmoLib ) {
 } );
 
 function init() {
-
-	heightData = generateHeight( terrainWidth, terrainDepth, terrainMinHeight, terrainMaxHeight );
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('fake_data')) {
+	       heightData = generateHeight( terrainWidth, terrainDepth, terrainMinHeight, terrainMaxHeight );
+    }
+    else {
+        heightData = getHeightFromServer( terrainWidth,
+                                          terrainDepth,
+                                          top_marker._latlng.lat,
+                                          top_marker._latlng.lng );
+    }
 
 	initGraphics();
 
@@ -165,7 +173,7 @@ function initPhysics() {
 	broadphase = new Ammo.btDbvtBroadphase();
 	solver = new Ammo.btSequentialImpulseConstraintSolver();
 	physicsWorld = new Ammo.btDiscreteDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration );
-	physicsWorld.setGravity( new Ammo.btVector3( 0, - 6, 0 ) );
+	physicsWorld.setGravity( new Ammo.btVector3( 0, - 9.81, 0 ) );
 
 	// Create the terrain body
 
@@ -178,12 +186,16 @@ function initPhysics() {
 	var groundLocalInertia = new Ammo.btVector3( 0, 0, 0 );
 	var groundMotionState = new Ammo.btDefaultMotionState( groundTransform );
 	var groundBody = new Ammo.btRigidBody( new Ammo.btRigidBodyConstructionInfo( groundMass, groundMotionState, groundShape, groundLocalInertia ) );
-    // groundBody.setRestitution(restitution);
-    // groundBody.setFriction(friction);
+    groundBody.setRestitution(restitution.value);
+    groundBody.setFriction(phi.value);
 	physicsWorld.addRigidBody( groundBody, colGroupPlane, colGroupParticles );
 
 	transformAux1 = new Ammo.btTransform();
 
+}
+
+function getHeightFromServer( width, depth, lat, lon) {
+    console.log("NOT IMPLEMENTED YET. RUN WITH fake_data URL FLAG!!!")
 }
 
 function generateHeight( width, depth, minHeight, maxHeight ) {
@@ -325,7 +337,7 @@ function generateObject() {
 	var motionState = new Ammo.btDefaultMotionState( transform );
 	var rbInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, shape, localInertia );
 	var body = new Ammo.btRigidBody( rbInfo );
-    body.setRestitution(restitution);
+    body.setRestitution(restitution.value);
     body.setFriction(phi.value);
 
 	threeObject.userData.physicsBody = body;
@@ -343,8 +355,10 @@ function generateObject() {
 }
 
 export function reset_physics() {
-    for (var i = 0; i<dynamicObjects.length; i++) {
-        physicsWorld.removeBody(i+1);
+    console.log('resetting physics')
+    for (var i = dynamicObjects.length-1; i>=0; i--) {
+        physicsWorld.removeRigidBody(i);
+        scene.remove(dynamicObjects[i]);
     }
 }
 

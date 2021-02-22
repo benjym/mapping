@@ -15,17 +15,17 @@
 .left_col {
     order: 1;
     flex: 1;
-    height: 600px;
+    height: 400px;
     text-align: center;
 }
 .right_col {
     order: 2;
-    flex: 3;
+    flex: 2;
 }
 .bottom_row {
     order: 4;
     flex: 1;
-    height: 400px;
+    height: 450px;
     padding: 0px;
     margin: 0px;
 }
