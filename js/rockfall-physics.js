@@ -335,7 +335,6 @@ function createTerrainShape(heightData) {
 		}
 	}
 
-    console.log(Math.min(...heightData))
 	// Creates the heightfield physics shape
 	var heightFieldShape = new Ammo.btHeightfieldTerrainShape(
 		terrainWidth,
