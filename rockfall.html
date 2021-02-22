@@ -27,8 +27,10 @@
                 <option value="cube" selected>Cuboid</option>
                 <option value="sphere">Sphere</option>
             </select>
-            Bulk Modulus K (GPa): <output id="bulk_modulus">20</output>
-            <div class="slider">0 <input type="range" id="bulk_modulus" value="20" min="0" max="100" step="1" oninput="bulk_modulus.value = bulk_modulus.value" class="updater"> 100</div><br>
+            Boulder size (m): <output id="objectSize_out"> 1</output>
+            <div class="slider">0 <input type="range" id="objectSize" value="1" min="0" max="10" step="0.01" oninput="objectSize_out.value = objectSize.value" class="updater"> 1</div><br>
+            Randomness (-): <output id="randomness_out"> 0.5</output>
+            <div class="slider">0 <input type="range" id="randomness" value="0.5" min="0" max="1" step="0.01" oninput="randomness_out.value = randomness.value" class="updater"> 1</div><br>
             Coefficient of restitution e (-): <output id="restitution_out"> 0.8</output>
             <div class="slider">0 <input type="range" id="restitution" value="0.8" min="0" max="1" step="0.01" oninput="restitution_out.value = restitution.value" class="updater"> 1</div><br>
             Friction angle &phi; (degree): <output id="phi_out"> 30</output>

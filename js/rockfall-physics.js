@@ -92,7 +92,8 @@ function initGraphics() {
 	camera = new THREE.PerspectiveCamera( 60, document.getElementById("three").clientWidth / document.getElementById("three").clientHeight, 0.2, 2000 );
 
 	scene = new THREE.Scene();
-	scene.background = new THREE.Color( 0xbfd1e5 );
+	// scene.background = new THREE.Color( 0xbfd1e5 );
+    scene.background = new THREE.Color( 0xFFFFFF );
 
 	camera.position.y = 50; //heightData[ terrainHalfWidth + terrainHalfDepth * terrainWidth ] * ( terrainMaxHeight - terrainMinHeight );
 
@@ -137,18 +138,18 @@ function initGraphics() {
 	var light = new THREE.DirectionalLight( 0xffffff, 1 );
 	light.position.set( 100, 100, 50 );
 	light.castShadow = true;
-	var dLight = 200;
-	var sLight = dLight * 0.25;
-	light.shadow.camera.left = - sLight;
-	light.shadow.camera.right = sLight;
-	light.shadow.camera.top = sLight;
-	light.shadow.camera.bottom = - sLight;
-
-	light.shadow.camera.near = dLight / 30;
-	light.shadow.camera.far = dLight;
-
-	light.shadow.mapSize.x = 1024 * 2;
-	light.shadow.mapSize.y = 1024 * 2;
+	// var dLight = 200;
+	// var sLight = dLight * 0.25;
+	// light.shadow.camera.left = - sLight;
+	// light.shadow.camera.right = sLight;
+	// light.shadow.camera.top = sLight;
+	// light.shadow.camera.bottom = - sLight;
+    //
+	// light.shadow.camera.near = dLight / 30;
+	// light.shadow.camera.far = dLight;
+    //
+	// light.shadow.mapSize.x = 1024 * 2;
+	// light.shadow.mapSize.y = 1024 * 2;
 
 	scene.add( light );
 
@@ -298,23 +299,24 @@ function createTerrainShape() {
 
 function generateObject() {
 
+    var diameter = parseFloat(objectSize.value);
 	var threeObject = null;
 	var shape = null;
 
-	var objectSize = 3;
-	var margin = 0.05;
+	var margin = 0.05*diameter;
 
     if ( particle_shape.value === 'sphere') {
 		// Sphere
-		var radius = 1 + Math.random() * objectSize;
+		var radius = 1 + randomness.value*(Math.random() - 0.5) * diameter;
 		threeObject = new THREE.Mesh( new THREE.SphereBufferGeometry( radius, 20, 20 ), createObjectMaterial() );
 		shape = new Ammo.btSphereShape( radius );
 		shape.setMargin( margin );
     }
     else if ( particle_shape.value === 'cube' ) {
-        var sx = 1 + Math.random() * objectSize;
-        var sy = 1 + Math.random() * objectSize;
-        var sz = 1 + Math.random() * objectSize;
+        var sx = diameter + parseFloat(randomness.value)*(Math.random() - 0.5) * diameter;
+        var sy = diameter + parseFloat(randomness.value)*(Math.random() - 0.5) * diameter;
+        var sz = diameter + parseFloat(randomness.value)*(Math.random() - 0.5) * diameter;
+        console.log(sx, sy, sz)
         threeObject = new THREE.Mesh( new THREE.BoxBufferGeometry( sx, sy, sz, 1, 1, 1 ), createObjectMaterial() );
         shape = new Ammo.btBoxShape( new Ammo.btVector3( sx * 0.5, sy * 0.5, sz * 0.5 ) );
         shape.setMargin( margin );
@@ -324,7 +326,7 @@ function generateObject() {
     // threeObject.position.set(0,terrainMaxHeight + objectSize);
     threeObject.position.set(0,(terrainMaxHeight + terrainMinHeight)/2 + parseFloat(H.value), 0);
 
-	var mass = objectSize * 5;
+	var mass = diameter * 2700.0;
 	var localInertia = new Ammo.btVector3( 0, 0, 0 );
 	shape.calculateLocalInertia( mass, localInertia );
 	var transform = new Ammo.btTransform();
