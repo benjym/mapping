@@ -23,8 +23,8 @@
     <div id="wrap">
         <div class="column left_col">
             Boulder shape
-            <select id="stability" class="updater">
-                <option value="cube" selected>Cube</option>
+            <select id="particle_shape" class="updater">
+                <option value="cube" selected>Cuboid</option>
                 <option value="sphere">Sphere</option>
             </select>
             Bulk Modulus K (GPa): <output id="bulk_modulus">20</output>
@@ -32,7 +32,9 @@
             Coefficient of restitution e (-): <output id="restitution_out"> 0.8</output>
             <div class="slider">0 <input type="range" id="restitution" value="0.8" min="0" max="1" step="0.01" oninput="restitution_out.value = restitution.value" class="updater"> 1</div><br>
             Friction angle &phi; (degree): <output id="phi_out"> 30</output>
-            <div class="slider">0 <input type="range" id="phi" value="20" min="0" max="90" oninput="phi_out.value = phi.value" class="updater"> 90</div>
+            <div class="slider">0 <input type="range" id="phi" value="20" min="0" max="90" oninput="phi_out.value = phi.value" class="updater"> 90</div><br>
+            Fall height H (m): <output id="H_out"> 1</output>
+            <div class="slider">0 <input type="range" id="H" value="1" min="0" max="10" step="0.1" oninput="H_out.value = H.value" class="updater"> 10</div>
         </div>
 
         <div id="map" class="column right_col"></div>

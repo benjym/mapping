@@ -40,7 +40,7 @@ var ammoHeightData = null;
 var time = 0;
 var objectTimePeriod = 0.1;
 var timeNextSpawn = time + objectTimePeriod;
-var maxNumObjects = 100;
+var maxNumObjects = 1000;
 
 // var restitution = 0.7;
 // var friction = 0.5;
@@ -82,10 +82,10 @@ function initGraphics() {
 	renderer.shadowMap.enabled = true;
 	container.appendChild( renderer.domElement );
 
-	stats = new Stats();
-	stats.domElement.style.position = 'absolute';
-	stats.domElement.style.top = '0px';
-	container.appendChild( stats.domElement );
+	// stats = new Stats();
+	// stats.domElement.style.position = 'absolute';
+	// stats.domElement.style.top = '0px';
+	// container.appendChild( stats.domElement );
 
 	camera = new THREE.PerspectiveCamera( 60, document.getElementById("three").clientWidth / document.getElementById("three").clientHeight, 0.2, 2000 );
 
@@ -296,25 +296,20 @@ function createTerrainShape() {
 
 function generateObject() {
 
-	var numTypes = 4;
-	// var objectType = Math.ceil( Math.random() * numTypes );
-    var objectType = stability.value;
-    console.log(objectType)
-
 	var threeObject = null;
 	var shape = null;
 
 	var objectSize = 3;
 	var margin = 0.05;
 
-    if ( stability.value === 'sphere') {
+    if ( particle_shape.value === 'sphere') {
 		// Sphere
 		var radius = 1 + Math.random() * objectSize;
 		threeObject = new THREE.Mesh( new THREE.SphereBufferGeometry( radius, 20, 20 ), createObjectMaterial() );
 		shape = new Ammo.btSphereShape( radius );
 		shape.setMargin( margin );
     }
-    else if ( stability.value === 'cube' ) {
+    else if ( particle_shape.value === 'cube' ) {
         var sx = 1 + Math.random() * objectSize;
         var sy = 1 + Math.random() * objectSize;
         var sz = 1 + Math.random() * objectSize;
@@ -325,7 +320,7 @@ function generateObject() {
 
 	// threeObject.position.set( ( Math.random() - 0.5 ) * terrainWidth * 0.6, terrainMaxHeight + objectSize + 2, ( Math.random() - 0.5 ) * terrainDepth * 0.6 );
     // threeObject.position.set(0,terrainMaxHeight + objectSize);
-    threeObject.position.set(0,(terrainMaxHeight + terrainMinHeight)/2 + objectSize);
+    threeObject.position.set(0,(terrainMaxHeight + terrainMinHeight)/2 + parseFloat(H.value), 0);
 
 	var mass = objectSize * 5;
 	var localInertia = new Ammo.btVector3( 0, 0, 0 );

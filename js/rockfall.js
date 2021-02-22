@@ -1,9 +1,10 @@
 import { reset_physics } from './rockfall-physics.js';
 
-
-var topo_server = 'https://api.opentopodata.org/v1/srtm30m?';
+// var topo_server = 'https://api.opentopodata.org/v1/srtm30m?';
 // var topo_server = 'http://localhost:5000/v1/srtm30m/?'
-var proxy_server = 'https://cors-anywhere.herokuapp.com/';
+// var proxy_server = 'https://cors-anywhere.herokuapp.com/';
+var proxy_server = '';
+var topo_server = 'http://202.161.83.242:5000/';
 
 var map = L.map('map', {
     // crs: L.CRS.EPSG4326,
@@ -20,15 +21,6 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
     accessToken: 'pk.eyJ1IjoiYmVuanltYXJrcyIsImEiOiJjand1M3BhanowOGx1NDlzMWs0bG0zNnpyIn0.OLLoUOjLUhcKoAVX1JKVdw'
 }).addTo(map);
 
-// document.querySelector('#stability').addEventListener('change', (event) => {
-  // redrawSection();
-// });
-// document.querySelector('.updater').addEventListener('change', (event) => {
-//   redrawSection();
-// });
-
-
-var slope_stab_model;
 var marker_size = 60;
 var top_icon = L.icon({
     iconUrl: 'marker2.png',
