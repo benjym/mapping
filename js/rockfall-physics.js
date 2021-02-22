@@ -307,15 +307,15 @@ function generateObject() {
 
     if ( particle_shape.value === 'sphere') {
 		// Sphere
-		var radius = 1 + randomness.value*(Math.random() - 0.5) * diameter;
+		var radius = (1 + parseFloat(randomness.value)*(Math.random() - 0.5)) * diameter;
 		threeObject = new THREE.Mesh( new THREE.SphereBufferGeometry( radius, 20, 20 ), createObjectMaterial() );
 		shape = new Ammo.btSphereShape( radius );
 		shape.setMargin( margin );
     }
     else if ( particle_shape.value === 'cube' ) {
-        var sx = diameter + parseFloat(randomness.value)*(Math.random() - 0.5) * diameter;
-        var sy = diameter + parseFloat(randomness.value)*(Math.random() - 0.5) * diameter;
-        var sz = diameter + parseFloat(randomness.value)*(Math.random() - 0.5) * diameter;
+        var sx = (1 + parseFloat(randomness.value)*(Math.random() - 0.5)) * diameter;
+        var sy = (1 + parseFloat(randomness.value)*(Math.random() - 0.5)) * diameter;
+        var sz = (1 + parseFloat(randomness.value)*(Math.random() - 0.5)) * diameter;
         // console.log(sx, sy, sz)
         threeObject = new THREE.Mesh( new THREE.BoxBufferGeometry( sx, sy, sz, 1, 1, 1 ), createObjectMaterial() );
         shape = new Ammo.btBoxShape( new Ammo.btVector3( sx * 0.5, sy * 0.5, sz * 0.5 ) );
@@ -398,7 +398,10 @@ function render() {
 
 function updatePhysics( deltaTime ) {
 
-	physicsWorld.stepSimulation( deltaTime, 10 );
+//     timeStep - the amount of time in seconds to step the simulation by. Typically you're going to be passing it the time since you last called it.
+    // maxSubSteps - the maximum number of steps that Bullet is allowed to take each time you call it.
+    // fixedTimeStep - regulates resolution of the simulation. If your balls penetrates your walls instead of colliding with them try to decrease it.
+	physicsWorld.stepSimulation( deltaTime, 10, ) // 1./100./parseFloat(objectSize.value) ); // reducing fixedTimeStep keeps things working nicely
 
 	// Update objects
 	for ( var i = 0, il = dynamicObjects.length; i < il; i ++ ) {
