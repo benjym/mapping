@@ -316,7 +316,7 @@ function generateObject() {
         var sx = diameter + parseFloat(randomness.value)*(Math.random() - 0.5) * diameter;
         var sy = diameter + parseFloat(randomness.value)*(Math.random() - 0.5) * diameter;
         var sz = diameter + parseFloat(randomness.value)*(Math.random() - 0.5) * diameter;
-        console.log(sx, sy, sz)
+        // console.log(sx, sy, sz)
         threeObject = new THREE.Mesh( new THREE.BoxBufferGeometry( sx, sy, sz, 1, 1, 1 ), createObjectMaterial() );
         shape = new Ammo.btBoxShape( new Ammo.btVector3( sx * 0.5, sy * 0.5, sz * 0.5 ) );
         shape.setMargin( margin );
