@@ -117,8 +117,8 @@ function initGraphics() {
 
 	geometry.computeVertexNormals();
 
-	var groundMaterial = new THREE.MeshPhongMaterial( { color: 0xC7C7C7 } );
-	terrainMesh = new THREE.Mesh( geometry, groundMaterial );
+	window.groundMaterial = new THREE.MeshStandardMaterial( { color: 0xC7C7C7 } );
+	terrainMesh = new THREE.Mesh( geometry, window.groundMaterial );
 	terrainMesh.receiveShadow = true;
 	terrainMesh.castShadow = true;
 
@@ -126,7 +126,6 @@ function initGraphics() {
 
 	// var textureLoader = new THREE.TextureLoader();
 	// textureLoader.load( "textures/grid.png", function ( texture ) {
-    //
 	// 	texture.wrapS = THREE.RepeatWrapping;
 	// 	texture.wrapT = THREE.RepeatWrapping;
 	// 	texture.repeat.set( terrainWidth - 1, terrainDepth - 1 );
@@ -135,27 +134,53 @@ function initGraphics() {
     //
 	// } );
 
+    getSatelliteImage(top_marker._latlng.lat,
+                      top_marker._latlng.lng);
+
+
+
+
 	var light = new THREE.DirectionalLight( 0xffffff, 1 );
 	light.position.set( 100, 100, 50 );
 	light.castShadow = true;
-	// var dLight = 200;
-	// var sLight = dLight * 0.25;
-	// light.shadow.camera.left = - sLight;
-	// light.shadow.camera.right = sLight;
-	// light.shadow.camera.top = sLight;
-	// light.shadow.camera.bottom = - sLight;
-    //
-	// light.shadow.camera.near = dLight / 30;
-	// light.shadow.camera.far = dLight;
-    //
-	// light.shadow.mapSize.x = 1024 * 2;
-	// light.shadow.mapSize.y = 1024 * 2;
+    const light2 = new THREE.AmbientLight( 0xFFFFFF, 1 ); // soft white light
+    scene.add( light2 );
+
 
 	scene.add( light );
 
 
 	window.addEventListener( 'resize', onWindowResize, false );
 
+}
+
+export async function getSatelliteImage(lat,lng) {
+    var access_token = 'pk.eyJ1IjoiYmVuanltYXJrcyIsImEiOiJjand1M3BhanowOGx1NDlzMWs0bG0zNnpyIn0.OLLoUOjLUhcKoAVX1JKVdw';
+    // following calculations from here: https://wiki.openstreetmap.org/wiki/Zoom_levels
+    var c = 40075016.686; // equatorial circumference of the earth (m)
+    var tile_size = 100; // size of whole tile (m)
+    var zoom = Math.log(c*Math.cos(top_marker._latlng.lat*Math.PI/180.)/tile_size)/Math.log(2)
+    // console.log(zoom)
+
+    var path =  "https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/" + lng + "," + lat + "," + zoom + ",0/600x600?access_token=" + access_token;
+
+    const loader = new THREE.TextureLoader();
+
+    loader.load( path,
+    	// onLoad callback
+    	function ( texture ) {
+            window.groundMaterial.map = texture;
+            window.groundMaterial.needsUpdate = true;
+    	},
+
+    	// onProgress callback currently not supported
+    	undefined,
+
+    	// onError callback
+    	function ( err ) {
+    		console.error( 'An error happened.' );
+    	}
+    );
 }
 
 function onWindowResize() {

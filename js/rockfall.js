@@ -1,4 +1,4 @@
-import { reset_physics } from './rockfall-physics.js';
+import { reset_physics, getSatelliteImage } from './rockfall-physics.js';
 
 // var topo_server = 'https://api.opentopodata.org/v1/srtm30m?';
 // var topo_server = 'http://localhost:5000/v1/srtm30m/?'
@@ -15,7 +15,7 @@ L.control.scale({ position: "bottomright" }).addTo(map); // add scale bar
 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
     attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a> | Brought together by <a href="https://www.benjymarks.com">Benjy Marks</a>',
     maxZoom: 22,
-    id: 'benjymarks/ckekrzken0dfj19nt7y93p671',
+    id: 'benjymarks/cklg5u46k5wga17nolopgxzsk',
     tileSize: 512,
     zoomOffset: -1,
     accessToken: 'pk.eyJ1IjoiYmVuanltYXJrcyIsImEiOiJjand1M3BhanowOGx1NDlzMWs0bG0zNnpyIn0.OLLoUOjLUhcKoAVX1JKVdw'
@@ -23,18 +23,18 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
 
 var marker_size = 60;
 var top_icon = L.icon({
-    iconUrl: 'marker2.png',
+    iconUrl: 'marker.png',
     iconSize:     [marker_size, marker_size], // size of the icon
     iconAnchor:   [marker_size/2, marker_size], // point of the icon which will
 });
 
-var top_marker_color = '#894dff';
+var top_marker_color = '#FFFFFF';
 
-window.top_marker = L.marker([-34.33606548328852,150.88733074376404],{
+window.top_marker = L.marker([-34.33706548328852,150.88733074376404],{
     icon:top_icon
 }).addTo(map);
 
-map.setView([top_marker._latlng.lat,top_marker._latlng.lng], 15)
+map.setView([top_marker._latlng.lat,top_marker._latlng.lng], 16)
 
 
 var colors = ['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf','#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf','#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf']; // lots of colours :)
@@ -89,7 +89,10 @@ window.onload = function() {
 
 function onLeftMapClick(e) {
     top_marker.setLatLng(e.latlng);
-    redrawSection();
+    // redrawSection();
+    getSatelliteImage(e.latlng.lat,
+                      e.latlng.lng,
+                      window.groundMaterial);
 }
 
 map.on('click', onLeftMapClick);
