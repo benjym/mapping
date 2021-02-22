@@ -11,17 +11,17 @@ import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/Orb
 // Heightfield parameters
 var terrainWidthExtents = 100;
 var terrainDepthExtents = 100;
-var terrainWidth = 16;//128;
-var terrainDepth = 16;//128;
-var terrainHalfWidth = terrainWidth / 2;
-var terrainHalfDepth = terrainDepth / 2;
-var terrainMaxHeight = 40;
-var terrainMinHeight = - 2;
+var terrainWidth = 10;//128;
+var terrainDepth = 10;//128;
+// var terrainHalfWidth = terrainWidth / 2;
+// var terrainHalfDepth = terrainDepth / 2;
+var terrainMaxHeight = 20;
+var terrainMinHeight = -20;
 
 // Graphics variables
 var container, stats;
 var camera, scene, renderer;
-var terrainMesh;
+var terrainMesh = null;
 var clock = new THREE.Clock();
 
 // Physics variables
@@ -29,20 +29,28 @@ var collisionConfiguration;
 var dispatcher;
 var broadphase;
 var solver;
+var groundBody;
 var physicsWorld;
 var dynamicObjects = [];
+var btBodies = [];
 var transformAux1;
-
+var planeGeometry;
+var physicsWorld;
+var groundShape;
 var colGroupPlane = 1;
 var colGroupParticles = 2;
 
-var heightData = null;
+var heightData = new Float32Array( terrainWidth * terrainDepth );
+for (var p=0; p<(terrainWidth*terrainDepth); p++ ) { heightData[p] = 0; p++}
+
 var ammoHeightData = null;
 
 var time = 0;
 var objectTimePeriod = 0.1;
 var timeNextSpawn = time + objectTimePeriod;
 var maxNumObjects = 1000;
+
+const urlParams = new URLSearchParams(window.location.search);
 
 // var restitution = 0.7;
 // var friction = 0.5;
@@ -57,21 +65,52 @@ Ammo().then( function ( AmmoLib ) {
 } );
 
 function init() {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('fake_data')) {
-	       heightData = generateHeight( terrainWidth, terrainDepth, terrainMinHeight, terrainMaxHeight );
-    }
-    else {
-        heightData = getHeightFromServer( terrainWidth,
-                                          terrainDepth,
-                                          top_marker._latlng.lat,
-                                          top_marker._latlng.lng );
-    }
-
 	initGraphics();
 
 	initPhysics();
 
+    generatePlaneGeometry();
+    updateGroundPlane(top_marker._latlng.lat,top_marker._latlng.lng);
+}
+
+function generatePlaneGeometry() {
+
+    planeGeometry = new THREE.PlaneBufferGeometry( terrainWidthExtents, terrainDepthExtents, terrainWidth - 1, terrainDepth - 1 );
+    planeGeometry.rotateX( - Math.PI / 2 );
+
+    var vertices = planeGeometry.attributes.position.array;
+
+    for ( var i = 0, j = 0, l = vertices.length; i < l; i ++, j += 3 ) {
+        // j + 1 because it is the y component that we modify
+        vertices[ j + 1 ] = heightData[ i ];
+
+    }
+    // console.log(heightData[i])
+
+    planeGeometry.computeVertexNormals();
+
+    window.groundMaterial = new THREE.MeshStandardMaterial( { color: 0xC7C7C7 } );
+    terrainMesh = new THREE.Mesh( planeGeometry, window.groundMaterial );
+    terrainMesh.receiveShadow = true;
+    terrainMesh.castShadow = true;
+
+    // if ( terrainMesh == null ) {
+        // console.log('no terrain mesh found. adding one.')
+    scene.add( terrainMesh );
+    // }
+
+}
+
+function updatePlaneGeometry() {
+    var vertices = planeGeometry.attributes.position.array;
+
+    for ( var i = 0, j = 0, l = vertices.length; i < l; i ++, j += 3 ) {
+        // j + 1 because it is the y component that we modify
+        vertices[ j + 1 ] = heightData[ i ];
+    }
+    planeGeometry.computeVertexNormals();
+    planeGeometry.attributes.position.needsUpdate = true;
+    // console.log(heightData);
 }
 
 function initGraphics() {
@@ -103,43 +142,6 @@ function initGraphics() {
 	var controls = new OrbitControls( camera, renderer.domElement );
 	// controls.enableZoom = false;
 
-	var geometry = new THREE.PlaneBufferGeometry( terrainWidthExtents, terrainDepthExtents, terrainWidth - 1, terrainDepth - 1 );
-	geometry.rotateX( - Math.PI / 2 );
-
-	var vertices = geometry.attributes.position.array;
-
-	for ( var i = 0, j = 0, l = vertices.length; i < l; i ++, j += 3 ) {
-
-		// j + 1 because it is the y component that we modify
-		vertices[ j + 1 ] = heightData[ i ];
-
-	}
-
-	geometry.computeVertexNormals();
-
-	window.groundMaterial = new THREE.MeshStandardMaterial( { color: 0xC7C7C7 } );
-	terrainMesh = new THREE.Mesh( geometry, window.groundMaterial );
-	terrainMesh.receiveShadow = true;
-	terrainMesh.castShadow = true;
-
-	scene.add( terrainMesh );
-
-	// var textureLoader = new THREE.TextureLoader();
-	// textureLoader.load( "textures/grid.png", function ( texture ) {
-	// 	texture.wrapS = THREE.RepeatWrapping;
-	// 	texture.wrapT = THREE.RepeatWrapping;
-	// 	texture.repeat.set( terrainWidth - 1, terrainDepth - 1 );
-	// 	groundMaterial.map = texture;
-	// 	groundMaterial.needsUpdate = true;
-    //
-	// } );
-
-    getSatelliteImage(top_marker._latlng.lat,
-                      top_marker._latlng.lng);
-
-
-
-
 	var light = new THREE.DirectionalLight( 0xffffff, 1 );
 	light.position.set( 100, 100, 50 );
 	light.castShadow = true;
@@ -152,6 +154,34 @@ function initGraphics() {
 
 	window.addEventListener( 'resize', onWindowResize, false );
 
+}
+
+export async function updateGroundPlane(lat,lng) {
+    console.log('updating ground plane')
+    reset_physics();
+    console.log('reset physics')
+    if (urlParams.has('fake_data')) {
+        generateFakeHeight( terrainWidth, terrainDepth, terrainMinHeight, terrainMaxHeight ).then( r => {
+            heightData = r;
+            console.log('made up some fake height data')
+            updatePlaneGeometry();
+            console.log('updated threejs plane')
+            updateGroundPlaneAmmo();
+            console.log('updated ammojs plane')
+        });
+    }
+    else {
+        getHeightFromServer(lat,lng).then( r => {
+            console.log('got height from server')
+            updatePlaneGeometry();
+            console.log('updated threejs plane')
+            updateGroundPlaneAmmo();
+            console.log('updated ammojs plane')
+        });
+    }
+
+    getSatelliteImage(lat,lng);
+    console.log('updated satellite imagery')
 }
 
 export async function getSatelliteImage(lat,lng) {
@@ -203,66 +233,74 @@ function initPhysics() {
 	physicsWorld = new Ammo.btDiscreteDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration );
 	physicsWorld.setGravity( new Ammo.btVector3( 0, - 9.81, 0 ) );
 
-	// Create the terrain body
-
-	var groundShape = createTerrainShape();
-	var groundTransform = new Ammo.btTransform();
-	groundTransform.setIdentity();
-	// Shifts the terrain, since bullet re-centers it on its bounding box.
-	groundTransform.setOrigin( new Ammo.btVector3( 0, ( terrainMaxHeight + terrainMinHeight ) / 2, 0 ) );
-	var groundMass = 0;
-	var groundLocalInertia = new Ammo.btVector3( 0, 0, 0 );
-	var groundMotionState = new Ammo.btDefaultMotionState( groundTransform );
-	var groundBody = new Ammo.btRigidBody( new Ammo.btRigidBodyConstructionInfo( groundMass, groundMotionState, groundShape, groundLocalInertia ) );
-    groundBody.setRestitution(restitution.value);
-    groundBody.setFriction(phi.value);
-	physicsWorld.addRigidBody( groundBody, colGroupPlane, colGroupParticles );
-
+    addGroundPlaneAmmo() // Create the terrain body
 	transformAux1 = new Ammo.btTransform();
 
 }
 
-function getHeightFromServer( width, depth, lat, lon) {
-    console.log("NOT IMPLEMENTED YET. RUN WITH fake_data URL FLAG!!!")
+function addGroundPlaneAmmo() {
+    groundShape = createTerrainShape(heightData);
+	var groundTransform = new Ammo.btTransform();
+	groundTransform.setIdentity();
+	// Shifts the terrain, since bullet re-centers it on its bounding box.
+	groundTransform.setOrigin( new Ammo.btVector3( 0, (Math.min(...heightData) + Math.max(...heightData))/2., 0 ) );
+    // groundTransform.setOrigin( new Ammo.btVector3( 0, 0, 0 ) );
+	var groundMass = 0;
+	var groundLocalInertia = new Ammo.btVector3( 0, 0, 0 );
+	var groundMotionState = new Ammo.btDefaultMotionState( groundTransform );
+	groundBody = new Ammo.btRigidBody( new Ammo.btRigidBodyConstructionInfo( groundMass, groundMotionState, groundShape, groundLocalInertia ) );
+    groundBody.setRestitution(restitution.value);
+    groundBody.setFriction(phi.value);
+	physicsWorld.addRigidBody( groundBody, colGroupPlane, colGroupParticles );
 }
 
-function generateHeight( width, depth, minHeight, maxHeight ) {
+async function updateGroundPlaneAmmo() {
+    groundBody = physicsWorld.removeRigidBody( groundBody );
+    addGroundPlaneAmmo();
+    // groundShape = createTerrainShape(heightData);
+    // groundBody.setCollisionShape(groundShape);
+}
 
+async function getHeightFromServer(lat, lon) {
+    var dx = 0.01; // FIXME
+    var dy = 0.01; // FIXME
+    var path = window.proxy_server + window.topo_server + "region=" + String(lat-dx) + "," + String(lon-dy) + ";" + String(lat+dx) + "," + String(lon+dy) + ";" + String(terrainWidth) + "," + String(terrainDepth);
+    // var path = "test.json";
+    const response = fetch( path, { } )
+    .then( r => r.json() )
+    .then(data => {
+      var p = 0;
+      for ( var i=0; i<terrainWidth; i++ ) {
+          for ( var j=0; j<terrainDepth; j++ ) {
+              heightData[i*terrainWidth + j] = parseFloat(data.results[j*terrainWidth + i].elevation);
+          }
+      }
+      var scaling = 10; // HACK!!!! FIX THIS
+      var midvalue = heightData[terrainWidth*terrainDepth/2 + terrainDepth/2];
+      heightData = heightData.map(function(element){ return (element - midvalue)/scaling; });
+
+    })
+    // .then ( function() { updatePlaneGeometry(); updateGroundPlaneAmmo(); })
+    return response
+}
+
+async function generateFakeHeight( width, depth, minHeight, maxHeight ) {
 	// Generates the height data (a sinus wave)
-
-	var size = width * depth;
-	var data = new Float32Array( size );
+    var h = new Float32Array( width * depth );
 
 	var hRange = maxHeight - minHeight;
-	var w2 = width / 2;
-	var d2 = depth / 2;
-	var phaseMult = 12;
-
 	var p = 0;
 	for ( var j = 0; j < depth; j ++ ) {
-
 		for ( var i = 0; i < width; i ++ ) {
-
-			// var radius = Math.sqrt(
-			// 	Math.pow( ( i - w2 ) / w2, 2.0 ) +
-			// 		Math.pow( ( j - d2 ) / d2, 2.0 ) );
-            //
-			// var height = ( Math.sin( radius * phaseMult ) + 1 ) * 0.5 * hRange + minHeight;
-
-            var height = 4*(Math.random()-0.5) + i/width*hRange + minHeight;
-			data[ p ] = height;
-
+			h[ p ] = 4*(Math.random()-0.5) + i/width*hRange + minHeight;
 			p ++;
-
 		}
-
 	}
-
-	return data;
-
+    return h
 }
 
-function createTerrainShape() {
+function createTerrainShape(heightData) {
+    // console.log(heightData)
 
 	// This parameter is not really used, since we are using PHY_FLOAT height data type and hence it is ignored
 	var heightScale = 1;
@@ -295,17 +333,17 @@ function createTerrainShape() {
 			p2 += 4;
 
 		}
-
 	}
 
+    console.log(Math.min(...heightData))
 	// Creates the heightfield physics shape
 	var heightFieldShape = new Ammo.btHeightfieldTerrainShape(
 		terrainWidth,
 		terrainDepth,
 		ammoHeightData,
 		heightScale,
-		terrainMinHeight,
-		terrainMaxHeight,
+		Math.min(...heightData),
+		Math.max(...heightData),
 		upAxis,
 		hdt,
 		flipQuadEdges
@@ -349,7 +387,7 @@ function generateObject() {
 
 	// threeObject.position.set( ( Math.random() - 0.5 ) * terrainWidth * 0.6, terrainMaxHeight + objectSize + 2, ( Math.random() - 0.5 ) * terrainDepth * 0.6 );
     // threeObject.position.set(0,terrainMaxHeight + objectSize);
-    threeObject.position.set(0,(terrainMaxHeight + terrainMinHeight)/2 + parseFloat(H.value), 0);
+    threeObject.position.set(0, parseFloat(H.value), 0);
 
 	var mass = diameter * 2700.0;
 	var localInertia = new Ammo.btVector3( 0, 0, 0 );
@@ -371,17 +409,14 @@ function generateObject() {
 
 	scene.add( threeObject );
 	dynamicObjects.push( threeObject );
-
+    btBodies.push( body );
 	physicsWorld.addRigidBody( body, colGroupParticles, colGroupPlane );
-
-
-
 }
 
 export function reset_physics() {
     console.log('resetting physics')
     for (var i = dynamicObjects.length-1; i>=0; i--) {
-        physicsWorld.removeRigidBody(i);
+        physicsWorld.removeRigidBody( btBodies[i] );
         scene.remove(dynamicObjects[i]);
     }
 }
@@ -394,12 +429,9 @@ function createObjectMaterial() {
 }
 
 function animate() {
-
 	requestAnimationFrame( animate );
-
 	render();
 	// stats.update();
-
 }
 
 function render() {

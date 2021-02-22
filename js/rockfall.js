@@ -1,10 +1,10 @@
-import { reset_physics, getSatelliteImage } from './rockfall-physics.js';
+import { reset_physics, updateGroundPlane } from './rockfall-physics.js';
 
 // var topo_server = 'https://api.opentopodata.org/v1/srtm30m?';
 // var topo_server = 'http://localhost:5000/v1/srtm30m/?'
 // var proxy_server = 'https://cors-anywhere.herokuapp.com/';
-var proxy_server = '';
-var topo_server = 'http://202.161.83.242:5000/';
+window.proxy_server = '';
+window.topo_server = 'http://202.161.83.242:5000/v1/srtm30m?';
 
 var map = L.map('map', {
     // crs: L.CRS.EPSG4326,
@@ -90,9 +90,9 @@ window.onload = function() {
 function onLeftMapClick(e) {
     top_marker.setLatLng(e.latlng);
     // redrawSection();
-    getSatelliteImage(e.latlng.lat,
-                      e.latlng.lng,
-                      window.groundMaterial);
+    reset_physics();
+    updateGroundPlane(e.latlng.lat,
+                      e.latlng.lng);
 }
 
 map.on('click', onLeftMapClick);
