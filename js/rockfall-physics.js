@@ -1,10 +1,12 @@
 // <script src="../node_modules/three/examples/js/libs/ammo.wasm.js"></script>
 
-import * as THREE from '../node_modules/three/build/three.module.js';
+// import * as THREE from '../node_modules/three/build/three.module.js';
+import * as THREE from 'https://unpkg.com/three/build/three.module.js';
 
-import Stats from '../node_modules/three/examples/jsm/libs/stats.module.js';
+// import Stats from '../node_modules/three/examples/jsm/libs/stats.module.js';
 
-import { OrbitControls } from '../node_modules/three/examples/jsm/controls/OrbitControls.js';
+// import { OrbitControls } from '../node_modules/three/examples/jsm/controls/OrbitControls.js';
+import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/OrbitControls.js';
 
 // Heightfield parameters
 var terrainWidthExtents = 100;
