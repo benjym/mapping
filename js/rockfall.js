@@ -55,7 +55,7 @@ var fos = 1;
 
 var elements = document.getElementsByClassName("updater");
 Array.from(elements).forEach(function(element) {
-      element.addEventListener('change', reset_physics);
+      element.addEventListener('input', reset_physics);
     });
 
 
@@ -73,22 +73,6 @@ window.onload = function() {
         // update_FoS();
     });
 }
-
-
-
-
-
-
-// var wmsLayer = L.tileLayer.wms('http://services.ga.gov.au/gis/services/DEM_LiDAR_5m/MapServer/WMSServer?', {
-//     layers: 'Image',
-//     opacity: 0.5,
-//     transparency: 'true',
-// }).addTo(map);
-// var wmsLayer = L.tileLayer.wms('http://gaservices.ga.gov.au/site_9/services/DEM_SRTM_1Second_Hydro_Enforced/MapServer/WMSServer?request=GetCapabilities&service=WMS').addTo(map);
-// var wmsLayer = L.tileLayer.wms('http://ows.mundialis.de/services/service?', {
-//     layers: 'TOPO-WMS'
-// }).addTo(map);
-
 
 
 function onLeftMapClick(e) {
@@ -116,12 +100,9 @@ function escapeKey(e) {
 map.on('click', onLeftMapClick);
 map.on('contextmenu', onRightMapClick);
 
-
-
-
-function transpose(a) {
-    return a[0].map(function (_, c) { return a.map(function (r) { return r[c]; }); });
-}
+// function transpose(a) {
+//     return a[0].map(function (_, c) { return a.map(function (r) { return r[c]; }); });
+// }
 
 /*Legend specific*/
 var legend = L.control({ position: "topright" });

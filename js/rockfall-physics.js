@@ -406,9 +406,10 @@ function generateObject() {
 		shape.setMargin( margin );
     }
     else if ( particle_shape.value === 'cube' ) {
-        var sx = (1 + parseFloat(randomness.value)*(Math.random() - 0.5)) * diameter;
-        var sy = (1 + parseFloat(randomness.value)*(Math.random() - 0.5)) * diameter;
-        var sz = (1 + parseFloat(randomness.value)*(Math.random() - 0.5)) * diameter;
+        var sx = (1 + 2*parseFloat(randomness.value)*(Math.random() - 0.5)) * diameter;
+        var sy = (1 + 2*parseFloat(randomness.value)*(Math.random() - 0.5)) * diameter;
+        // var sz = (1 + 2*parseFloat(randomness.value)*(Math.random() - 0.5)) * diameter;
+        var sz = Math.pow(diameter,3)/sx/sy; // conserve volume
         // console.log(sx, sy, sz)
         threeObject = new THREE.Mesh( new THREE.BoxBufferGeometry( sx, sy, sz, 1, 1, 1 ), createObjectMaterial() );
         shape = new Ammo.btBoxShape( new Ammo.btVector3( sx * 0.5, sy * 0.5, sz * 0.5 ) );
