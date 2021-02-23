@@ -9,8 +9,8 @@ import * as THREE from 'https://unpkg.com/three/build/three.module.js';
 import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/OrbitControls.js';
 
 // Heightfield parameters
-var terrainWidthExtents = 100;
-var terrainDepthExtents = 100;
+var terrainWidthExtents = 200;
+var terrainDepthExtents = 200;
 var terrainWidth = 10;//128;
 var terrainDepth = 10;//128;
 // var terrainHalfWidth = terrainWidth / 2;
@@ -32,7 +32,9 @@ var solver;
 var groundBody;
 var physicsWorld;
 var dynamicObjects = [];
+var staticObjects = [];
 var btBodies = [];
+var wallBodies = [];
 var transformAux1;
 var planeGeometry;
 var physicsWorld;
@@ -58,7 +60,6 @@ const urlParams = new URLSearchParams(window.location.search);
 Ammo().then( function ( AmmoLib ) {
 
 	Ammo = AmmoLib;
-
 	init();
 	animate();
 
@@ -66,9 +67,8 @@ Ammo().then( function ( AmmoLib ) {
 
 function init() {
 	initGraphics();
-
+    onWindowResize(); // update bottom row size
 	initPhysics();
-
     generatePlaneGeometry();
     updateGroundPlane(top_marker._latlng.lat,top_marker._latlng.lng);
 }
@@ -158,8 +158,6 @@ function initGraphics() {
 
 export async function updateGroundPlane(lat,lng) {
     console.log('updating ground plane')
-    reset_physics();
-    console.log('reset physics')
     if (urlParams.has('fake_data')) {
         generateFakeHeight( terrainWidth, terrainDepth, terrainMinHeight, terrainMaxHeight ).then( r => {
             heightData = r;
@@ -168,15 +166,22 @@ export async function updateGroundPlane(lat,lng) {
             console.log('updated threejs plane')
             updateGroundPlaneAmmo();
             console.log('updated ammojs plane')
+            reset_physics();
+            console.log('reset physics')
+
         });
     }
     else {
         getHeightFromServer(lat,lng).then( r => {
+            heightData = r;
             console.log('got height from server')
             updatePlaneGeometry();
             console.log('updated threejs plane')
             updateGroundPlaneAmmo();
             console.log('updated ammojs plane')
+            reset_physics();
+            console.log('reset physics')
+
         });
     }
 
@@ -208,13 +213,15 @@ export async function getSatelliteImage(lat,lng) {
 
     	// onError callback
     	function ( err ) {
-    		console.error( 'An error happened.' );
+    		console.error( 'An error happened while loading the satellite image.' );
     	}
     );
 }
 
 function onWindowResize() {
 
+    var left_col = document.getElementsByClassName("left_col")[0];
+    document.getElementById("three").style.height = window.innerHeight - left_col.clientHeight - 3*20;
 	camera.aspect = document.getElementById("three").clientWidth / document.getElementById("three").clientHeight;
 	camera.updateProjectionMatrix();
 
@@ -262,11 +269,17 @@ async function updateGroundPlaneAmmo() {
 }
 
 async function getHeightFromServer(lat, lon) {
-    var dx = 0.01; // FIXME
-    var dy = 0.01; // FIXME
-    var path = window.proxy_server + window.topo_server + "region=" + String(lat-dx) + "," + String(lon-dy) + ";" + String(lat+dx) + "," + String(lon+dy) + ";" + String(terrainWidth) + "," + String(terrainDepth);
+    var d = terrainDepthExtents/2./1000.0;
+    var R = 6371.0090; // equatorial radius of the earth (m)
+    var lat2 = Math.asin( Math.sin(lat*Math.PI/180)*Math.cos(d/R) + Math.cos(lat*Math.PI/180)*Math.sin(d/R)*Math.cos(Math.PI))*180/Math.PI;
+    var lat1 = Math.asin( Math.sin(lat*Math.PI/180)*Math.cos(d/R) + Math.cos(lat*Math.PI/180)*Math.sin(d/R)*Math.cos(0))*180/Math.PI;
+    var lon2 = lon + Math.atan2(Math.sin(Math.PI/2.)*Math.sin(d/R)*Math.cos(lat*Math.PI/180),Math.cos(d/R)-Math.sin(lat*Math.PI/180)*Math.sin(lat*Math.PI/180))*180/Math.PI;
+    var lon1 = lon + Math.atan2(Math.sin(3*Math.PI/2.)*Math.sin(d/R)*Math.cos(lat*Math.PI/180),Math.cos(d/R)-Math.sin(lat*Math.PI/180)*Math.sin(lat*Math.PI/180))*180/Math.PI;
+    // console.log(lat1,lat,lat2);
+    // console.log(lon1,lon,lon2);
+    var path = window.proxy_server + window.topo_server + "region=" + String(lat1) + "," + String(lon1) + ";" + String(lat2) + "," + String(lon2) + ";" + String(terrainWidth) + "," + String(terrainDepth);
     // var path = "test.json";
-    const response = fetch( path, { } )
+    var response = await fetch( path, { } )
     .then( r => r.json() )
     .then(data => {
       var p = 0;
@@ -275,13 +288,31 @@ async function getHeightFromServer(lat, lon) {
               heightData[i*terrainWidth + j] = parseFloat(data.results[j*terrainWidth + i].elevation);
           }
       }
-      var scaling = 10; // HACK!!!! FIX THIS
-      var midvalue = heightData[terrainWidth*terrainDepth/2 + terrainDepth/2];
-      heightData = heightData.map(function(element){ return (element - midvalue)/scaling; });
+      var midvalue = (heightData[(terrainWidth/2  )*terrainDepth + terrainDepth/2] +
+                      heightData[(terrainWidth/2  )*terrainDepth + terrainDepth/2 - 1] +
+                      heightData[(terrainWidth/2-1)*terrainDepth + terrainDepth/2] +
+                      heightData[(terrainWidth/2-1)*terrainDepth + terrainDepth/2 - 1])/4.;
+      heightData = heightData.map(function(element){ return (element - midvalue); });
+    })
+    .catch( error => {
+        console.error('Using cached data. Error: ' + error);
+        response = fetch( "test.json", { } )
+        .then( r => r.json() )
+        .then(data => {
+          var p = 0;
+          for ( var i=0; i<terrainWidth; i++ ) {
+              for ( var j=0; j<terrainDepth; j++ ) {
+                  heightData[i*terrainWidth + j] = parseFloat(data.results[j*terrainWidth + i].elevation);
+              }
+          }
+          var midvalue = heightData[terrainWidth*terrainDepth/2 + terrainDepth/2];
+          heightData = heightData.map(function(element){ return (element - midvalue); });
 
+        })
     })
     // .then ( function() { updatePlaneGeometry(); updateGroundPlaneAmmo(); })
-    return response
+    return heightData
+
 }
 
 async function generateFakeHeight( width, depth, minHeight, maxHeight ) {
@@ -312,7 +343,7 @@ function createTerrainShape(heightData) {
 	var hdt = "PHY_FLOAT";
 
 	// Set this to your needs (inverts the triangles)
-	var flipQuadEdges = false;
+	var flipQuadEdges = true;
 
 	// Creates height data buffer in Ammo heap
 	ammoHeightData = Ammo._malloc( 4 * terrainWidth * terrainDepth );
@@ -353,7 +384,7 @@ function createTerrainShape(heightData) {
 	var scaleZ = terrainDepthExtents / ( terrainDepth - 1 );
 	heightFieldShape.setLocalScaling( new Ammo.btVector3( scaleX, 1, scaleZ ) );
 
-	heightFieldShape.setMargin( 0.05 );
+	heightFieldShape.setMargin( 0.01 );
 
 	return heightFieldShape;
 
@@ -365,7 +396,7 @@ function generateObject() {
 	var threeObject = null;
 	var shape = null;
 
-	var margin = 0.05*diameter;
+	var margin = 0.05;
 
     if ( particle_shape.value === 'sphere') {
 		// Sphere
@@ -412,12 +443,82 @@ function generateObject() {
 	physicsWorld.addRigidBody( body, colGroupParticles, colGroupPlane );
 }
 
+function make_wall() {
+    if ( window.polyline._latlngs.length > 1 ) {
+        for ( var i=0; i<window.polyline._latlngs.length-1; i++ ) {
+            generateWallObject(top_marker._latlng.lat,
+                               top_marker._latlng.lng,
+                               window.polyline._latlngs[i].lat,
+                               window.polyline._latlngs[i].lng,
+                               window.polyline._latlngs[i+1].lat,
+                               window.polyline._latlngs[i+1].lng)
+        }
+    }
+}
+
+function generateWallObject(lat_ref,lon_ref,lat1,lon1,lat2,lon2) {
+
+	var margin = 0.05;
+    var width = 1;
+    var height = 100;
+
+    var lat_mid = (lat1 + lat2)/2.
+    var lon_mid = (lon1 + lon2)/2.
+    // console.log(lat_ref,lon_ref);
+    // console.log(lat_mid,lon_mid);
+    var angle = Math.atan2(lat2 - lat1,lon2 - lon1);
+    var loc = getLocationFromLatLon(lat_ref,lon_ref,lat_mid,lon_mid)
+    // console.log(angle);
+    // console.log(loc);
+    var sx = haversine(lat1,lon1,lat2,lon2);
+    var sy = height; //parseFloat(barrier.value);
+    var sz = width;
+    // console.log(sx, sy, sz)
+    var wallMaterial = new THREE.MeshPhongMaterial( { color: "#E903CD" } );
+    var threeObject = new THREE.Mesh( new THREE.BoxBufferGeometry( sx, sy, sz, 1, 1, 1 ), wallMaterial );
+    var shape = new Ammo.btBoxShape( new Ammo.btVector3( sx * 0.5, sy * 0.5, sz * 0.5 ) );
+    shape.setMargin( margin );
+
+    threeObject.position.set(loc[0], parseFloat(barrier.value) - height/2., loc[1]);
+    threeObject.rotateY(angle);
+
+	var mass = 0;
+	var localInertia = new Ammo.btVector3( 0, 0, 0 );
+	shape.calculateLocalInertia( mass, localInertia );
+	var transform = new Ammo.btTransform();
+	transform.setIdentity();
+	var pos = threeObject.position;
+    var quat = threeObject.quaternion;
+	transform.setOrigin( new Ammo.btVector3( pos.x, pos.y, pos.z ) );
+    transform.setRotation( new Ammo.btQuaternion( quat.x, quat.y, quat.z, quat.w ) );
+	var motionState = new Ammo.btDefaultMotionState( transform );
+	var rbInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, shape, localInertia );
+	var body = new Ammo.btRigidBody( rbInfo );
+    body.setRestitution(restitution.value);
+    body.setFriction(phi.value);
+
+	threeObject.userData.physicsBody = body;
+
+	threeObject.receiveShadow = true;
+	threeObject.castShadow = true;
+
+	scene.add( threeObject );
+	staticObjects.push( threeObject );
+    wallBodies.push( body );
+	physicsWorld.addRigidBody( body, colGroupPlane, colGroupParticles );
+}
+
 export function reset_physics() {
     console.log('resetting physics')
     for (var i = dynamicObjects.length-1; i>=0; i--) {
         physicsWorld.removeRigidBody( btBodies[i] );
         scene.remove(dynamicObjects[i]);
     }
+    for (var i = staticObjects.length-1; i>=0; i--) {
+        physicsWorld.removeRigidBody( wallBodies[i] );
+        scene.remove(staticObjects[i]);
+    }
+    make_wall();
 }
 
 function createObjectMaterial() {
@@ -477,4 +578,33 @@ function updatePhysics( deltaTime ) {
 
 	}
 
+}
+
+function haversine(lat1,lon1,lat2,lon2) {
+    const R = 6371e3; // metres
+    const φ1 = lat1 * Math.PI/180; // φ, λ in radians
+    const φ2 = lat2 * Math.PI/180;
+    const Δφ = (lat2-lat1) * Math.PI/180;
+    const Δλ = (lon2-lon1) * Math.PI/180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    const d = R * c; // in metres
+    return d
+}
+
+function getLocationFromLatLon(lat_ref, lon_ref, lat_pos, lon_pos) {
+    var x = Math.sign(lon_pos - lon_ref)*haversine(lat_ref,lon_ref,lat_ref,lon_pos);
+    var y = Math.sign(lat_ref - lat_pos)*haversine(lat_ref,lon_ref,lat_pos,lon_ref);
+    return [x, y]
+}
+
+function getLatLonFromBearingDistance(d,bearing,lat,lon) {
+    var R = 6371009.0; // equatorial radius of the earth (m)
+    var lat1 = Math.asin( Math.sin(lat*Math.PI/180)*Math.cos(d/R) + Math.cos(lat*Math.PI/180)*Math.sin(d/R)*Math.cos(0))*180/Math.PI;
+    var lon1 = lon + Math.atan2(Math.sin(3*Math.PI/2.)*Math.sin(d/R)*Math.cos(lat*Math.PI/180),Math.cos(d/R)-Math.sin(lat*Math.PI/180)*Math.sin(lat*Math.PI/180))*180/Math.PI;
+    return [lat1, lon1]
 }

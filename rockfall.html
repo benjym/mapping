@@ -17,6 +17,8 @@
     <script src="https://kit.fontawesome.com/ac7cd0e05d.js" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/three/examples/js/libs/ammo.wasm.js"></script>
     <script src="js/rockfall-physics.js" type="module"></script>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet">
 </head>
 
 <body>
@@ -31,12 +33,14 @@
             <div class="slider">0.5 <input type="range" id="objectSize" value="1" min="0.5" max="10" step="0.01" oninput="objectSize_out.value = objectSize.value" class="updater"> 1</div><br>
             Randomness (-): <output id="randomness_out"> 0.5</output>
             <div class="slider">0 <input type="range" id="randomness" value="0.5" min="0" max="1" step="0.01" oninput="randomness_out.value = randomness.value" class="updater"> 1</div><br>
-            Coefficient of restitution e (-): <output id="restitution_out"> 0.8</output>
+            Coefficient of restitution (-): <output id="restitution_out"> 0.8</output>
             <div class="slider">0 <input type="range" id="restitution" value="0.8" min="0" max="1" step="0.01" oninput="restitution_out.value = restitution.value" class="updater"> 1</div><br>
-            Friction angle &phi; (degree): <output id="phi_out"> 30</output>
+            Friction angle (degree): <output id="phi_out"> 30</output>
             <div class="slider">0 <input type="range" id="phi" value="20" min="0" max="90" oninput="phi_out.value = phi.value" class="updater"> 90</div><br>
-            Fall height H (m): <output id="H_out"> 1</output>
-            <div class="slider">0 <input type="range" id="H" value="1" min="0" max="10" step="0.1" oninput="H_out.value = H.value" class="updater"> 10</div>
+            Fall height RL (m): <output id="H_out"> 1</output>
+            <div class="slider">0 <input type="range" id="H" value="1" min="0" max="10" step="0.1" oninput="H_out.value = H.value" class="updater"> 10</div><br>
+            Barrier height RL (m): <output id="barrier_out"> 0</output>
+            <div class="slider">-100 <input type="range" id="barrier" value="1" min="-100" max="100" step="1" oninput="barrier_out.value = barrier.value" class="updater"> 100</div>
         </div>
 
         <div id="map" class="column right_col"></div>

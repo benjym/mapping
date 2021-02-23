@@ -4,7 +4,7 @@ import { reset_physics, updateGroundPlane } from './rockfall-physics.js';
 // var topo_server = 'http://localhost:5000/v1/srtm30m/?'
 // var proxy_server = 'https://cors-anywhere.herokuapp.com/';
 window.proxy_server = '';
-window.topo_server = 'https://202.161.83.242:5000/v1/srtm30m?';
+window.topo_server = 'http://202.161.83.242:5000/v1/srtm30m?';
 
 var map = L.map('map', {
     // crs: L.CRS.EPSG4326,
@@ -29,12 +29,15 @@ var top_icon = L.icon({
 });
 
 var top_marker_color = '#FFFFFF';
-
+var wall_color = '#E903CD';
 window.top_marker = L.marker([-34.33706548328852,150.88733074376404],{
     icon:top_icon
 }).addTo(map);
 
-map.setView([top_marker._latlng.lat,top_marker._latlng.lng], 16)
+// window.polyline = L.polyline([[-34.33206548328852,150.88733074376404],[-34.33906548328852,150.88733074376404]], {color: wall_color}).addTo(map); // FOR TESTING ONLY
+window.polyline = L.polyline([], {color: wall_color}).addTo(map);
+
+map.setView([top_marker._latlng.lat,top_marker._latlng.lng], 16) // zoom the map to the polygon
 
 
 var colors = ['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf','#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf','#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf']; // lots of colours :)
@@ -95,7 +98,25 @@ function onLeftMapClick(e) {
                       e.latlng.lng);
 }
 
+function onRightMapClick(e) {
+    polyline.addLatLng(e.latlng);
+    reset_physics();
+}
+
+document.addEventListener('keydown', escapeKey);
+
+function escapeKey(e) {
+  if (e.key === 'Escape') { // wipe the polyline
+      polyline.setLatLngs([]);
+      reset_physics();
+  };
+}
+
 map.on('click', onLeftMapClick);
+map.on('contextmenu', onRightMapClick);
+
+
+
 
 function transpose(a) {
     return a[0].map(function (_, c) { return a.map(function (r) { return r[c]; }); });
@@ -108,8 +129,8 @@ legend.onAdd = function(map) {
   legend_div = L.DomUtil.create("div", "legend");
 
   // legend_div.innerHTML += "<h4>Legend</h4>";
-  legend_div.innerHTML += '<i style="background: ' + top_marker_color + '"></i><span>Middle of rockfall slope</span><br>';
-  // legend_div.innerHTML += '<i style="background: ' + bottom_marker_color + '"></i><span>Bottom of slope</span><br>';
+  legend_div.innerHTML += '<i style="background: ' + top_marker_color + '"></i><span>Rockfall source. Left click to move.</span><br>';
+  legend_div.innerHTML += '<i style="background: ' + wall_color + '"></i><span>Barrier. Right click to add. Escape to reset.</span><br>';
   return legend_div;
 };
 
