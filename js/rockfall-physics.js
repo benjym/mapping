@@ -132,7 +132,7 @@ function initGraphics() {
 
 	scene = new THREE.Scene();
 	// scene.background = new THREE.Color( 0xbfd1e5 );
-    scene.background = new THREE.Color( 0xFFFFFF );
+    scene.background = new THREE.Color( 0x363636 );
 
 	camera.position.y = 50; //heightData[ terrainHalfWidth + terrainHalfDepth * terrainWidth ] * ( terrainMaxHeight - terrainMinHeight );
 
@@ -197,7 +197,7 @@ export async function getSatelliteImage(lat,lng) {
     var zoom = Math.log(c*Math.cos(top_marker._latlng.lat*Math.PI/180.)/tile_size)/Math.log(2)
     // console.log(zoom)
 
-    var path =  "https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/" + lng + "," + lat + "," + zoom + ",0/600x600?access_token=" + access_token;
+    var path =  "https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/" + lng + "," + lat + "," + zoom + ",0/1200x1200?access_token=" + access_token;
 
     const loader = new THREE.TextureLoader();
 

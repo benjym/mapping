@@ -30,7 +30,8 @@ var top_icon = L.icon({
 
 var top_marker_color = '#FFFFFF';
 var wall_color = '#E903CD';
-window.top_marker = L.marker([-34.33706548328852,150.88733074376404],{
+// window.top_marker = L.marker([-34.33706548328852,150.88733074376404],{ // wollongong
+window.top_marker = L.marker([-34.254865, 150.972253], { // Sea Cliff Bridge
     icon:top_icon
 }).addTo(map);
 
