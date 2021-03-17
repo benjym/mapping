@@ -2,7 +2,8 @@
 // var topo_server = 'http://localhost:5000/v1/srtm30m/?'
 // var proxy_server = 'https://cors-anywhere.herokuapp.com/';
 var proxy_server = '';
-var topo_server = 'http://202.161.83.242:5000/';
+// var topo_server = 'http://202.161.83.242:5000/v1/srtm30m?';
+var topo_server = 'https://data.scigem.com/v1/srtm30m?';
 
 var map = L.map('map', {
     // crs: L.CRS.EPSG4326,
