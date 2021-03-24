@@ -1,6 +1,6 @@
 import { reset_physics, updateGroundPlane } from './rockfall-physics.js';
 
-var urlParams = new URLSearchParams(paramsString);
+var urlParams = new URLSearchParams(window.location);
 if ( urlParams.has("data_source") ) {
     var data_source = urlParams.get("data_source");
 }
