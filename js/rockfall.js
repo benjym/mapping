@@ -1,11 +1,16 @@
 import { reset_physics, updateGroundPlane } from './rockfall-physics.js';
 
-// var topo_server = 'https://api.opentopodata.org/v1/srtm30m?';
-// var topo_server = 'http://localhost:5000/v1/srtm30m/?'
-// var proxy_server = 'https://cors-anywhere.herokuapp.com/';
+var urlParams = new URLSearchParams(paramsString);
+if urlParams.has("data_source") {
+    data_source = urlParams.get("data_source");
+}
+else {
+    data_source = 'srtm30m';
+}
 window.proxy_server = '';
-// window.topo_server = 'http://202.161.83.242:5000/v1/srtm30m?';
-window.topo_server = 'https://data.scigem.com:5000/v1/srtm30m?';
+window.topo_server = 'https://data.scigem.com:5000/v1/' + endpoint + '?';
+// window.topo_server = 'http://193.82.254.101:5000/v1/srtm30m?';
+
 
 var map = L.map('map', {
     // crs: L.CRS.EPSG4326,
@@ -56,7 +61,7 @@ var fos = 1;
 
 var elements = document.getElementsByClassName("updater");
 Array.from(elements).forEach(function(element) {
-      element.addEventListener('change', reset_physics);
+      element.addEventListener('input', reset_physics);
     });
 
 
@@ -74,22 +79,6 @@ window.onload = function() {
         // update_FoS();
     });
 }
-
-
-
-
-
-
-// var wmsLayer = L.tileLayer.wms('http://services.ga.gov.au/gis/services/DEM_LiDAR_5m/MapServer/WMSServer?', {
-//     layers: 'Image',
-//     opacity: 0.5,
-//     transparency: 'true',
-// }).addTo(map);
-// var wmsLayer = L.tileLayer.wms('http://gaservices.ga.gov.au/site_9/services/DEM_SRTM_1Second_Hydro_Enforced/MapServer/WMSServer?request=GetCapabilities&service=WMS').addTo(map);
-// var wmsLayer = L.tileLayer.wms('http://ows.mundialis.de/services/service?', {
-//     layers: 'TOPO-WMS'
-// }).addTo(map);
-
 
 
 function onLeftMapClick(e) {
@@ -117,12 +106,9 @@ function escapeKey(e) {
 map.on('click', onLeftMapClick);
 map.on('contextmenu', onRightMapClick);
 
-
-
-
-function transpose(a) {
-    return a[0].map(function (_, c) { return a.map(function (r) { return r[c]; }); });
-}
+// function transpose(a) {
+//     return a[0].map(function (_, c) { return a.map(function (r) { return r[c]; }); });
+// }
 
 /*Legend specific*/
 var legend = L.control({ position: "topright" });

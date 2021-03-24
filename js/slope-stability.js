@@ -1,9 +1,13 @@
-// var topo_server = 'https://api.opentopodata.org/v1/srtm30m?';
-// var topo_server = 'http://localhost:5000/v1/srtm30m/?'
-// var proxy_server = 'https://cors-anywhere.herokuapp.com/';
+var urlParams = new URLSearchParams(paramsString);
+if urlParams.has("data_source") {
+    data_source = urlParams.get("data_source");
+}
+else {
+    data_source = 'srtm30m';
+}
+
 var proxy_server = '';
-// var topo_server = 'http://202.161.83.242:5000/v1/srtm30m?';
-var topo_server = 'https://data.scigem.com/v1/srtm30m?';
+var topo_server = 'https://data.scigem.com:5000/v1/' + endpoint + '?';
 
 var map = L.map('map', {
     // crs: L.CRS.EPSG4326,
@@ -241,9 +245,9 @@ async function getElevationData(lats,lngs) {
     locs = locs.substring(0, locs.length - 1); // remove trailing |
     // fetch(topo_server + "locations="+locs )
     const response = fetch( proxy_server + topo_server + "locations=" + locs, {
-        headers: {
-      'Content-Type': 'application/json'
-    },
+        // headers: {
+      // 'Content-Type': 'application/json'
+    // },
     } )
     .then( r => r.json() )
     .then(data => {
@@ -271,7 +275,7 @@ function redrawSection() {
 
 function updateElevationGraph(l) {
     var t = d3.transition().duration(1000).ease(d3.easeLinear);
-
+    // console.log(l)
     // console.log(l)
     elev = l.map(function(d) { return {"x": haversine(d.location.lat,d.location.lng,l[0].location.lat,l[0].location.lng) , "y": d.elevation } });
     // console.log(elev);
@@ -337,7 +341,7 @@ function initialiseElevationGraph() {
         // .attr("transform", "translate(0,"+-margin.top+")")
         .attr("d", line); // 11. Calls the line generator
 
-    updateElevationGraph();
+    // updateElevationGraph();
 }
 
 

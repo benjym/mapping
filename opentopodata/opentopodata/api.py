@@ -2,6 +2,7 @@ import logging
 import os
 
 from flask import Flask, jsonify, request
+from flask import render_template
 from flask_caching import Cache
 import polyline
 
@@ -125,35 +126,35 @@ def _parse_region (locations, max_n_locations):
         raise ClientError(msg)
     locations = locations.strip(";").split(";")
     if (len(locations) != 3) : msg='Not an appropriate region command: region=lat1,lon1;lat2,lon2;nx,ny' ;
-    
+
     #if n_locations > max_n_locations:
     #    msg = f"Too many locations provided ({n_locations}), the limit is {max_n_locations}."
     #    raise ClientError(msg)
-    
-    parts = locations[0].split(",", 1) 
+
+    parts = locations[0].split(",", 1)
     try:
-        lat1 = float(parts[0]) ; 
-        long1 = float(parts[1]) ; 
+        lat1 = float(parts[0]) ;
+        long1 = float(parts[1]) ;
     except ValueError:
         msg = f"Unable to parse location '{locations[0]}'."
         raise ClientError(msg)
-    
-    parts = locations[1].split(",", 1) 
+
+    parts = locations[1].split(",", 1)
     try:
-        lat2 = float(parts[0]) ; 
-        long2 = float(parts[1]) ; 
+        lat2 = float(parts[0]) ;
+        long2 = float(parts[1]) ;
     except ValueError:
         msg = f"Unable to parse location '{locations[0]}'."
         raise ClientError(msg)
-    
-    parts = locations[2].split(",", 1) 
+
+    parts = locations[2].split(",", 1)
     try:
-        nx = int(parts[0]) ; 
-        ny = int(parts[1]) ; 
+        nx = int(parts[0]) ;
+        ny = int(parts[1]) ;
     except ValueError:
         msg = f"Unable to parse nx or ny '{locations[0]}'."
         raise ClientError(msg)
-    
+
     # Check bounds.
     if not (LAT_MIN <= lat1 <= LAT_MAX):
         msg = f"Unable to parse location '{lat1}'."
@@ -182,14 +183,14 @@ def _parse_region (locations, max_n_locations):
         msg += f" Longitude must be between {LON_MIN} and {LON_MAX}."
         raise ClientError(msg)
 
-    dx = (lat2-lat1)/(nx-1) 
+    dx = (lat2-lat1)/(nx-1)
     dy = (long2-long1)/(ny-1)
     lats = []
     lons = []
     for j in range(ny):
-        lats.extend([lat1 + i*dx for i in range(nx)]) 
+        lats.extend([lat1 + i*dx for i in range(nx)])
         lons.extend([long1 + j*dy for i in range(nx)])
-    
+
     if len(lats) > max_n_locations:
         msg = f"Too many locations provided ({len(lats)}), the limit is {max_n_locations}."
         raise ClientError(msg)
@@ -331,10 +332,11 @@ def _get_dataset(name):
 @app.route("/")
 @app.route("/v1/")
 def get_help_message(methods=["GET", "OPTIONS", "HEAD"]):
-    msg = "No dataset name provided."
-    msg += " Try a url like '/v1/test-dataset?locations=-10,120' to get started,"
-    msg += " and see https://www.opentopodata.org for full documentation."
-    return jsonify({"status": "INVALID_REQUEST", "error": msg}), 404
+    # msg = "No dataset name provided."
+    # msg += " Try a url like '/v1/test-dataset?locations=-10,120' to get started,"
+    # msg += " and see https://www.opentopodata.org for full documentation."
+    # return jsonify({"status": "INVALID_REQUEST", "error": msg}), 404
+    return render_template("index.html")
 
 
 @app.route("/health")
@@ -365,9 +367,9 @@ def get_elevation(dataset_name, status='OK'):
         interpolation = request.args.get("interpolation", DEFAULT_INTERPOLATION_METHOD)
         interpolation = _validate_interpolation(interpolation)
         locations = request.args.get("locations")
-        if locations==None : 
+        if locations==None :
             locations = request.args.get("region")
-            lats, lons = _parse_region (locations, _load_config()["max_locations_per_request"]) 
+            lats, lons = _parse_region (locations, _load_config()["max_locations_per_request"])
         else:
             lats, lons = _parse_locations(
                 locations, _load_config()["max_locations_per_request"]
@@ -376,7 +378,7 @@ def get_elevation(dataset_name, status='OK'):
         # Get the z values.
         dataset = _get_dataset(dataset_name)
         elevations = backend.get_elevation(lats, lons, dataset, interpolation)
-        
+
         if dataset_name != 'srtm30m' and [elevations[i]==elevations[i] for i in range(len(elevations))].count(False): # of nans
             return(get_elevation('srtm30m', status='FALLBACK')) ;
 

@@ -14,6 +14,8 @@
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <!-- <script src="https://code.jquery.com/jquery-3.5.1.min.js" crossorigin="anonymous"></script> -->
     <script src="js/slope-stability.js" type="module"></script>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet">
     <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css"> -->
     <!-- <script src="js/ac7cd0e05d.js"></script> -->
     <link rel="preconnect" href="https://fonts.gstatic.com">
@@ -32,13 +34,13 @@
                 <option value="taylor">Taylor charts</option>
             </select><br>
             Specific weight &gamma; (kN.m<sup>3</sup>)
-            <div class="slider">0 <input type="range" id="G_s" value="20" min="0" max="50" step="1" oninput="Gs_out.value = G_s.value" class="updater"> <output id="Gs_out">20</output> </div>
+            <div class="slider">0 <input type="range" id="G_s" value="20" min="0" max="50" step="1" oninput="Gs_out.value = G_s.value" class="updater"> <output id="Gs_out">20</output> </div><br>
             Cohesion c (kN.m<sup>2</sup>)
-            <div class="slider">0 <input type="range" id="c" value="5" min="0" max="50" oninput="c_out.value = c.value" class="updater"> <output id="c_out"> 5</output> </div>
+            <div class="slider">0 <input type="range" id="c" value="5" min="0" max="50" oninput="c_out.value = c.value" class="updater"> <output id="c_out"> 5</output> </div><br>
             Friction angle &phi; (degree)
-            <div class="slider">0 <input type="range" id="phi" value="30" min="0" max="90" oninput="phi_out.value = phi.value" class="updater"> <output id="phi_out"> 30</output></div>
+            <div class="slider">0 <input type="range" id="phi" value="30" min="0" max="90" oninput="phi_out.value = phi.value" class="updater"> <output id="phi_out"> 30</output></div><br>
             <span id="rock-depth">Rock depth d (m)</span></a>
-            <span id="rock-depth-slider"><div class="slider">0 <input type="range" id="H" value="10" min="0" max="100" oninput="H_out.value = H.value" class="updater"> <output id="H_out">10 </output></div></span>
+            <span id="rock-depth-slider"><div class="slider">0 <input type="range" id="H" value="10" min="0" max="100" oninput="H_out.value = H.value" class="updater"> <output id="H_out">10 </output></div></span><br>
             <span id="watertable">Water table depth dw (m)</span></a>
             <span id="watertable-slider"><div class="slider">0 <input type="range" id="dw" value="10" min="0" max="100" oninput="dw_out.value = dw.value" class="updater"> <output id="dw_out">10 </output></div></span> <br><br>
 
