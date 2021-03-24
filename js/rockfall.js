@@ -7,6 +7,12 @@ if ( urlParams.has("data_source") ) {
 else {
     var data_source = 'srtm30m';
 }
+if ( urlParams.has("loc") ) {
+    var initial_loc = urlParams.get("loc").split(",");
+}
+else {
+    var initial_loc = [-34.254865, 150.972253];
+}
 window.proxy_server = '';
 window.topo_server = 'https://data.scigem.com:5000/v1/' + data_source + '?';
 
@@ -36,7 +42,7 @@ var top_icon = L.icon({
 var top_marker_color = '#FFFFFF';
 var wall_color = '#E903CD';
 // window.top_marker = L.marker([-34.33706548328852,150.88733074376404],{ // wollongong
-window.top_marker = L.marker([-34.254865, 150.972253], { // Sea Cliff Bridge
+window.top_marker = L.marker(initial_loc, { // Sea Cliff Bridge
     icon:top_icon
 }).addTo(map);
 

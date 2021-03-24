@@ -5,6 +5,18 @@ if ( urlParams.has("data_source") ) {
 else {
     var data_source = 'srtm30m';
 }
+if ( urlParams.has("top") ) {
+    var initial_top_marker = urlParams.get("top").split(",");
+}
+else {
+    var initial_top_marker = [-34.33606548328852,150.88733074376404];
+}
+if ( urlParams.has("bot") ) {
+    var initial_bot_marker = urlParams.get("bot").split(",");
+}
+else {
+    var initial_bot_marker = [-34.33680965830653,150.88973520047998];
+}
 window.proxy_server = '';
 window.topo_server = 'https://data.scigem.com:5000/v1/' + data_source + '?';
 
@@ -83,10 +95,10 @@ var bottom_icon = L.icon({
 var top_marker_color = '#894dff';
 var bottom_marker_color = '#ffcfff';
 
-var top_marker = L.marker([-34.33606548328852,150.88733074376404],{
+var top_marker = L.marker(initial_top_marker,{
     icon:top_icon
 }).addTo(map);
-var bottom_marker = L.marker([-34.33680965830653,150.88973520047998],{
+var bottom_marker = L.marker(initial_bot_marker,{
     icon:bottom_icon
 }).addTo(map);
 

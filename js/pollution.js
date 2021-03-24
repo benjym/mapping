@@ -34,9 +34,33 @@ var Iz = [  4.679, -1.999,-2.341 ,-3.186 ,-3.783 ,-4.490 ];
 var Jz = [-1.7172, 0.8752,0.9477 ,1.1737 ,1.3010 ,1.4024 ];
 var Kz = [ 0.2770, 0.0136,-0.0020,-0.0316,-0.0450,-0.0540];
 
+var initial_loc, initial_loc1, initial_loc2
 const urlParams = new URLSearchParams(window.location.search);
-if ( urlParams.has('source') ) { source = urlParams.get('source') }
-else { source = 'point' }
+if ( urlParams.has('source') ) {
+    source = urlParams.get('source');
+    if ( urlParams.has("loc") ) {
+        initial_loc = urlParams.get("loc").split(",");
+    }
+    else {
+        initial_loc = [-33.891,151.1935];
+    }
+ }
+else {
+    source = 'point';
+    if ( urlParams.has("loc1") ) {
+        initial_loc1 = urlParams.get("loc2").split(",");
+    }
+    else {
+        initial_loc1 = [-34.33606548328852,150.88733074376404];
+    }
+    if ( urlParams.has("loc1") ) {
+        initial_loc2 = urlParams.get("loc2").split(",");
+    }
+    else {
+        initial_loc2 = [-34.33680965830653,150.88973520047998];
+    }
+ }
+
 
 function onLeftMapClick(e) {
     marker.setLatLng(e.latlng);
@@ -50,9 +74,11 @@ function onRightMapClick(e) {
 
 if ( source === 'point' ) {
     map.on('click', onLeftMapClick);
-    var marker = L.marker([-33.891,151.1935],{
+    var marker = L.marker(initial_loc,{
         icon:customIcon // tried but didn't make something good - worth continuing with!
     }).addTo(map);//.bindPopup("I am an orange leaf.");
+    map.setView([marker._latlng.lat,marker._latlng.lng], 17) // zoom the map to the polygon
+
 }
 else if ( source === 'line' ) {
     map.on('click', onLeftMapClick);
@@ -72,12 +98,13 @@ else if ( source === 'line' ) {
     var top_marker_color = '#894dff';
     var bottom_marker_color = '#ffcfff';
 
-    var top_marker = L.marker([-34.33606548328852,150.88733074376404],{
+    var top_marker = L.marker(initial_loc1,{
         icon:top_icon
     }).addTo(map);
-    var bottom_marker = L.marker([-34.33680965830653,150.88973520047998],{
+    var bottom_marker = L.marker(initial_loc2,{
         icon:bottom_icon
     }).addTo(map);
+    map.setView([(top_marker._latlng.lat + bottom_marker._latlng.lat)/2.,(top_marker._latlng.lng + bottom_marker._latlng.lng)/2.], 15)
 }
 else if ( source === 'area' ) {
     map.on('click', onLeftMapClick);
