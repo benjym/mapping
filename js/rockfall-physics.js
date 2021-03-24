@@ -11,8 +11,8 @@ import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/Orb
 // Heightfield parameters
 var terrainWidthExtents = 200;
 var terrainDepthExtents = 200;
-var terrainWidth = 10;//128;
-var terrainDepth = 10;//128;
+var terrainWidth = window.resolution;//128;
+var terrainDepth = window.resolution;//128;
 // var terrainHalfWidth = terrainWidth / 2;
 // var terrainHalfDepth = terrainDepth / 2;
 var terrainMaxHeight = 20;
