@@ -1,15 +1,14 @@
 import { reset_physics, updateGroundPlane } from './rockfall-physics.js';
 
 var urlParams = new URLSearchParams(paramsString);
-if urlParams.has("data_source") {
-    data_source = urlParams.get("data_source");
+if ( urlParams.has("data_source") ) {
+    var data_source = urlParams.get("data_source");
 }
 else {
-    data_source = 'srtm30m';
+    var data_source = 'srtm30m';
 }
 window.proxy_server = '';
-window.topo_server = 'https://data.scigem.com:5000/v1/' + endpoint + '?';
-// window.topo_server = 'http://193.82.254.101:5000/v1/srtm30m?';
+window.topo_server = 'https://data.scigem.com:5000/v1/' + data_source + '?';
 
 
 var map = L.map('map', {
