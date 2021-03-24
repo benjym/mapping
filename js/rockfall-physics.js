@@ -11,8 +11,9 @@ import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/Orb
 // Heightfield parameters
 var terrainWidthExtents = 200;
 var terrainDepthExtents = 200;
-var terrainWidth = window.resolution;//128;
-var terrainDepth = window.resolution;//128;
+var terrainWidth = 10;//128;
+var terrainDepth = 10;//128;
+
 // var terrainHalfWidth = terrainWidth / 2;
 // var terrainHalfDepth = terrainDepth / 2;
 var terrainMaxHeight = 20;
@@ -42,8 +43,6 @@ var groundShape;
 var colGroupPlane = 1;
 var colGroupParticles = 2;
 
-var heightData = new Float32Array( terrainWidth * terrainDepth );
-for (var p=0; p<(terrainWidth*terrainDepth); p++ ) { heightData[p] = 0; p++}
 
 var ammoHeightData = null;
 
@@ -53,6 +52,16 @@ var timeNextSpawn = time + objectTimePeriod;
 var maxNumObjects = 1000;
 
 const urlParams = new URLSearchParams(window.location.search);
+if ( urlParams.has("resolution") ) {
+    console.log(terrainWidth)
+    terrainWidth = parseInt(urlParams.get("resolution"));
+    terrainDepth = parseInt(urlParams.get("resolution"));
+    console.log(terrainWidth)
+}
+
+var heightData = new Float32Array( terrainWidth * terrainDepth );
+for (var p=0; p<(terrainWidth*terrainDepth); p++ ) { heightData[p] = 0; p++}
+
 
 // var restitution = 0.7;
 // var friction = 0.5;

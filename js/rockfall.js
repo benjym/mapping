@@ -13,12 +13,6 @@ if ( urlParams.has("loc") ) {
 else {
     var initial_loc = [-34.254865, 150.972253];
 }
-if ( urlParams.has("resolution") ) {
-    window.resolution = parseInt(urlParams.get("resolution"));
-}
-else {
-    window.resolution = 10;
-}
 window.proxy_server = '';
 window.topo_server = 'https://data.scigem.com:5000/v1/' + data_source + '?';
 
