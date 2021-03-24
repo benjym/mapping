@@ -34,36 +34,34 @@ var Iz = [  4.679, -1.999,-2.341 ,-3.186 ,-3.783 ,-4.490 ];
 var Jz = [-1.7172, 0.8752,0.9477 ,1.1737 ,1.3010 ,1.4024 ];
 var Kz = [ 0.2770, 0.0136,-0.0020,-0.0316,-0.0450,-0.0540];
 
-var initial_loc, initial_loc1, initial_loc2
+var initial_loc1, initial_loc2
 const urlParams = new URLSearchParams(window.location.search);
 if ( urlParams.has('source') ) {
     source = urlParams.get('source');
-    if ( urlParams.has("loc") ) {
-        initial_loc = urlParams.get("loc").split(",");
-    }
-    else {
-        initial_loc = [-33.891,151.1935];
-    }
  }
 else {
     source = 'point';
-    if ( urlParams.has("loc1") ) {
-        initial_loc1 = urlParams.get("loc2").split(",");
-    }
-    else {
-        initial_loc1 = [-34.33606548328852,150.88733074376404];
-    }
-    if ( urlParams.has("loc1") ) {
-        initial_loc2 = urlParams.get("loc2").split(",");
-    }
-    else {
-        initial_loc2 = [-34.33680965830653,150.88973520047998];
-    }
+ }
+
+ if ( urlParams.has("loc1") ) {
+     initial_loc1 = urlParams.get("loc1").split(",");
+ }
+ else {
+     if ( source == 'point' ) { initial_loc1 = [-33.891,151.1935]; }
+     else { initial_loc1 = [-34.33606548328852,150.88733074376404]; }
+ }
+ if ( urlParams.has("loc2") ) {
+     initial_loc2 = urlParams.get("loc2").split(",");
+ }
+ else {
+     initial_loc2 = [-34.33680965830653,150.88973520047998];
  }
 
 
 function onLeftMapClick(e) {
-    marker.setLatLng(e.latlng);
+    top_marker.setLatLng(e.latlng);
+    urlParams.set("loc1",String(e.latlng.lat) + "," + String(e.latlng.lng))
+
     redrawContours();
 }
 function onRightMapClick(e) {
@@ -74,10 +72,10 @@ function onRightMapClick(e) {
 
 if ( source === 'point' ) {
     map.on('click', onLeftMapClick);
-    var marker = L.marker(initial_loc,{
+    var top_marker = L.marker(initial_loc1,{
         icon:customIcon // tried but didn't make something good - worth continuing with!
     }).addTo(map);//.bindPopup("I am an orange leaf.");
-    map.setView([marker._latlng.lat,marker._latlng.lng], 17) // zoom the map to the polygon
+    map.setView([top_marker._latlng.lat,top_marker._latlng.lng], 17) // zoom the map to the polygon
 
 }
 else if ( source === 'line' ) {
@@ -187,11 +185,11 @@ function redrawContoursFromLine() {
                 valid = false;
             }
             else if ( isFinite(y_plus) ) {
-                lat_p = marker._latlng.lat + (-x*Math.sin(theta) + y_plus*Math.cos(theta))/111111.;
-                lon_p = marker._latlng.lng + ( x*Math.cos(theta) + y_plus*Math.sin(theta))/(111111.*Math.cos(marker._latlng.lat*Math.PI/180.));
+                lat_p = top_marker._latlng.lat + (-x*Math.sin(theta) + y_plus*Math.cos(theta))/111111.;
+                lon_p = top_marker._latlng.lng + ( x*Math.cos(theta) + y_plus*Math.sin(theta))/(111111.*Math.cos(top_marker._latlng.lat*Math.PI/180.));
 
-                lat_m = marker._latlng.lat + (-x*Math.sin(theta) - y_plus*Math.cos(theta))/111111.;
-                lon_m = marker._latlng.lng + ( x*Math.cos(theta) - y_plus*Math.sin(theta))/(111111.*Math.cos(marker._latlng.lat*Math.PI/180.));
+                lat_m = top_marker._latlng.lat + (-x*Math.sin(theta) - y_plus*Math.cos(theta))/111111.;
+                lon_m = top_marker._latlng.lng + ( x*Math.cos(theta) - y_plus*Math.sin(theta))/(111111.*Math.cos(top_marker._latlng.lat*Math.PI/180.));
 
                 x_p_vertices.push(lat_p);
                 x_m_vertices.push(lat_m);
@@ -277,11 +275,11 @@ function redrawContoursFromPoint() {
                 valid = false;
             }
             else if ( isFinite(y_plus) ) {
-                lat_p = marker._latlng.lat + (-x*Math.sin(theta) + y_plus*Math.cos(theta))/111111.;
-                lon_p = marker._latlng.lng + ( x*Math.cos(theta) + y_plus*Math.sin(theta))/(111111.*Math.cos(marker._latlng.lat*Math.PI/180.));
+                lat_p = top_marker._latlng.lat + (-x*Math.sin(theta) + y_plus*Math.cos(theta))/111111.;
+                lon_p = top_marker._latlng.lng + ( x*Math.cos(theta) + y_plus*Math.sin(theta))/(111111.*Math.cos(top_marker._latlng.lat*Math.PI/180.));
 
-                lat_m = marker._latlng.lat + (-x*Math.sin(theta) - y_plus*Math.cos(theta))/111111.;
-                lon_m = marker._latlng.lng + ( x*Math.cos(theta) - y_plus*Math.sin(theta))/(111111.*Math.cos(marker._latlng.lat*Math.PI/180.));
+                lat_m = top_marker._latlng.lat + (-x*Math.sin(theta) - y_plus*Math.cos(theta))/111111.;
+                lon_m = top_marker._latlng.lng + ( x*Math.cos(theta) - y_plus*Math.sin(theta))/(111111.*Math.cos(top_marker._latlng.lat*Math.PI/180.));
 
                 x_p_vertices.push(lat_p);
                 x_m_vertices.push(lat_m);
