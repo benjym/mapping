@@ -53,10 +53,10 @@ var maxNumObjects = 1000;
 
 const urlParams = new URLSearchParams(window.location.search);
 if ( urlParams.has("resolution") ) {
-    console.log(terrainWidth)
+    // console.log(terrainWidth)
     terrainWidth = parseInt(urlParams.get("resolution"));
     terrainDepth = parseInt(urlParams.get("resolution"));
-    console.log(terrainWidth)
+    // console.log(terrainWidth)
 }
 
 var heightData = new Float32Array( terrainWidth * terrainDepth );
