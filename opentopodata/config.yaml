@@ -3,7 +3,7 @@
 
 
 # 400 error will be thrown above this limit.
-max_locations_per_request: 100 
+max_locations_per_request: 1000 
 
 # CORS header. Should be None for no CORS, '*' for all domains, or a url with
 # protocol, domain, and port ('https://api.example.com/'). Default is null.
@@ -12,11 +12,21 @@ access_control_allow_origin: null
 datasets:
 
 # A small testing dataset is included in the repo.
+- name: lidar2m
+  path: /media/franz/Koala/LiDAR2m/full/
+  resolution: 0.066
+  
 - name: lidar5m
   path: /media/franz/Koala/LiDAR5m/full/
+  resolution: 0.167
 
+- name: cop30m
+  path: /media/franz/Koala/COP_DEMGLO30/tifs 
+  resolution: 1 
+  
 - name: srtm30m
   path: /media/franz/Koala/SRTMGL_OpenTopoData/geotiff/
+  resolution: 1
   fallback: true
   
 # Example config for 90 metre SRTM.

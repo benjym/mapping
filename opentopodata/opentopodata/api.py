@@ -5,6 +5,7 @@ from flask import Flask, jsonify, request
 from flask import render_template
 from flask_caching import Cache
 import polyline
+import numpy as np
 
 from opentopodata import backend, config
 
@@ -19,6 +20,13 @@ LAT_MAX = 90
 LON_MIN = -180
 LON_MAX = 180
 
+class InputError(ValueError):
+    """Invalid input data.
+
+    The error message should be safe to pass back to the client.
+    """
+
+    pass
 
 # Memcache is used to store the latlon -> filename lookups, which can take a
 # while to compute for datasets made up of many files. Memcache needs to be
@@ -300,7 +308,6 @@ def _parse_latlon_locations(locations, max_n_locations):
 
     return lats, lons
 
-
 @cache.cached(key_prefix="_load_datasets")
 def _load_datasets():
     """Load datasets defined in config
@@ -351,6 +358,87 @@ def get_health_status(methods=["GET", "OPTIONS", "HEAD"]):
         return jsonify(data), 500
 
 
+
+@app.route("/v1/autodataset", methods=["GET", "OPTIONS", "HEAD"])
+def get_elevation_auto(status='OK'):
+    """Calculate the elevation for the given locations.
+
+    Args:
+        dataset_name: String matching a dataset in the config file.
+
+    Returns:
+        Response.
+    """
+
+    try:
+        # Parse inputs.
+        interpolation = request.args.get("interpolation", DEFAULT_INTERPOLATION_METHOD)
+        interpolation = _validate_interpolation(interpolation)
+        locations = request.args.get("locations")
+        if locations==None :
+            locations = request.args.get("region")
+            lats, lons = _parse_region (locations, _load_config()["max_locations_per_request"])
+        else:
+            data = {"status": "FAIL", "reason": "supports only region"}
+            return jsonify(data)
+
+        # Get the z values.
+        #dataset = _get_dataset(dataset_name)
+        datasets = _load_datasets()
+        minres = min (abs(lats[1]-lats[0]), abs(np.unique(lons)[1]-np.unique(lons)[0])) * 3600 ; 
+        numdatasets = len(list(datasets)) ;
+        for i in range(0, numdatasets):
+            if (datasets[list(datasets)[i]].resolution > minres):
+                break;
+        i=i-1 ; 
+        if i<0: i=0 ; 
+        
+        keepgoing = True ; 
+        while keepgoing:
+            try: 
+                elevations = backend.get_elevation(lats, lons, datasets[list(datasets)[i]], interpolation)
+            except (ClientError, backend.InputError) : 
+                i = i+1
+                continue ;
+            datasetused = list(datasets)[i]
+            
+            if [elevations[i]==elevations[i] for i in range(len(elevations))].count(False):
+                i = i+1 ; 
+            else :
+                keepgoing = False ; 
+            if i>=numdatasets : 
+                status = 'MISSING DATA' ; 
+                keepgoing = False ; 
+
+            if i<numdatasets-1 and [elevations[i]==elevations[i] for i in range(len(elevations))].count(False): # of nans
+                return(get_elevation('srtm30m', status='FALLBACK')) ;
+
+        ## Build response.
+        results = []
+        if 'verbose' in request.args:
+            for z, lat, lon in zip(elevations, lats, lons):
+                results.append({"elevation": z, "location": {"lat": lat, "lng": lon}})
+        else:
+            results.append({"elevation": elevations})
+                
+        data = {"status": status, "dataset": datasetused, "results": results}
+        return jsonify(data)
+
+    except (ClientError, backend.InputError) as e:
+        return jsonify({"status": "INVALID_REQUEST", "error": str(e)}), 400
+    except config.ConfigError as e:
+        return (
+            jsonify({"status": "SERVER_ERROR", "error": "Config Error: {}".format(e)}),
+            500,
+        )
+    except Exception as e:
+        if app.debug:
+            raise e
+        app.logger.error(e)
+        msg = "Server error, please retry request."
+        return jsonify({"status": "SERVER_ERROR", "error": msg}), 500
+
+
 @app.route("/v1/<dataset_name>", methods=["GET", "OPTIONS", "HEAD"])
 def get_elevation(dataset_name, status='OK'):
     """Calculate the elevation for the given locations.
@@ -384,8 +472,11 @@ def get_elevation(dataset_name, status='OK'):
 
         # Build response.
         results = []
-        for z, lat, lon in zip(elevations, lats, lons):
-            results.append({"elevation": z, "location": {"lat": lat, "lng": lon}})
+        if 'verbose' in request.args:
+            for z, lat, lon in zip(elevations, lats, lons):
+                results.append({"elevation": z, "location": {"lat": lat, "lng": lon}})
+        else:
+            results.append({"elevation": elevations})
         data = {"status": status, "results": results}
         return jsonify(data)
 

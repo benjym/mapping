@@ -175,6 +175,11 @@ class Dataset:
         if not all_rasters:
             raise ConfigError("Dataset folder '{}' seems to be empty.".format(path))
 
+
+        # reading the dataset resolution
+        resolution = 1 ; 
+        resolution = kwargs.get('resolution') ; 
+
         # Check for single file.
         if len(all_rasters) == 1:
             tile_path = all_rasters[0]
@@ -183,7 +188,7 @@ class Dataset:
                     pass
             except rasterio.RasterioIOError as e:
                 raise ConfigError("Unsupported filetype for '{}'.".format(tile_path))
-            return SingleFileDataset(name, tile_path=tile_path)
+            return SingleFileDataset(name, tile_path=tile_path, resolution=resolution)
 
         # Check for SRTM-style naming.
         all_filenames = [os.path.basename(p) for p in all_rasters]
@@ -200,6 +205,7 @@ class Dataset:
                 tile_paths=all_rasters,
                 filename_epsg=filename_epsg,
                 filename_tile_size=filename_tile_size,
+                resolution=resolution,
             )
 
         raise ConfigError(
@@ -213,7 +219,7 @@ class Dataset:
 
 
 class SingleFileDataset(Dataset):
-    def __init__(self, name, tile_path):
+    def __init__(self, name, tile_path, resolution=1):
         """A dataset consisting of a single raster file.
 
         Args:
@@ -221,6 +227,7 @@ class SingleFileDataset(Dataset):
             tile_path: String path to single raster file.
         """
         self.name = name
+        self.resolution = resolution
         self.tile_path = tile_path
 
     def location_paths(self, lats, lons):
@@ -237,7 +244,7 @@ class SingleFileDataset(Dataset):
 
 
 class TiledDataset(Dataset):
-    def __init__(self, name, path, tile_paths, filename_epsg, filename_tile_size):
+    def __init__(self, name, path, tile_paths, filename_epsg, filename_tile_size, resolution=1):
         """A dataset of files named in SRTM format.
 
         Each file should be a square tile, named like N50W121 for the lower left (SW) corner.
@@ -256,6 +263,7 @@ class TiledDataset(Dataset):
         """
         self.name = name
         self.path = path
+        self.resolution = resolution ;
         self.filename_epsg = filename_epsg
         self.filename_tile_size = filename_tile_size
 

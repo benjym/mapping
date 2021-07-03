@@ -116,6 +116,7 @@ def _get_elevation_from_path(lats, lons, path, interpolation):
 
         # Check bounds.
         _validate_points_lie_within_raster(xs, ys, lats, lons, f.bounds, f.res)
+        
         rows, cols = tuple(f.index(xs, ys, op=_noop))
 
         # Offset by 0.5 to convert from center coords (provided by
