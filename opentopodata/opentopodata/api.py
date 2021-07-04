@@ -359,7 +359,7 @@ def get_health_status(methods=["GET", "OPTIONS", "HEAD"]):
 
 
 
-@app.route("/v1/autodataset", methods=["GET", "OPTIONS", "HEAD"])
+@app.route("/elevation", methods=["GET", "OPTIONS", "HEAD"])
 def get_elevation_auto(status='OK'):
     """Calculate the elevation for the given locations.
 
@@ -379,19 +379,33 @@ def get_elevation_auto(status='OK'):
             locations = request.args.get("region")
             lats, lons = _parse_region (locations, _load_config()["max_locations_per_request"])
         else:
-            data = {"status": "FAIL", "reason": "supports only region"}
-            return jsonify(data)
+            lats, lons = _parse_locations(
+                locations, _load_config()["max_locations_per_request"]
+            )
+            #data = {"status": "FAIL", "reason": "supports only region"}
+            #return jsonify(data)
 
         # Get the z values.
         #dataset = _get_dataset(dataset_name)
         datasets = _load_datasets()
-        minres = min (abs(lats[1]-lats[0]), abs(np.unique(lons)[1]-np.unique(lons)[0])) * 3600 ; 
         numdatasets = len(list(datasets)) ;
-        for i in range(0, numdatasets):
-            if (datasets[list(datasets)[i]].resolution > minres):
-                break;
-        i=i-1 ; 
-        if i<0: i=0 ; 
+        if 'maxres' in request.args:
+            i=0
+        else if 'dataset' in request.args:
+            reqdataset = request.args.get("dataset")
+            for i in range(0, numdatasets):
+                if (datasets[list(datasets)[i]].name == reqdataset):
+                    break;
+            i=i-1 ; 
+            if i<0: i=0 ; 
+            
+        else
+            minres = min (abs(lats[1]-lats[0]), abs(np.unique(lons)[1]-np.unique(lons)[0])) * 3600 ; 
+            for i in range(0, numdatasets):
+                if (datasets[list(datasets)[i]].resolution > minres):
+                    break;
+            i=i-1 ; 
+            if i<0: i=0 ; 
         
         keepgoing = True ; 
         while keepgoing:
