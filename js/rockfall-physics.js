@@ -11,8 +11,8 @@ import { OrbitControls } from 'https://cdn.skypack.dev/three@0.120.0/examples/js
 // Heightfield parameters
 var terrainWidthExtents = 200;
 var terrainDepthExtents = 200;
-var terrainWidth = 10;//128;
-var terrainDepth = 10;//128;
+var terrainWidth = 11;//128;
+var terrainDepth = 11;//128;
 
 // var terrainHalfWidth = terrainWidth / 2;
 // var terrainHalfDepth = terrainDepth / 2;
@@ -298,10 +298,11 @@ async function getHeightFromServer(lat, lon) {
               heightData[i*terrainWidth + j] = parseFloat(data.results[0].elevation[j*terrainWidth + i]);
           }
       }
-      var midvalue = (heightData[(terrainWidth/2  )*terrainDepth + terrainDepth/2] +
-                      heightData[(terrainWidth/2  )*terrainDepth + terrainDepth/2-1] +
-                      heightData[(terrainWidth/2-1)*terrainDepth + terrainDepth/2] +
-                      heightData[(terrainWidth/2-1)*terrainDepth + terrainDepth/2-1])/4.;
+      // var midvalue = (heightData[(terrainWidth/2  )*terrainDepth + terrainDepth/2] +
+      //                 heightData[(terrainWidth/2  )*terrainDepth + terrainDepth/2-1] +
+      //                 heightData[(terrainWidth/2-1)*terrainDepth + terrainDepth/2] +
+      //                 heightData[(terrainWidth/2-1)*terrainDepth + terrainDepth/2-1])/4.;
+      var midvalue = heightData[Math.floor(heightData.length/2) + 0]; // MUST BE AN ODD NUMBER OF GRID POINTS IN (EACH?) DIRECTION!!
       heightData = heightData.map(function(element){ return (element - midvalue); });
     })
     .catch( error => {
@@ -394,7 +395,7 @@ function createTerrainShape(heightData) {
 	var scaleZ = terrainDepthExtents / ( terrainDepth - 1 );
 	heightFieldShape.setLocalScaling( new Ammo.btVector3( scaleX, 1, scaleZ ) );
 
-	heightFieldShape.setMargin( 0.01 );
+	heightFieldShape.setMargin( 0.001 );
 
 	return heightFieldShape;
 
