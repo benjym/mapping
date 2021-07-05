@@ -3,7 +3,7 @@ if ( urlParams.has("data_source") ) {
     var data_source = urlParams.get("data_source");
 }
 else {
-    var data_source = 'srtm30m';
+    var data_source = 'cop30m';
 }
 if ( urlParams.has("top") ) {
     var initial_top_marker = urlParams.get("top").split(",");
@@ -18,7 +18,7 @@ else {
     var initial_bot_marker = [-34.33680965830653,150.88973520047998];
 }
 window.proxy_server = '';
-window.topo_server = 'https://data.scigem.com:5000/v1/' + data_source + '?';
+window.topo_server = 'https://data.scigem.com:5000/elevation?verbose&';//'/' + data_source + '?';
 
 var map = L.map('map', {
     // crs: L.CRS.EPSG4326,
@@ -287,7 +287,7 @@ function redrawSection() {
 function updateElevationGraph(l) {
     var t = d3.transition().duration(1000).ease(d3.easeLinear);
     // console.log(l)
-    // console.log(l)
+    console.log(l)
     elev = l.map(function(d) { return {"x": haversine(d.location.lat,d.location.lng,l[0].location.lat,l[0].location.lng) , "y": d.elevation } });
     // console.log(elev);
     // console.log(elev.map( function(d) {return d.y.toString() }).join())

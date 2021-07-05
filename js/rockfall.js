@@ -5,7 +5,7 @@ if ( urlParams.has("data_source") ) {
     var data_source = urlParams.get("data_source");
 }
 else {
-    var data_source = 'srtm30m';
+    var data_source = 'cop30m';
 }
 if ( urlParams.has("loc") ) {
     var initial_loc = urlParams.get("loc").split(",");
@@ -14,7 +14,7 @@ else {
     var initial_loc = [-34.254865, 150.972253];
 }
 window.proxy_server = '';
-window.topo_server = 'https://data.scigem.com:5000/v1/' + data_source + '?';
+window.topo_server = 'https://data.scigem.com:5000/elevation?';// + data_source + '?';
 
 
 var map = L.map('map', {

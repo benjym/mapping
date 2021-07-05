@@ -291,16 +291,17 @@ async function getHeightFromServer(lat, lon) {
     var response = await fetch( path, { } )
     .then( r => r.json() )
     .then(data => {
+      console.log('Got data from: ' + data.dataset)
       var p = 0;
       for ( var i=0; i<terrainWidth; i++ ) {
           for ( var j=0; j<terrainDepth; j++ ) {
-              heightData[i*terrainWidth + j] = parseFloat(data.results[j*terrainWidth + i].elevation);
+              heightData[i*terrainWidth + j] = parseFloat(data.results[0].elevation[j*terrainWidth + i]);
           }
       }
       var midvalue = (heightData[(terrainWidth/2  )*terrainDepth + terrainDepth/2] +
-                      heightData[(terrainWidth/2  )*terrainDepth + terrainDepth/2 - 1] +
+                      heightData[(terrainWidth/2  )*terrainDepth + terrainDepth/2-1] +
                       heightData[(terrainWidth/2-1)*terrainDepth + terrainDepth/2] +
-                      heightData[(terrainWidth/2-1)*terrainDepth + terrainDepth/2 - 1])/4.;
+                      heightData[(terrainWidth/2-1)*terrainDepth + terrainDepth/2-1])/4.;
       heightData = heightData.map(function(element){ return (element - midvalue); });
     })
     .catch( error => {
