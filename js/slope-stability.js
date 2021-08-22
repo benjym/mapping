@@ -194,8 +194,8 @@ function update_map ()
 function update_FoS() {
     import("./slope-models/"+stability.value+".js").then(module => {
         slope_stab_model = module;
-        var slope = Math.atan2(Math.abs(elev[0].y - elev[n-1].y), Math.abs(elev[0].x - elev[n-1].x)) ;
         var n = elev.length ;
+        var slope = Math.atan2(Math.abs(elev[0].y - elev[n-1].y), Math.abs(elev[0].x - elev[n-1].x)) ;
         var maxheight = elev[0].y ;
         var minheight = elev[0].y ;
         for (var i = 0 ; i<n ; i++)
@@ -243,7 +243,7 @@ function processData(allText) {
         elevation.push(parseFloat(tmp[i])) ;
     console.log(bounds) ; 
     compute_gradient(elevation, map.getCenter(), dx, dy) ; 
-    compute_heigth() ; 
+    compute_height() ; 
     console.log(height) ; 
 }
 
