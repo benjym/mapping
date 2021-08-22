@@ -243,7 +243,7 @@ function processData(allText) {
         elevation.push(parseFloat(tmp[i])) ;
     console.log(bounds) ; 
     compute_gradient(elevation, map.getCenter(), dx, dy) ; 
-    compute_heigth() ; 
+    compute_height() ; 
     console.log(height) ; 
 }
 
