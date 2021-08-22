@@ -346,7 +346,7 @@ map.on('moveend',function(e){
   bounds = map.getBounds() ; 
   console.log(map.getCenter()) ; 
   //const response = fetch( proxy_server + topo_server_region + bounds._northEast.lat +','+ bounds._northEast.lng+ ';' + bounds._southWest.lat + ',' + bounds._southWest.lng + ';' + ny + ',' + nx + '&reorder' , {}) https://data.scigem.com:5000/
-  const response = fetch ('http://127.0.0.1:5000/elevationfast?ne_lat=' + bounds._northEast.lat + '&ne_lng=' + bounds._northEast.lng + '&sw_lat='+ bounds._southWest.lat + '&sw_lng=' + bounds._southWest.lng +'&nx=' + nx + '&ny=' + ny , {})
+  const response = fetch ('https://data.scigem.com:5000/elevationfast?ne_lat=' + bounds._northEast.lat + '&ne_lng=' + bounds._northEast.lng + '&sw_lat='+ bounds._southWest.lat + '&sw_lng=' + bounds._southWest.lng +'&nx=' + nx + '&ny=' + ny , {})
     .then( r => r.json() )
     .then( data => {
      dy = (bounds._northEast.lat-bounds._southWest.lat)/ny ; 
