@@ -12,7 +12,7 @@ function calculateFoS(slope, height) {
     // var fos = (G_s - 9.81)*Math.tan(phi*Math.PI/180.)/G_s/slope;
     var fos = (c + (G_s * h - 9.81*dwater) * Math.cos(slope) * Math.cos(slope) * Math.tan(phi*Math.PI/180.)) / (G_s * h * Math.sin(slope) * Math.cos(slope))
     // console.log(G_s,c,phi,h)
-    console.log(fos)
+    //console.log(fos)
     return fos
 }
 

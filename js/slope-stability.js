@@ -650,14 +650,14 @@ return (0) ;
 function compute_slopefs()
 {
 var x0=0 ; var x1 = ny ; var y0=0 ; var y1 = nx ; 
-height_slope=[] ; 
+slopefs=[] ; 
 import("./slope-models/"+stability.value+".js").then(module => {
 slope_stab_model = module;
 
 for (var i=x0 ; i<x1 ; i++)
     for (var j=y0 ; j<y1 ; j++)
     {
-        fos = slope_stab_model.calculateFoS(slope[i*nx+j], height[i*nx+j]);
+        slopefs[i*nx+j] = slope_stab_model.calculateFoS(slope[i*nx+j], height[i*nx+j]);
     }
 })
 }
