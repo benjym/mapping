@@ -9,6 +9,9 @@ import numpy as np
 
 from opentopodata import backend, config
 
+from ctypes import *
+libfastread = CDLL("../cpp/libfastread.so")
+libfastread._Z9elevationddddiiPf.argtypes = [c_double, c_double, c_double, c_double, c_int, c_int, POINTER(c_float)] ;
 
 app = Flask(__name__)
 app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
@@ -358,6 +361,35 @@ def get_health_status(methods=["GET", "OPTIONS", "HEAD"]):
         return jsonify(data), 500
 
 
+@app.route("/elevationfast", methods=["GET", "OPTIONS", "HEAD"])
+def get_elevation_fast(status='OK'):
+    try:
+        #t0=time.perf_counter() ; 
+        nx=int(request.args.get('nx')) ; 
+        ny=int(request.args.get('ny')) ; 
+        ne_lat=float(request.args.get('ne_lat')) ; 
+        ne_lng=float(request.args.get('ne_lng')) ; 
+        sw_lat=float(request.args.get('sw_lat')) ; 
+        sw_lng=float(request.args.get('sw_lng')) ; 
+        nn = nx*ny ; 
+        elevationarray = (c_float*nn)();
+        a=libfastread._Z9elevationddddiiPf(ne_lat, ne_lng, sw_lat, sw_lng, ny, nx, cast(elevationarray, POINTER(c_float)))
+        elevation=[] ; 
+        for i in range (0,nn):
+            elevation.append(elevationarray[i]) ;
+        results=[] ; 
+        results.append({"elevation": elevation})
+
+        data = {"status": status, "dataset": "COP30m", "results": results}
+        #print(time.perf_counter()-t0) 
+        return jsonify(data)
+    except Exception as e:
+        if app.debug:
+            raise e
+        app.logger.error(e)
+        msg = "Server error, please retry request."
+        return jsonify({"status": "SERVER_ERROR", "error": msg}), 500
+    
 
 @app.route("/elevation", methods=["GET", "OPTIONS", "HEAD"])
 def get_elevation_auto(status='OK'):
@@ -391,7 +423,7 @@ def get_elevation_auto(status='OK'):
         numdatasets = len(list(datasets)) ;
         if 'maxres' in request.args:
             i=0
-        else if 'dataset' in request.args:
+        elif 'dataset' in request.args:
             reqdataset = request.args.get("dataset")
             for i in range(0, numdatasets):
                 if (datasets[list(datasets)[i]].name == reqdataset):
@@ -399,7 +431,7 @@ def get_elevation_auto(status='OK'):
             i=i-1 ; 
             if i<0: i=0 ; 
             
-        else
+        else:
             minres = min (abs(lats[1]-lats[0]), abs(np.unique(lons)[1]-np.unique(lons)[0])) * 3600 ; 
             for i in range(0, numdatasets):
                 if (datasets[list(datasets)[i]].resolution > minres):
@@ -424,8 +456,8 @@ def get_elevation_auto(status='OK'):
                 status = 'MISSING DATA' ; 
                 keepgoing = False ; 
 
-            if i<numdatasets-1 and [elevations[i]==elevations[i] for i in range(len(elevations))].count(False): # of nans
-                return(get_elevation('srtm30m', status='FALLBACK')) ;
+            #if i<numdatasets-1 and [elevations[i]==elevations[i] for i in range(len(elevations))].count(False): # of nans
+            #    return(get_elevation('srtm30m', status='FALLBACK')) ;
 
         ## Build response.
         results = []

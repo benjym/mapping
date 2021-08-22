@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/slope-stability.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
     integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
     crossorigin=""/>
@@ -12,12 +13,15 @@
     crossorigin=""></script>
     <link rel="icon" href="favicon.ico" type="image/png" sizes="16x16">
     <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/chroma-js/2.1.0/chroma.min.js"></script>
+    <script src="https://ihcantabria.github.io/Leaflet.CanvasLayer.Field/dist/leaflet.canvaslayer.field.js"></script>
     <script src="js/slope-stability.js" type="module"></script>
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet">
 </head>
 
 <body>
+    <!--<a id="tmp">TMPDL</a>-->
     <div id="wrap">
         <div class="column left_col">
             Viewpoint: <input id="latitude" type="number" step=0.00001 min=-90 max=90 style="width:35%;" class="mapupdater" value="-34.33644" />
@@ -37,10 +41,22 @@
             <span id="rock-depth">Rock depth d (m)</span></a>
             <span id="rock-depth-slider"><div class="slider">0 <input type="range" id="H" value="10" min="0" max="100" oninput="H_out.value = H.value" class="updater"> <output id="H_out">10 </output></div></span><br>
             <span id="watertable">Water table depth dw (m)</span></a>
-            <span id="watertable-slider"><div class="slider">0 <input type="range" id="dw" value="10" min="0" max="100" oninput="dw_out.value = dw.value" class="updater"> <output id="dw_out">10 </output></div></span> <br><br>
+            <span id="watertable-slider"><div class="slider">0 <input type="range" id="dw" value="10" min="0" max="100" oninput="dw_out.value = dw.value" class="updater"> <output id="dw_out">10 </output></div></span> <br>
 
             <div style="border:solid;border-color:#ce3d20;padding-bottom:10px;padding-top:10px;"> Factor of safety: <span id="FoS">Unknown</span> &nbsp; <span id="FoSIndicator" style="color:green;">&#11044;</span></div>
 
+            <hr />
+            Overlay <select id="overlay" class="overlayupdater" style="width:50%;">
+                <option value="None" selected>None</option>
+                <option value="slpFs">Factor of safety</option>
+                <option value="elevation">Elevation</option>
+                <option value="slpangle">Slope angle</option>
+                <option value="slpdirection">Slope direction</option>
+                <option value="slpheight">Slope height</option>
+            </select><br>Opacity 
+            <span class="slider"> 0 <input type="range" id="overlayopacity" value="0.8" min="0" max="1" step="0.1" style="width:50%;" oninput="opac_out.value = overlayopacity.value" class="overlayupdater"> <output id="opac_out">0.8 </output> </span> <img src="resources/wait.gif" width="32px"/>
+            <br>
+            
             <!--<br><br>
             <div onclick="assumptions();"> ? </div>-->
 
@@ -69,5 +85,10 @@
             </svg>
         </div>
     </div>
+    
+    <canvas width="300" height="300">
+  An alternative text describing what your canvas displays.
+</canvas>
+
 </body>
 </html>

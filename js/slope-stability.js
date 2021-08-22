@@ -19,6 +19,7 @@ else {
 }
 window.proxy_server = '';
 window.topo_server = 'https://data.scigem.com:5000/elevation?verbose&';//'/' + data_source + '?';
+window.topo_server_region = 'https://data.scigem.com:5000/elevation?region='
 
 var map = L.map('map', {
     // crs: L.CRS.EPSG4326,
@@ -34,6 +35,13 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
     zoomOffset: -1,
     accessToken: 'pk.eyJ1IjoiYmVuanltYXJrcyIsImEiOiJjand1M3BhanowOGx1NDlzMWs0bG0zNnpyIn0.OLLoUOjLUhcKoAVX1JKVdw'
 }).addTo(map);
+
+/*L.tileLayer('http://localhost:5001/map/{z}/{x}/{y}.png', {
+    maxZoom: 15,
+    tileSize: 256,
+    zoomOffset: 0,
+    opacity:0.7
+}).addTo(map);*/
 
 // document.querySelector('#stability').addEventListener('change', (event) => {
   // redrawSection();
@@ -131,6 +139,10 @@ var elements = document.getElementsByClassName("updater");
 Array.from(elements).forEach(function(element) {
       element.addEventListener('change', update_FoS);
     });
+var elements = document.getElementsByClassName("overlayupdater");
+Array.from(elements).forEach(function(element) {
+      element.addEventListener('change', update_overlay);
+    });
 var mapelements = document.getElementsByClassName("mapupdater");
 Array.from(mapelements).forEach(function(mapelement) {
       mapelement.addEventListener('change', update_map);
@@ -182,7 +194,17 @@ function update_map ()
 function update_FoS() {
     import("./slope-models/"+stability.value+".js").then(module => {
         slope_stab_model = module;
-        fos = slope_stab_model.calculateFoS(elev);
+        var slope = Math.atan2(Math.abs(elev[0].y - elev[n-1].y), Math.abs(elev[0].x - elev[n-1].x)) ;
+        var n = elev.length ;
+        var maxheight = elev[0].y ;
+        var minheight = elev[0].y ;
+        for (var i = 0 ; i<n ; i++)
+        {
+            if (maxheight < elev[i].y) maxheight = elev[i].y ;
+            if (minheight > elev[i].y) minheight = elev[i].y ;
+        }
+        var height = maxheight-minheight ;
+        fos = slope_stab_model.calculateFoS(slope, height);
         // console.log(fos)
         document.getElementById("FoS").innerHTML = fos.toFixed(2).toString();
         if (fos<1)
@@ -192,6 +214,103 @@ function update_FoS() {
         else
           document.getElementById("FoSIndicator").style.color='green'
     })
+    update_overlay() ; 
+}
+
+
+var heatmaplayer ;
+var s ; 
+var gradient=[] ; 
+var nx=100 ; var ny=75 ; 
+var elevation ; 
+var direction=[] ; 
+var slope=[] ;
+var slopefs=[] ; 
+var height_slope ; 
+var bounds = map.getBounds() ;
+var dy = (bounds._northEast.lat-bounds._southWest.lat)/ny ; 
+var dx = (bounds._northEast.lng-bounds._southWest.lng)/nx ; 
+$.ajax({
+        type: "GET",
+        url: "resources/InitElevation.csv",
+        dataType: "text",
+        success: function(data) {processData(data);}
+     });
+function processData(allText) {
+    var tmp = allText.split(/,/);
+    elevation = [] ; 
+    for (var i=0; i<tmp.length; i++)
+        elevation.push(parseFloat(tmp[i])) ;
+    console.log(bounds) ; 
+    compute_gradient(elevation, map.getCenter(), dx, dy) ; 
+    compute_heigth() ; 
+    console.log(height) ; 
+}
+
+
+function update_overlay ()
+{
+    bounds = map.getBounds() ; 
+    if (heatmaplayer)
+        map.removeLayer(heatmaplayer) ; 
+    var overlaytype = document.getElementById('overlay').value ;
+    if (overlaytype!= "None") 
+    {
+        var overlaydata ;
+        var colorscale ; 
+        let p = {
+                nCols: nx,
+                nRows: ny,
+                xllCorner: bounds._southWest.lng,
+                yllCorner: bounds._southWest.lat,
+                cellXSize: dx,
+                cellYSize: dy,
+            };
+            console.log(overlaytype)
+        if (overlaytype == "elevation")
+        {
+            p.zs = elevation ;
+            var max_v = elevation.reduce(function(a, b) { return Math.max(a, b);}, 0);
+            var min_v = elevation.reduce(function(a, b) { return Math.min(a, b);}, 0);
+            colorscale = chroma.scale(['navy','yellow']).mode('lch').domain([min_v, max_v]).correctLightness()
+        }
+        else if (overlaytype=="slpangle") 
+        {
+            p.zs = slope ;
+            colorscale = chroma.scale(['navy','yellow']).mode('lch').domain([0, Math.PI/3.]).correctLightness()
+            //colorscale = chroma.scale(['navy','yellow']).mode('lch').domain([min_v, Math.PI/3.]).correctLightness()
+        }
+        else if (overlaytype=="slpdirection")
+        {
+            p.zs = direction ; 
+            //colorscale = chroma.scale(['red','green', 'purple']).mode('hsl').domain([-Math.PI, 0, Math.PI])
+            
+            colorscale = chroma.scale('RdGy').domain([-Math.PI, 0, Math.PI])
+        }
+        else if (overlaytype=="slpheight")
+        {
+            p.zs = height_slope ;
+            console.log(height_slope) ; 
+            var max_v = height_slope.reduce(function(a, b) { return Math.max(a, b);}, 0);
+            colorscale = chroma.scale(['navy','yellow']).mode('lch').domain([0, max_v]).correctLightness()
+        }
+        else if (overlaytype == "slpFs")
+        {
+            compute_slopefs() ; 
+            console.log(slopefs) ; 
+            p.zs = slopefs ; 
+            colorscale = chroma.scale(['red','yellow', 'green']).domain([0, 1, 10]).correctLightness()
+        }
+        var opac = document.getElementById('overlayopacity').value ;
+        
+        s = new L.ScalarField(p) ; 
+        const layvar = L.canvasLayer.scalarField(s, {
+                    color: colorscale,
+                    opacity: opac
+                });
+        heatmaplayer = layvar.addTo(map);
+        console.log("done") ; 
+    }
 }
 
 // var wmsLayer = L.tileLayer.wms('http://services.ga.gov.au/gis/services/DEM_LiDAR_5m/MapServer/WMSServer?', {
@@ -224,7 +343,24 @@ map.on('moveend',function(e){
   var location=map.getCenter() ;
   document.getElementById("latitude").value = location.lat.toFixed(5).toString() ;
   document.getElementById("longitude").value = location.lng.toFixed(5).toString() ;
+  bounds = map.getBounds() ; 
+  console.log(map.getCenter()) ; 
+  //const response = fetch( proxy_server + topo_server_region + bounds._northEast.lat +','+ bounds._northEast.lng+ ';' + bounds._southWest.lat + ',' + bounds._southWest.lng + ';' + ny + ',' + nx + '&reorder' , {}) https://data.scigem.com:5000/
+  const response = fetch ('http://127.0.0.1:5000/elevationfast?ne_lat=' + bounds._northEast.lat + '&ne_lng=' + bounds._northEast.lng + '&sw_lat='+ bounds._southWest.lat + '&sw_lng=' + bounds._southWest.lng +'&nx=' + nx + '&ny=' + ny , {})
+    .then( r => r.json() )
+    .then( data => {
+     dy = (bounds._northEast.lat-bounds._southWest.lat)/ny ; 
+     dx = (bounds._northEast.lng-bounds._southWest.lng)/nx ; 
+     
+     elevation = data.results[0].elevation ; 
+     compute_gradient(elevation, map.getCenter(), dx, dy) ; 
+     compute_height() ; 
+     console.log("Data loaded") ; 
+     update_overlay() ; 
+    }) ; 
 });
+
+
 
 function transpose(a) {
     return a[0].map(function (_, c) { return a.map(function (r) { return r[c]; }); });
@@ -413,3 +549,137 @@ function haversine(lat1,lon1,lat2,lon2) {
     const d = R * c; // in metres
     return d
 }
+
+//=============================================================================
+function compute_gradient (elevation, bounds, dx, dy)
+{
+console.log(dx)
+var dxm=haversine(bounds.lat,bounds.lng, bounds.lat, bounds.lng+dx) ;
+var dym=haversine(bounds.lat,bounds.lng, bounds.lat+dy, bounds.lng) ;
+console.log(dxm)
+for (var i=1 ; i<ny-1 ; i++)
+    for (var j=1 ; j<nx-1 ; j++)
+    {
+        gradient[i*nx*2 + j*2 + 0]=(-elevation[(i-1)*nx + j    ]+elevation[(i+1)*nx + j  ])/(2*dxm) ;
+        gradient[i*nx*2 + j*2 + 1]=(-elevation[ i   *nx + (j-1)]+elevation[    i*nx + j+1])/(2*dym) ;
+    }
+    
+i=0 ;
+for (j=1 ; j<nx-1 ; j++)
+{
+    gradient[i*nx*2 + j*2 + 0]=( elevation[ (i+1)*nx + j ]-elevation[i*nx+j])/dxm ;
+    gradient[i*nx*2 + j*2 + 1]=(-elevation[ i*nx + (j-1) ]+elevation[i*nx+(j+1)])/(2*dym) ;
+}
+i=ny-1 ;
+for (j=1 ; j<nx-1 ; j++)
+{
+    gradient[i*nx*2 + j*2 + 0]=( elevation[i*nx+j]-elevation[(i-1)*nx+j])/dxm ;
+    gradient[i*nx*2 + j*2 + 1]=(-elevation[i*nx+(j-1)]+elevation[i*nx+(j+1)])/(2*dym) ;
+}
+j=0 ;
+for (i=1 ; i<ny-1 ; i++)
+{
+    gradient[i*nx*2 + j*2 + 0]=(-elevation[(i-1)*nx + j]+elevation[(i+1)*nx + j])/(2*dxm) ;
+    gradient[i*nx*2 + j*2 + 1]=(elevation[ i*nx + (j+1)]-elevation[ i*nx + j])/(dym) ;
+}
+j=nx-1 ;
+for (i=1 ; i<ny-1 ; i++)
+{
+    gradient[i*nx*2 + j*2 + 0]=(-elevation[(i-1)*nx+j]+elevation[(i+1)*nx+j])/(2*dxm) ;
+    gradient[i*nx*2 + j*2 + 1]=(elevation[i*nx+j]-elevation[i*nx+(j-1)])/(dym) ;
+}
+
+// Corners
+var x0=0 ; var x1 = ny ; var y0=0 ; var y1 = nx ; 
+gradient[x0*nx*2+y0*2+0]         = (elevation[(x0+1)*nx+(y0+0)] - elevation[x0*nx + y0]      )/dxm ;
+gradient[x0*nx*2+y0*2+1]         = (elevation[(x0+0)*nx+(y0+1)] - elevation[x0*nx + y0]      )/dym ;
+gradient[x0*nx*2+(y1-1)*2+0]     = (elevation[(x0+1)*nx+(y1-1)] - elevation[x0*nx + (y1-1)]  )/dxm ;
+gradient[x0*nx*2+(y1-1)*2+1]     = (elevation[(x0+0)*nx+(y1-1)] - elevation[x0*nx + (y1-2)]  )/dym ;
+gradient[(x1-1)*nx*2+y0*2+0]     = (elevation[(x1-1)*nx+(y0+0)] - elevation[(x1-2)*nx+y0]    )/dxm ;
+gradient[(x1-1)*nx*2+y0*2+1]     = (elevation[(x1-1)*nx+(y0+1)] - elevation[(x1-1)*nx+y0]    )/dym ;
+gradient[(x1-1)*nx*2+(y1-1)*2+0] = (elevation[(x1-1)*nx+(y1-1)] - elevation[(x1-2)*nx+(y1-1)])/dxm ;
+gradient[(x1-1)*nx*2+(y1-1)*2+1] = (elevation[(x1-1)*nx+(y1-1)] - elevation[(x1-1)*nx+(y1-2)])/dym ;
+
+for (i=0 ; i<ny ; i++)
+    for (j=0 ; j<nx ; j++)
+    {
+        direction[i*nx+j]=Math.atan2(gradient[i*nx*2+j*2+1], gradient[i*nx*2+j*2+0]) ;
+        //slope[i][j]=sqrt(gradient[i][j][1]*gradient[i][j][1]+gradient[i][j][0]*gradient[i][j][0]) ;
+        slope[i*nx+j] = Math.atan ((gradient[i*nx*2+j*2+0] * Math.cos(direction[i*nx+j]) + gradient[i*nx*2+j*2+1]*Math.sin(direction[i*nx+j]))) ;
+    }    
+}    
+//------------------------------------
+function compute_height () // Lets try
+{
+var x0=0 ; var x1 = ny ; var y0=0 ; var y1 = nx ; 
+height_slope=[] ;
+for (var i=x0 ; i<x1 ; i++)
+    for (var j=y0 ; j<y1 ; j++)
+    {
+        var m=elevation[i*nx+j] ; 
+        var M=elevation[i*nx+j] ;
+        var c=Math.cos(direction[i*nx+j]) ;
+        var s=Math.sin(direction[i*nx+j]) ;
+        var x=i ; var y=j ;
+        for (var k=0 ; k<ny ; k++ )
+        {
+         x+=c ; y+=s ;
+         var i2=Math.round(x) ;
+         var j2=Math.round(y) ;
+         if (i2<x0 || i2>=x1 || j2<y0 || j2>=y1) break ;
+         if (M<elevation[i2*nx+j2]) M=elevation[i2*nx+j2] ;
+         if (slope[i2*nx+j2]<10/180.*Math.PI) break ;
+        }
+        x=i ; y=j ;
+        for (var k=0 ; k<ny ; k++ )
+        {
+         x-=c ; y-=s ;
+         var i2=Math.round(x) ;
+         var j2=Math.round(y) ;
+         if (i2<x0 || i2>=x1 || j2<y0 || j2>=y1) break ;
+         if (m>elevation[i2*nx+j2]) m=elevation[i2*nx+j2] ;
+         if (slope[i2*nx+j2]<10/180.*Math.PI) break ;
+        }
+    //maxH[i*nx+j]=M ;
+    //minH[i*nx+j]=m ;
+    height_slope[i*nx+j]=M-m ;
+    }
+return (0) ;
+}
+//------------------------------
+function compute_slopefs()
+{
+var x0=0 ; var x1 = ny ; var y0=0 ; var y1 = nx ; 
+height_slope=[] ; 
+import("./slope-models/"+stability.value+".js").then(module => {
+slope_stab_model = module;
+
+for (var i=x0 ; i<x1 ; i++)
+    for (var j=y0 ; j<y1 ; j++)
+    {
+        fos = slope_stab_model.calculateFoS(slope[i*nx+j], height[i*nx+j]);
+    }
+})
+}
+
+/* Load the initial elevation map and let us download it. 
+nx = 100 ; ny = 75 ; 
+var location=map.getCenter() ;
+document.getElementById("latitude").value = location.lat.toFixed(5).toString() ;
+document.getElementById("longitude").value = location.lng.toFixed(5).toString() ;
+bounds = map.getBounds() ; 
+console.log(map.getCenter()) ; 
+const response = fetch( proxy_server + topo_server_region + bounds._northEast.lat +','+ bounds._northEast.lng+ ';' + bounds._southWest.lat + ',' + bounds._southWest.lng + ';' + ny + ',' + nx + '&reorder' , {})
+.then( r => r.json() )
+.then( data => {
+    dy = (bounds._northEast.lat-bounds._southWest.lat)/ny ; 
+    dx = (bounds._northEast.lng-bounds._southWest.lng)/nx ; 
+    
+    elevation = data.results[0].elevation ; 
+    compute_gradient(elevation, map.getCenter(), dx, dy) ; 
+    console.log("Data loaded") ; 
+    var csv = elevation.join(' ');
+    var link = document.getElementById("tmp");
+link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8\n"+elevation));
+console.log(link) ;
+}) ; */

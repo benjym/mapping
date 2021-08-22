@@ -1,5 +1,4 @@
-function calculateFoS(elev) {
-    console.log(elev)
+function calculateFoS(slope, height) {
     var fos = 97;
     return fos
 }
