@@ -299,7 +299,8 @@ function update_overlay ()
             compute_slopefs() ; 
             console.log(slopefs) ; 
             p.zs = slopefs ; 
-            colorscale = chroma.scale(['red','yellow', 'green']).domain([0, 1, 10]).correctLightness()
+            //colorscale = chroma.scale(['navy','yellow']).mode('lch').domain([0, 10]).correctLightness()
+            colorscale = chroma.scale(['red','yellow', 'green']).domain([0., 1., 10.])
         }
         var opac = document.getElementById('overlayopacity').value ;
         
@@ -651,15 +652,15 @@ function compute_slopefs()
 {
 var x0=0 ; var x1 = ny ; var y0=0 ; var y1 = nx ; 
 slopefs=[] ; 
-import("./slope-models/"+stability.value+".js").then(module => {
-slope_stab_model = module;
-
+//import("./slope-models/"+stability.value+".js").then(module => {
+//slope_stab_model = module;
+console.log(slope_stab_model)
 for (var i=x0 ; i<x1 ; i++)
     for (var j=y0 ; j<y1 ; j++)
     {
-        slopefs[i*nx+j] = slope_stab_model.calculateFoS(slope[i*nx+j], height[i*nx+j]);
+        slopefs[i*nx+j] = slope_stab_model.calculateFoS(slope[i*nx+j], height_slope[i*nx+j]);
     }
-})
+//})
 }
 
 /* Load the initial elevation map and let us download it. 

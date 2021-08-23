@@ -6,7 +6,7 @@ function calculateFoS(slope, height) {
 
   var fprime, fprimeprime ;
 
-  var niter=10 ;     // Number of iteration of the NR algo
+  var niter=5 ;     // Number of iteration of the NR algo
   var fos=1 ;
 
   // Running a Newton-Raphson algorithm to find the zero of Fs' and the failure angle
@@ -21,6 +21,7 @@ function calculateFoS(slope, height) {
     failureangle=failureangle-fprime/fprimeprime ;
   }
   fos=a/(Math.sin(failureangle)*Math.sin(slope-failureangle))+b/Math.tan(failureangle) ;
+
   if (isNaN(fos) || fos<0) fos = 0 ;
   return (fos) ;
 }
