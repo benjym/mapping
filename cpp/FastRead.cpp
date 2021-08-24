@@ -52,10 +52,16 @@ int elevation (double ne_lat, double ne_lng, double sw_lat, double sw_lng, int n
             int nnx = nx_geotiff*adfGeoTransform[1]*nx/(ne_lng-sw_lng) ;
                 nny = ny_geotiff*adfGeoTransform[5]*ny/(sw_lat-ne_lat) ; //adfGeoTransform[5]<0)
             
+            if (nnx > nx) nnx = nx ; 
+            if (nny > ny) nny = ny ; 
+            if (nnx < 0 ) nnx = 0 ; 
+            if (nny < 0 ) nny = 0 ;
+            
             int bufferoffset = (nnycum * nx + nnxcum) ;   
             nnxcum += nnx ; 
             
-            printf("%d %d %d %d %g %g | %d %d %s\n", nx_geotiff, ny_geotiff, startx, starty, adfGeoTransform[1], adfGeoTransform[5], nnxcum, nnycum, filename.c_str());
+            
+            printf("%d %d %d %d %g %g | %d %d %d %d %s\n", nx_geotiff, ny_geotiff, startx, starty, adfGeoTransform[1], adfGeoTransform[5], nnx, nny, nnxcum, nnycum, filename.c_str());
             auto res = poDataset->RasterIO( GF_Read, startx, starty, nx_geotiff, ny_geotiff, (void *)(pafScanline+bufferoffset), nnx, nny, GDT_Float32, 1, NULL, 0, nx * sizeof(GDT_Float32), 0, &extraargs);
             
             GDALClose(poDataset) ; 
@@ -98,11 +104,12 @@ int elevation (double ne_lat, double ne_lng, double sw_lat, double sw_lng, int n
 
 int main (int argc, char * argv[])
 {
-int nx = 10 ;
-int ny = 5 ; 
+int nx = 21 ;
+int ny = 21 ; 
 int nn = nx*ny ; 
 float * elevationarray = (float *) malloc(sizeof(float)*nn); 
-elevation( -34.32507927447516, 150.91146469116214, -34.3477588987833, 150.86558818817142,  ny, nx, elevationarray) ;  
+//elevation( -34.32507927447516, 150.91146469116214, -34.3477588987833, 150.86558818817142,  ny, nx, elevationarray) ;  
+elevation(-34.25396567966451,150.97334105164282,-34.255764320335494,150.97116494835717,21,21, elevationarray) ;
 printf("//") ; 
 for (int i=0 ; i<nx*ny ; i++) printf("%f ", elevationarray[i]) ; 
 }

@@ -250,6 +250,7 @@ function processData(allText) {
 
 function update_overlay ()
 {
+    //document.getElementById("waitingwheel").hidden = false ; 
     bounds = map.getBounds() ; 
     if (heatmaplayer)
         map.removeLayer(heatmaplayer) ; 
@@ -273,18 +274,25 @@ function update_overlay ()
             var max_v = elevation.reduce(function(a, b) { return Math.max(a, b);}, 0);
             var min_v = elevation.reduce(function(a, b) { return Math.min(a, b);}, 0);
             colorscale = chroma.scale(['navy','yellow']).mode('lch').domain([min_v, max_v]).correctLightness()
+            document.getElementById('colorbar').hidden = false ; 
+            document.getElementById('colorbar').src = 'resources/Colorbar-NavyYellow-lch.png' ; 
+            document.getElementById('caxis_low').value = Math.round(min_v); document.getElementById('caxis_low').hidden = false ; 
+            document.getElementById('caxis_high').value = Math.round(max_v) ; document.getElementById('caxis_high').hidden = false ; 
+            console.log(document.getElementById('caxis_high').value)
         }
         else if (overlaytype=="slpangle") 
         {
             p.zs = slope ;
             colorscale = chroma.scale(['navy','yellow']).mode('lch').domain([0, Math.PI/3.]).correctLightness()
-            //colorscale = chroma.scale(['navy','yellow']).mode('lch').domain([min_v, Math.PI/3.]).correctLightness()
+            document.getElementById('colorbar').hidden = false ; 
+            document.getElementById('colorbar').src = 'resources/Colorbar-NavyYellow-lch.png' ; 
+            document.getElementById('caxis_low').value = "0"; document.getElementById('caxis_low').hidden = false ; 
+            document.getElementById('caxis_high').value = "60°" ; document.getElementById('caxis_high').hidden = false ; 
         }
         else if (overlaytype=="slpdirection")
         {
             p.zs = direction ; 
             //colorscale = chroma.scale(['red','green', 'purple']).mode('hsl').domain([-Math.PI, 0, Math.PI])
-            
             colorscale = chroma.scale('RdGy').domain([-Math.PI, 0, Math.PI])
         }
         else if (overlaytype=="slpheight")
@@ -293,6 +301,10 @@ function update_overlay ()
             console.log(height_slope) ; 
             var max_v = height_slope.reduce(function(a, b) { return Math.max(a, b);}, 0);
             colorscale = chroma.scale(['navy','yellow']).mode('lch').domain([0, max_v]).correctLightness()
+            document.getElementById('colorbar').hidden = false ; 
+            document.getElementById('colorbar').src = 'resources/Colorbar-NavyYellow-lch.png' ; 
+            document.getElementById('caxis_low').value = 0; document.getElementById('caxis_low').hidden = false ; 
+            document.getElementById('caxis_high').value = Math.round(max_v)+"m" ; document.getElementById('caxis_high').hidden = false ; 
         }
         else if (overlaytype == "slpFs")
         {
@@ -301,6 +313,10 @@ function update_overlay ()
             p.zs = slopefs ; 
             //colorscale = chroma.scale(['navy','yellow']).mode('lch').domain([0, 10]).correctLightness()
             colorscale = chroma.scale(['red','yellow', 'green']).domain([0., 1., 10.])
+            document.getElementById('colorbar').hidden = false ; 
+            document.getElementById('colorbar').src = 'resources/RdYlGr.png' ; 
+            document.getElementById('caxis_low').value = "0"; document.getElementById('caxis_low').hidden = false ; 
+            document.getElementById('caxis_high').value = "10" ; document.getElementById('caxis_high').hidden = false ; 
         }
         var opac = document.getElementById('overlayopacity').value ;
         
@@ -312,6 +328,13 @@ function update_overlay ()
         heatmaplayer = layvar.addTo(map);
         console.log("done") ; 
     }
+    else
+    {
+        document.getElementById('colorbar').hidden = true ; 
+        document.getElementById('caxis_low').hidden = true ; 
+        document.getElementById('caxis_high').hidden = true ; 
+    }
+    //document.getElementById("waitingwheel").hidden = true ; 
 }
 
 // var wmsLayer = L.tileLayer.wms('http://services.ga.gov.au/gis/services/DEM_LiDAR_5m/MapServer/WMSServer?', {
@@ -347,6 +370,7 @@ map.on('moveend',function(e){
   bounds = map.getBounds() ; 
   console.log(map.getCenter()) ; 
   //const response = fetch( proxy_server + topo_server_region + bounds._northEast.lat +','+ bounds._northEast.lng+ ';' + bounds._southWest.lat + ',' + bounds._southWest.lng + ';' + ny + ',' + nx + '&reorder' , {}) https://data.scigem.com:5000/
+  //document.getElementById("waitingwheel").hidden = false ; 
   const response = fetch ('https://data.scigem.com:5000/elevationfast?ne_lat=' + bounds._northEast.lat + '&ne_lng=' + bounds._northEast.lng + '&sw_lat='+ bounds._southWest.lat + '&sw_lng=' + bounds._southWest.lng +'&nx=' + nx + '&ny=' + ny , {})
     .then( r => r.json() )
     .then( data => {
@@ -358,6 +382,7 @@ map.on('moveend',function(e){
      compute_height() ; 
      console.log("Data loaded") ; 
      update_overlay() ; 
+     //document.getElementById("waitingwheel").hidden = true ; 
     }) ; 
 });
 
@@ -413,7 +438,7 @@ function redrawSection() {
     var lngs = linspace(top_marker._latlng.lng,bottom_marker._latlng.lng,n)
     getElevationData(lats,lngs)
     .then( data => {
-        if ( slope_stab_model !== undefined ) {
+        if ( slope_stab_model !== undefined ) {document.getElementById("waitingwheel").hidden =
             fos = slope_stab_model.calculateFoS(elev);
             document.getElementById("FoS").innerHTML = fos.toFixed(2).toString();
         }
