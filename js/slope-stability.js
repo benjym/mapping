@@ -141,7 +141,7 @@ Array.from(elements).forEach(function(element) {
     });
 var elements = document.getElementsByClassName("overlayupdater");
 Array.from(elements).forEach(function(element) {
-      element.addEventListener('change', update_overlay);
+      element.addEventListener('change', update_overlay_info);
     });
 var mapelements = document.getElementsByClassName("mapupdater");
 Array.from(mapelements).forEach(function(mapelement) {
@@ -213,8 +213,7 @@ function update_FoS() {
           document.getElementById("FoSIndicator").style.color='yellow'
         else
           document.getElementById("FoSIndicator").style.color='green'
-    })
-    update_overlay() ; 
+    }).then(update_overlay_info()) ; 
 }
 
 
@@ -247,30 +246,41 @@ function processData(allText) {
     console.log(height) ; 
 }
 
+function update_overlay(array, colorscale)
+{
+    if (heatmaplayer) map.removeLayer(heatmaplayer) ; 
+    let p = {
+        nCols: nx,
+        nRows: ny,
+        xllCorner: bounds._southWest.lng,
+        yllCorner: bounds._southWest.lat,
+        cellXSize: dx,
+        cellYSize: dy,
+    };
+    p.zs = array ; 
+    var opac = document.getElementById('overlayopacity').value ;
+        
+    s = new L.ScalarField(p) ; 
+    const layvar = L.canvasLayer.scalarField(s, {
+                color: colorscale,
+                opacity: opac
+            });
+    heatmaplayer = layvar.addTo(map);
+    console.log("done") ; 
+}
 
-function update_overlay ()
+function update_overlay_info ()
 {
     //document.getElementById("waitingwheel").hidden = false ; 
     bounds = map.getBounds() ; 
-    if (heatmaplayer)
-        map.removeLayer(heatmaplayer) ; 
     var overlaytype = document.getElementById('overlay').value ;
     if (overlaytype!= "None") 
     {
         var overlaydata ;
         var colorscale ; 
-        let p = {
-                nCols: nx,
-                nRows: ny,
-                xllCorner: bounds._southWest.lng,
-                yllCorner: bounds._southWest.lat,
-                cellXSize: dx,
-                cellYSize: dy,
-            };
-            console.log(overlaytype)
+        console.log(overlaytype)
         if (overlaytype == "elevation")
         {
-            p.zs = elevation ;
             var max_v = elevation.reduce(function(a, b) { return Math.max(a, b);}, 0);
             var min_v = elevation.reduce(function(a, b) { return Math.min(a, b);}, 0);
             colorscale = chroma.scale(['navy','yellow']).mode('lch').domain([min_v, max_v]).correctLightness()
@@ -279,54 +289,44 @@ function update_overlay ()
             document.getElementById('caxis_low').value = Math.round(min_v); document.getElementById('caxis_low').hidden = false ; 
             document.getElementById('caxis_high').value = Math.round(max_v) ; document.getElementById('caxis_high').hidden = false ; 
             console.log(document.getElementById('caxis_high').value)
+            update_overlay(elevation, colorscale) ; 
         }
         else if (overlaytype=="slpangle") 
         {
-            p.zs = slope ;
             colorscale = chroma.scale(['navy','yellow']).mode('lch').domain([0, Math.PI/3.]).correctLightness()
             document.getElementById('colorbar').hidden = false ; 
             document.getElementById('colorbar').src = 'resources/Colorbar-NavyYellow-lch.png' ; 
             document.getElementById('caxis_low').value = "0"; document.getElementById('caxis_low').hidden = false ; 
             document.getElementById('caxis_high').value = "60°" ; document.getElementById('caxis_high').hidden = false ; 
+            update_overlay(slope, colorscale) ; 
         }
         else if (overlaytype=="slpdirection")
         {
-            p.zs = direction ; 
             //colorscale = chroma.scale(['red','green', 'purple']).mode('hsl').domain([-Math.PI, 0, Math.PI])
             colorscale = chroma.scale('RdGy').domain([-Math.PI, 0, Math.PI])
+            update_overlay(direction, colorscale) ; 
         }
         else if (overlaytype=="slpheight")
         {
-            p.zs = height_slope ;
             console.log(height_slope) ; 
             var max_v = height_slope.reduce(function(a, b) { return Math.max(a, b);}, 0);
             colorscale = chroma.scale(['navy','yellow']).mode('lch').domain([0, max_v]).correctLightness()
             document.getElementById('colorbar').hidden = false ; 
             document.getElementById('colorbar').src = 'resources/Colorbar-NavyYellow-lch.png' ; 
             document.getElementById('caxis_low').value = 0; document.getElementById('caxis_low').hidden = false ; 
-            document.getElementById('caxis_high').value = Math.round(max_v)+"m" ; document.getElementById('caxis_high').hidden = false ; 
+            document.getElementById('caxis_high').value = Math.round(max_v)+"m" ; document.getElementById('caxis_high').hidden = false ;
+            update_overlay(height_slope, colorscale) ; 
         }
         else if (overlaytype == "slpFs")
         {
-            compute_slopefs() ; 
-            console.log(slopefs) ; 
-            p.zs = slopefs ; 
             //colorscale = chroma.scale(['navy','yellow']).mode('lch').domain([0, 10]).correctLightness()
             colorscale = chroma.scale(['red','yellow', 'green']).domain([0., 1., 10.])
             document.getElementById('colorbar').hidden = false ; 
             document.getElementById('colorbar').src = 'resources/RdYlGr.png' ; 
             document.getElementById('caxis_low').value = "0"; document.getElementById('caxis_low').hidden = false ; 
             document.getElementById('caxis_high').value = "10" ; document.getElementById('caxis_high').hidden = false ; 
+            compute_slopefs(colorscale); 
         }
-        var opac = document.getElementById('overlayopacity').value ;
-        
-        s = new L.ScalarField(p) ; 
-        const layvar = L.canvasLayer.scalarField(s, {
-                    color: colorscale,
-                    opacity: opac
-                });
-        heatmaplayer = layvar.addTo(map);
-        console.log("done") ; 
     }
     else
     {
@@ -381,7 +381,7 @@ map.on('moveend',function(e){
      compute_gradient(elevation, map.getCenter(), dx, dy) ; 
      compute_height() ; 
      console.log("Data loaded") ; 
-     update_overlay() ; 
+     update_overlay_info() ; 
      //document.getElementById("waitingwheel").hidden = true ; 
     }) ; 
 });
@@ -579,10 +579,8 @@ function haversine(lat1,lon1,lat2,lon2) {
 //=============================================================================
 function compute_gradient (elevation, bounds, dx, dy)
 {
-console.log(dx)
 var dxm=haversine(bounds.lat,bounds.lng, bounds.lat, bounds.lng+dx) ;
 var dym=haversine(bounds.lat,bounds.lng, bounds.lat+dy, bounds.lng) ;
-console.log(dxm)
 for (var i=1 ; i<ny-1 ; i++)
     for (var j=1 ; j<nx-1 ; j++)
     {
@@ -673,19 +671,20 @@ for (var i=x0 ; i<x1 ; i++)
 return (0) ;
 }
 //------------------------------
-function compute_slopefs()
+async function compute_slopefs(colorscale)
 {
 var x0=0 ; var x1 = ny ; var y0=0 ; var y1 = nx ; 
 slopefs=[] ; 
-//import("./slope-models/"+stability.value+".js").then(module => {
-//slope_stab_model = module;
-console.log(slope_stab_model)
+import("./slope-models/"+stability.value+".js").then(module => {
+slope_stab_model = module;
+console.log("Blaa") 
 for (var i=x0 ; i<x1 ; i++)
     for (var j=y0 ; j<y1 ; j++)
     {
         slopefs[i*nx+j] = slope_stab_model.calculateFoS(slope[i*nx+j], height_slope[i*nx+j]);
     }
-//})
+update_overlay(slopefs, colorscale) ; 
+}) ;
 }
 
 /* Load the initial elevation map and let us download it. 
