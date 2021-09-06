@@ -17,7 +17,7 @@
 .left_col {
     order: 1;
     flex: 1;
-    height: 600px;
+    /* height: 600px; */
     text-align: center;
 }
 .right_col {
