@@ -216,22 +216,22 @@ function update_FoS() {
           document.getElementById("FoSIndicator").style.color='yellow'
         else
           document.getElementById("FoSIndicator").style.color='green'
-    }).then(update_overlay_info()) ; 
+    }).then(update_overlay_info()) ;
 }
 
 
 var heatmaplayer ;
-var s ; 
-var gradient=[] ; 
-var nx=100 ; var ny=75 ; 
-var elevation ; 
-var direction=[] ; 
+var s ;
+var gradient=[] ;
+var nx=100 ; var ny=75 ;
+var elevation ;
+var direction=[] ;
 var slope=[] ;
-var slopefs=[] ; 
-var height_slope ; 
+var slopefs=[] ;
+var height_slope ;
 var bounds = map.getBounds() ;
-var dy = (bounds._northEast.lat-bounds._southWest.lat)/ny ; 
-var dx = (bounds._northEast.lng-bounds._southWest.lng)/nx ; 
+var dy = (bounds._northEast.lat-bounds._southWest.lat)/ny ;
+var dx = (bounds._northEast.lng-bounds._southWest.lng)/nx ;
 $.ajax({
         type: "GET",
         url: "resources/InitElevation.csv",
@@ -240,18 +240,18 @@ $.ajax({
      });
 function processData(allText) {
     var tmp = allText.split(/,/);
-    elevation = [] ; 
+    elevation = [] ;
     for (var i=0; i<tmp.length; i++)
         elevation.push(parseFloat(tmp[i])) ;
-    console.log(bounds) ; 
-    compute_gradient(elevation, map.getCenter(), dx, dy) ; 
-    compute_height() ; 
-    console.log(height) ; 
+    console.log(bounds) ;
+    compute_gradient(elevation, map.getCenter(), dx, dy) ;
+    compute_height() ;
+    console.log(height) ;
 }
 
 function update_overlay(array, colorscale)
 {
-    if (heatmaplayer) map.removeLayer(heatmaplayer) ; 
+    if (heatmaplayer) map.removeLayer(heatmaplayer) ;
     let p = {
         nCols: nx,
         nRows: ny,
@@ -260,28 +260,29 @@ function update_overlay(array, colorscale)
         cellXSize: dx,
         cellYSize: dy,
     };
-    p.zs = array ; 
+    p.zs = array ;
     var opac = document.getElementById('overlayopacity').value ;
-        
-    s = new L.ScalarField(p) ; 
+
+    s = new L.ScalarField(p) ;
     const layvar = L.canvasLayer.scalarField(s, {
                 color: colorscale,
                 opacity: opac
             });
     heatmaplayer = layvar.addTo(map);
-    console.log("done") ; 
+    console.log("done") ;
 }
 
 function update_overlay_info ()
 {
-    //document.getElementById("waitingwheel").hidden = false ; 
-    bounds = map.getBounds() ; 
+    //document.getElementById("waitingwheel").hidden = false ;
+    bounds = map.getBounds() ;
     var overlaytype = document.getElementById('overlay').value ;
+
     var CVD = document.getElementById('colourblind').checked ;
     if (overlaytype != "None") 
     {
         var overlaydata ;
-        var colorscale ; 
+        var colorscale ;
         console.log(overlaytype)
         if (overlaytype == "elevation")
         {
@@ -299,9 +300,9 @@ function update_overlay_info ()
             document.getElementById('caxis_low').value = Math.round(min_v); document.getElementById('caxis_low').hidden = false ; 
             document.getElementById('caxis_high').value = Math.round(max_v) ; document.getElementById('caxis_high').hidden = false ; 
             console.log(document.getElementById('caxis_high').value)
-            update_overlay(elevation, colorscale) ; 
+            update_overlay(elevation, colorscale) ;
         }
-        else if (overlaytype=="slpangle") 
+        else if (overlaytype=="slpangle")
         {
             if (CVD) {   
                 document.getElementById('colorbar').src = 'resources/Colorbar-Cividis.png' ; 
@@ -318,12 +319,13 @@ function update_overlay_info ()
         else if (overlaytype=="slpdirection")
         {
             colorscale = chroma.scale('RdGy').domain([-Math.PI, 0, Math.PI])
-            update_overlay(direction, colorscale) ; 
+            update_overlay(direction, colorscale) ;
         }
         else if (overlaytype=="slpheight")
         {
-            console.log(height_slope) ; 
+            console.log(height_slope) ;
             var max_v = height_slope.reduce(function(a, b) { return Math.max(a, b);}, 0);
+
             if (CVD) {
                 document.getElementById('colorbar').src = 'resources/Colorbar-Cividis.png' ; 
                 colorscale = chroma.scale(cividis).domain([0, max_v])
@@ -359,7 +361,7 @@ function update_overlay_info ()
         document.getElementById('caxis_high').hidden = true ; 
         if (heatmaplayer) map.removeLayer(heatmaplayer) ; 
     }
-    //document.getElementById("waitingwheel").hidden = true ; 
+    //document.getElementById("waitingwheel").hidden = true ;
 }
 
 // var wmsLayer = L.tileLayer.wms('http://services.ga.gov.au/gis/services/DEM_LiDAR_5m/MapServer/WMSServer?', {
@@ -392,23 +394,23 @@ map.on('moveend',function(e){
   var location=map.getCenter() ;
   document.getElementById("latitude").value = location.lat.toFixed(5).toString() ;
   document.getElementById("longitude").value = location.lng.toFixed(5).toString() ;
-  bounds = map.getBounds() ; 
-  console.log(map.getCenter()) ; 
+  bounds = map.getBounds() ;
+  console.log(map.getCenter()) ;
   //const response = fetch( proxy_server + topo_server_region + bounds._northEast.lat +','+ bounds._northEast.lng+ ';' + bounds._southWest.lat + ',' + bounds._southWest.lng + ';' + ny + ',' + nx + '&reorder' , {}) https://data.scigem.com:5000/
-  //document.getElementById("waitingwheel").hidden = false ; 
+  //document.getElementById("waitingwheel").hidden = false ;
   const response = fetch ('https://data.scigem.com:5000/elevationfast?ne_lat=' + bounds._northEast.lat + '&ne_lng=' + bounds._northEast.lng + '&sw_lat='+ bounds._southWest.lat + '&sw_lng=' + bounds._southWest.lng +'&nx=' + nx + '&ny=' + ny , {})
     .then( r => r.json() )
     .then( data => {
-     dy = (bounds._northEast.lat-bounds._southWest.lat)/ny ; 
-     dx = (bounds._northEast.lng-bounds._southWest.lng)/nx ; 
-     
-     elevation = data.results[0].elevation ; 
-     compute_gradient(elevation, map.getCenter(), dx, dy) ; 
-     compute_height() ; 
-     console.log("Data loaded") ; 
-     update_overlay_info() ; 
-     //document.getElementById("waitingwheel").hidden = true ; 
-    }) ; 
+     dy = (bounds._northEast.lat-bounds._southWest.lat)/ny ;
+     dx = (bounds._northEast.lng-bounds._southWest.lng)/nx ;
+
+     elevation = data.results[0].elevation ;
+     compute_gradient(elevation, map.getCenter(), dx, dy) ;
+     compute_height() ;
+     console.log("Data loaded") ;
+     update_overlay_info() ;
+     //document.getElementById("waitingwheel").hidden = true ;
+    }) ;
 });
 
 
@@ -612,7 +614,7 @@ for (var i=1 ; i<ny-1 ; i++)
         gradient[i*nx*2 + j*2 + 0]=(-elevation[(i-1)*nx + j    ]+elevation[(i+1)*nx + j  ])/(2*dxm) ;
         gradient[i*nx*2 + j*2 + 1]=(-elevation[ i   *nx + (j-1)]+elevation[    i*nx + j+1])/(2*dym) ;
     }
-    
+
 i=0 ;
 for (j=1 ; j<nx-1 ; j++)
 {
@@ -639,7 +641,7 @@ for (i=1 ; i<ny-1 ; i++)
 }
 
 // Corners
-var x0=0 ; var x1 = ny ; var y0=0 ; var y1 = nx ; 
+var x0=0 ; var x1 = ny ; var y0=0 ; var y1 = nx ;
 gradient[x0*nx*2+y0*2+0]         = (elevation[(x0+1)*nx+(y0+0)] - elevation[x0*nx + y0]      )/dxm ;
 gradient[x0*nx*2+y0*2+1]         = (elevation[(x0+0)*nx+(y0+1)] - elevation[x0*nx + y0]      )/dym ;
 gradient[x0*nx*2+(y1-1)*2+0]     = (elevation[(x0+1)*nx+(y1-1)] - elevation[x0*nx + (y1-1)]  )/dxm ;
@@ -655,17 +657,17 @@ for (i=0 ; i<ny ; i++)
         direction[i*nx+j]=Math.atan2(gradient[i*nx*2+j*2+1], gradient[i*nx*2+j*2+0]) ;
         //slope[i][j]=sqrt(gradient[i][j][1]*gradient[i][j][1]+gradient[i][j][0]*gradient[i][j][0]) ;
         slope[i*nx+j] = Math.atan ((gradient[i*nx*2+j*2+0] * Math.cos(direction[i*nx+j]) + gradient[i*nx*2+j*2+1]*Math.sin(direction[i*nx+j]))) ;
-    }    
-}    
+    }
+}
 //------------------------------------
 function compute_height () // Lets try
 {
-var x0=0 ; var x1 = ny ; var y0=0 ; var y1 = nx ; 
+var x0=0 ; var x1 = ny ; var y0=0 ; var y1 = nx ;
 height_slope=[] ;
 for (var i=x0 ; i<x1 ; i++)
     for (var j=y0 ; j<y1 ; j++)
     {
-        var m=elevation[i*nx+j] ; 
+        var m=elevation[i*nx+j] ;
         var M=elevation[i*nx+j] ;
         var c=Math.cos(direction[i*nx+j]) ;
         var s=Math.sin(direction[i*nx+j]) ;
@@ -698,36 +700,36 @@ return (0) ;
 //------------------------------
 async function compute_slopefs(colorscale)
 {
-var x0=0 ; var x1 = ny ; var y0=0 ; var y1 = nx ; 
-slopefs=[] ; 
+var x0=0 ; var x1 = ny ; var y0=0 ; var y1 = nx ;
+slopefs=[] ;
 import("./slope-models/"+stability.value+".js").then(module => {
 slope_stab_model = module;
-console.log("Blaa") 
+console.log("Blaa")
 for (var i=x0 ; i<x1 ; i++)
     for (var j=y0 ; j<y1 ; j++)
     {
         slopefs[i*nx+j] = slope_stab_model.calculateFoS(slope[i*nx+j], height_slope[i*nx+j]);
     }
-update_overlay(slopefs, colorscale) ; 
+update_overlay(slopefs, colorscale) ;
 }) ;
 }
 
-/* Load the initial elevation map and let us download it. 
-nx = 100 ; ny = 75 ; 
+/* Load the initial elevation map and let us download it.
+nx = 100 ; ny = 75 ;
 var location=map.getCenter() ;
 document.getElementById("latitude").value = location.lat.toFixed(5).toString() ;
 document.getElementById("longitude").value = location.lng.toFixed(5).toString() ;
-bounds = map.getBounds() ; 
-console.log(map.getCenter()) ; 
+bounds = map.getBounds() ;
+console.log(map.getCenter()) ;
 const response = fetch( proxy_server + topo_server_region + bounds._northEast.lat +','+ bounds._northEast.lng+ ';' + bounds._southWest.lat + ',' + bounds._southWest.lng + ';' + ny + ',' + nx + '&reorder' , {})
 .then( r => r.json() )
 .then( data => {
-    dy = (bounds._northEast.lat-bounds._southWest.lat)/ny ; 
-    dx = (bounds._northEast.lng-bounds._southWest.lng)/nx ; 
-    
-    elevation = data.results[0].elevation ; 
-    compute_gradient(elevation, map.getCenter(), dx, dy) ; 
-    console.log("Data loaded") ; 
+    dy = (bounds._northEast.lat-bounds._southWest.lat)/ny ;
+    dx = (bounds._northEast.lng-bounds._southWest.lng)/nx ;
+
+    elevation = data.results[0].elevation ;
+    compute_gradient(elevation, map.getCenter(), dx, dy) ;
+    console.log("Data loaded") ;
     var csv = elevation.join(' ');
     var link = document.getElementById("tmp");
 link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8\n"+elevation));

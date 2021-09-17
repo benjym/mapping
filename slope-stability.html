@@ -32,27 +32,29 @@
                 <option value="cullman">Cullman's model</option>
                 <option value="taylor-explicit">Taylor charts</option>
             </select><br>
-            Specific weight &gamma; (kN.m<sup>3</sup>)
+            Specific weight &gamma; (kN/m<sup>3</sup>)
             <div class="slider">0 <input type="range" id="G_s" value="20" min="0" max="50" step="1" oninput="Gs_out.value = G_s.value" class="updater"> <output id="Gs_out">20</output> </div><br>
-            Cohesion c (kN.m<sup>2</sup>)
+            Cohesion c (kN/m<sup>2</sup>)
             <div class="slider">0 <input type="range" id="c" value="5" min="0" max="50" oninput="c_out.value = c.value" class="updater"> <output id="c_out"> 5</output> </div><br>
             Friction angle &phi; (degree)
             <div class="slider">0 <input type="range" id="phi" value="30" min="0" max="90" oninput="phi_out.value = phi.value" class="updater"> <output id="phi_out"> 30</output></div><br>
             <span id="rock-depth">Rock depth d (m)</span></a>
             <span id="rock-depth-slider"><div class="slider">0 <input type="range" id="H" value="10" min="0" max="100" oninput="H_out.value = H.value" class="updater"> <output id="H_out">10 </output></div></span><br>
-            <span id="watertable">Water table depth dw (m)</span></a>
+            <span id="watertable">Water table depth d<sub>w</sub> (m)</span></a>
             <span id="watertable-slider"><div class="slider">0 <input type="range" id="dw" value="10" min="0" max="100" oninput="dw_out.value = dw.value" class="updater"> <output id="dw_out">10 </output></div></span> <br>
 
             <div style="border:solid;border-color:#ce3d20;padding-bottom:10px;padding-top:10px;"> Factor of safety: <span id="FoS">Unknown</span> &nbsp; <span id="FoSIndicator" style="color:green;">&#11044;</span></div>
 
+            <br>
             <hr />
-            Overlay <select id="overlay" class="overlayupdater" style="width:50%;">
+            Overlay: <select id="overlay" class="overlayupdater" style="width:50%;">
                 <option value="None" selected>None</option>
                 <option value="slpFs">Factor of safety</option>
                 <option value="elevation">Elevation</option>
                 <option value="slpangle">Slope angle</option>
                 <!--<option value="slpdirection">Slope direction</option>-->
                 <option value="slpheight">Slope height</option>
+<<<<<<< HEAD
             </select><img src="resources/wait.gif" width="32px" id="waitingwheel" hidden=true /></td><td>
             
             <table><tr><td width=70%>
@@ -61,8 +63,19 @@
             </td><td><input type="checkbox" id="colourblind" name="colourblind" value="CVD" class="overlayupdater"><label for="colourblind" style="font-size:small; width:10%;color:white;">Colour deficiency&nbsp;mode</label>
             </td></tr></table>
             <output id="caxis_low" hidden=true>0 </output> <img src='resources/Colorbar-NavyYellow-lch.png' id="colorbar" style="width:50%;height:20px;" hidden="false" /><output id="caxis_high" hidden=true>1</output>
+=======
+            </select><img src="resources/wait.gif" width="32px" id="waitingwheel" hidden=true />
+            <br><br>
+            Opacity:
+            <span class="slider"> 0 <input type="range" id="overlayopacity" value="0.8" min="0" max="1" step="0.1" style="width:50%;" oninput="opac_out.value = overlayopacity.value" class="overlayupdater"> <output id="opac_out">0.8 </output> </span><br>
+>>>>>>> 6a5eaa5147c6a601a70d56a4672f3c66df413582
             <br>
-            
+            <div>
+                <output id="caxis_low" hidden=true>0 </output> <img src='resources/Colorbar-NavyYellow-lch.png' id="colorbar" style="width:67%;height:24px;vertical-align: middle;" hidden="false" /><output id="caxis_high" hidden=true>1</output>
+            </div>
+
+            <!-- <br> -->
+
             <!--<br><br>
             <div onclick="assumptions();"> ? </div>-->
 
@@ -91,7 +104,7 @@
             </svg>
         </div>
     </div>
-    
+
     <canvas width="300" height="300">
   An alternative text describing what your canvas displays.
 </canvas>
