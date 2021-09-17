@@ -57,7 +57,7 @@ canvas {
     text-align: center;
     /* vertical-align:; */
     margin-top: 5px;
-    margin-bottom: 5px;
+    margin-bottom: 0px;
 }
 
 input[type=range] {
