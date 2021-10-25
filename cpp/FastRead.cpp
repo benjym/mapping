@@ -9,31 +9,53 @@
 #include <filesystem>
 using namespace std ; 
 
-std::string tilename (double lat, double lon)
+//--------------------------------------------------------
+int flooring_lon (double lon, int ds) { return (floor((lon - (-180))/double(ds))*ds + (-180)) ; }
+int ceiling_lon (double lon, int ds)  { return (ceil ((lon - (-180))/double(ds))*ds + (-180)) ; }
+int flooring_lat (double lat, int ds) { return (floor((lat - (-90))/double(ds))*ds + (-90)) ; }
+int ceiling_lat (double lat, int ds)  { return (ceil ((lat - (-90))/double(ds))*ds + (-90)) ; }
+//--------------------------------------------------------
+std::string tilename (double lat, double lon, std::pair<int,std::string> ds)
 {
  char name[50] ; 
- sprintf(name, "/media/franz/Koala2/COP30M/extracted/%c%02d%c%02d.tif", ((lat<0)?'S':'N'), static_cast<int>(abs(floor(lat))),  ((lon<0)?'W':'E'), static_cast<int>(abs(floor(lon)))) ; 
- //sprintf(name, "/mnt/Koala/COP_DEMGLO30/tifs/%c%02d%c%02d.tif", ((lat<0)?'S':'N'), static_cast<int>(abs(floor(lat))),  ((lon<0)?'W':'E'), static_cast<int>(abs(floor(lon)))) ; 
+ int ilat = flooring_lat(lat, ds.first) ; 
+ int ilon = flooring_lon(lon, ds.first) ; 
+ sprintf(name, "/media/franz/Koala2/COP30M/%s/%c%02d%c%03d.tif", ds.second.c_str(), ((ilat<0)?'S':'N'), abs(ilat),  ((ilon<0)?'W':'E'), abs(ilon)) ; 
+ //sprintf(name, "/mnt/Koala/COP_DEMGLO30/%s/%c%02d%c%03d.tif", ds.second.c_str(), ((ilat<0)?'S':'N'), abs(ilat),  ((ilon<0)?'W':'E'), abs(ilon)) ; 
  return (name) ;     
 }
-
+//--------------------------------------------------------
 int elevation (double ne_lat, double ne_lng, double sw_lat, double sw_lng, int ny, int nx, float * pafScanline)
 {
     GDALRasterIOExtraArg extraargs ;
     INIT_RASTERIO_EXTRA_ARG(extraargs) ; 
     extraargs.eResampleAlg = GRIORA_Bilinear ; 
     
-    for (int j=ceil(ne_lat), nnycum = 0 ; j>floor(sw_lat) ; j--)
+    std::vector <std::pair<int,std::string>> downsampling = {{1,"extracted"}, {4, "quarter"}, {16, "sixteenth"}, {64, "sixtyfourth"}} ; 
+    
+    int ntiles = 0 ; int idx = -1 ; 
+    int beglat, beglon, endlat, endlon ;
+    do {
+        idx++ ; 
+        beglat = ceiling_lat (ne_lat, downsampling[idx].first) ; 
+        beglon = flooring_lon(sw_lng, downsampling[idx].first) ; 
+        endlat = flooring_lat(sw_lat, downsampling[idx].first) ; 
+        endlon = ceiling_lon (ne_lng, downsampling[idx].first) ; 
+        ntiles = (beglat-endlat)/downsampling[idx].first * (endlon-beglon)/downsampling[idx].first ; 
+    } while (ntiles > 8 && idx<downsampling.size()) ; 
+    
+    printf("[%d %d %d %d %d %d]\n", beglat, endlat, beglon, endlon, ntiles, idx) ; 
+    for (int j=beglat, nnycum = 0 ; j>endlat ; j -= downsampling[idx].first)
     {
         int nny ; 
-        for (int i = floor(sw_lng), nnxcum=0 ; i<ceil(ne_lng) ; i++)
+        for (int i = beglon, nnxcum=0 ; i<endlon ; i += downsampling[idx].first)
         {
             GDALDataset  *poDataset;
             GDALAllRegister();
-            auto filename = tilename(j-1, i) ; // Lower left corner for COP30M DEM
+            auto filename = tilename(j-downsampling[idx].first, i, downsampling[idx]) ; // Lower left corner for COP30M DEM
             if (!std::filesystem::exists(filename))
             {
-                printf("Cannot find the required file %s. ", filename.c_str()) ;
+                printf("Cannot find the required file %s. \n", filename.c_str()) ;
                 continue ; 
             }
             else
@@ -44,8 +66,8 @@ int elevation (double ne_lat, double ne_lng, double sw_lat, double sw_lng, int n
     
             int startx = round((max(sw_lng,(double)(i))-i)/(adfGeoTransform[1])) ;
             int starty = round((min(ne_lat,(double)(j))-j)/(adfGeoTransform[5])) ;
-            int stopx  = round((min(ne_lng,(double)(i+1))-i)/(adfGeoTransform[1])) ;
-            int stopy  = round((max(sw_lat,(double)(j-1))-j)/(adfGeoTransform[5])) ;
+            int stopx  = round((min(ne_lng,(double)(i + downsampling[idx].first ))-i)/(adfGeoTransform[1])) ;
+            int stopy  = round((max(sw_lat,(double)(j - downsampling[idx].first ))-j)/(adfGeoTransform[5])) ;
             int nx_geotiff = stopx-startx ; 
             int ny_geotiff = stopy-starty ; 
             
@@ -104,12 +126,20 @@ int elevation (double ne_lat, double ne_lng, double sw_lat, double sw_lng, int n
 
 int main (int argc, char * argv[])
 {
-int nx = 21 ;
-int ny = 21 ; 
+int nx = 10 ;
+int ny = 10 ; 
 int nn = nx*ny ; 
 float * elevationarray = (float *) malloc(sizeof(float)*nn); 
-//elevation( -34.32507927447516, 150.91146469116214, -34.3477588987833, 150.86558818817142,  ny, nx, elevationarray) ;  
-elevation(-34.25396567966451,150.97334105164282,-34.255764320335494,150.97116494835717,21,21, elevationarray) ;
+elevation( -34.32507927447516, 150.91146469116214, -34.3477588987833, 150.86558818817142,  ny, nx, elevationarray) ;  
+//elevation(-34.25396567966451,150.97334105164282,-34.255764320335494,150.97116494835717,21,21, elevationarray) ;
 printf("//") ; 
-for (int i=0 ; i<nx*ny ; i++) printf("%f ", elevationarray[i]) ; 
+
+elevation( -34, 160, -36, 150,  ny, nx, elevationarray) ;  
+
+
+elevation( 60, 116, 35, 100,  ny, nx, elevationarray) ;  
+//for (int i=0 ; i<nx*ny ; i++) printf("%f ", elevationarray[i]) ; 
+
+//printf("%d %d %d |", flooring (150.91146469116214, 1), flooring (150.91146469116214, 4), flooring (150.91146469116214, 16)) ; 
+//printf(" %d %d %d ", flooring (-150.91146469116214, 1), flooring (-150.91146469116214, 4), flooring (-150.91146469116214, 16)) ; 
 }
