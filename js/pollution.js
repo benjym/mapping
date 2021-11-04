@@ -169,7 +169,6 @@ function redrawContoursFromLine() {
     var wind_theta = -Math.atan2(u[1],u[0]); // angle of wind to N/E/S/W
 
     nx = ny = 100;
-    ny = 100;
     var bounds = map.getBounds();
     var data = new Array(nx*ny);
 
@@ -184,12 +183,17 @@ function redrawContoursFromLine() {
     alpha = Math.atan2(y_2 - y_1, x_2 - x_1); // slope of the road
     cos_alpha = Math.cos(alpha);
     sin_alpha = Math.sin(alpha);
-    var theta = alpha + wind_theta + Math.PI/2.;
+    var theta = (alpha + wind_theta + Math.PI/2.);
     var cos_theta = Math.cos(theta);
     var sin_theta = Math.sin(theta);
 
     var centre_x = (x_1 + x_2)/2.;
     var centre_y = (y_1 + y_2)/2.;
+    var source_dist = Math.sqrt(Math.pow(x_2-x_1,2) + Math.pow(y_2-y_1,2))/2;
+    // x_1 -= centre_x;
+    // x_2 -= centre_x;
+    // y_1 -= centre_y;
+    // y_2 -= centre_y;
 
     distance_x = map.distance(
         L.latLng(bounds.getEast(),top_marker._latlng.lng),
@@ -199,7 +203,7 @@ function redrawContoursFromLine() {
         L.latLng(top_marker._latlng.lat,bounds.getSouth()),
         L.latLng(top_marker._latlng.lat,bounds.getNorth())
     )
-    delta_x = distance_x/(nx+1)/1.2; // HACK: NO IDEA WHY I NEED THE 1.2 FACTOR!!!
+    delta_x = distance_x/(nx+1)/1.2; // HACK: NO IDEA WHY I NEED THE 1.2 FACTOR - does the map extend off the page??!!!
     delta_y = distance_y/(ny+1)*1.2; // HACK: NO IDEA WHY I NEED THE 1.2 FACTOR!!!
 
     for (var i = 0; i < nx; i++) { // for each pixel
@@ -208,21 +212,20 @@ function redrawContoursFromLine() {
             var x = -sin_alpha*(i*delta_x - centre_x) + cos_alpha*((ny-j)*delta_y - centre_y); // in SOURCE coordinate system
 
             var d_eff = x/cos_theta; // Equation 5
-            //HACK: WHERE DOES THE 2 BELOW COME FROM!?????
-            var d_1   = (x)*cos_theta + (y - 2*(y_1 - centre_y))*sin_theta; // Equation 6 (in source coord system)
-            var d_2   = (x)*cos_theta + (y - 2*(y_2 - centre_y))*sin_theta; // Equation 6 (in source coord system)
+            var d_1   = x*cos_theta + (y+source_dist)*sin_theta;// + *sin_theta*(y_1 - centre_y); // Equation 6 (in source coord system)
+            var d_2   = x*cos_theta + (y-source_dist)*sin_theta;// - sin_theta*(y_2 - centre_y); // Equation 6 (in source coord system)
 
             var sigma_z_deff = sigma_z(d_eff,si);
             // if ( d_1 > 0 ) {
-                var source_term_1 = erf( ((y - 2*(y_1 - centre_y))*cos_theta - x*sin_theta)/(sqrt_2*sigma_y(d_1,si)) );
+            var source_term_1 = erf( ((y + source_dist)*cos_theta - x*sin_theta)/(sqrt_2*sigma_y(d_1,si)) );
             // }
             // else {
                 // var source_term_1 = -Math.sign(sin_theta);
             // }
             // if ( d_2 > 0 ) {
-            var source_term_2 = erf( ((y - 2*(y_2 - centre_y))*cos_theta - x*sin_theta)/(sqrt_2*sigma_y(d_2,si)) );
+            var source_term_2 = erf( ((y - source_dist)*cos_theta - x*sin_theta)/(sqrt_2*sigma_y(d_2,si)) );
 
-            if ( y_1 > y_2 ) { [source_term_1,source_term_2] = [source_term_2,source_term_1]}
+            // if ( y_1 > y_2 ) { [source_term_1,source_term_2] = [source_term_2,source_term_1]}
             // }
             // else {
                 // var source_term_2 = -Math.sign(sin_theta);
@@ -231,7 +234,7 @@ function redrawContoursFromLine() {
 
             if ( isNaN(C) || !isFinite(C) ) { data[i+j*nx] = -999; }
             else { data[i+j*nx] = C; }
-            // data[i+j*nx] = d_2;
+            // data[i+j*nx] = d_1;
 
         }
     }
