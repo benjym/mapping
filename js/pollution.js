@@ -34,7 +34,10 @@ var Iz = [  4.679, -1.999,-2.341 ,-3.186 ,-3.783 ,-4.490 ];
 var Jz = [-1.7172, 0.8752,0.9477 ,1.1737 ,1.3010 ,1.4024 ];
 var Kz = [ 0.2770, 0.0136,-0.0020,-0.0316,-0.0450,-0.0540];
 
-var initial_loc1, initial_loc2
+var nx, ny, delta_x, delta_y;
+var heatmaplayer;
+var initial_loc1, initial_loc2;
+var polyline;
 const urlParams = new URLSearchParams(window.location.search);
 if ( urlParams.has('source') ) {
     source = urlParams.get('source');
@@ -61,7 +64,7 @@ else {
 function onLeftMapClick(e) {
     top_marker.setLatLng(e.latlng);
     urlParams.set("loc1",String(e.latlng.lat) + "," + String(e.latlng.lng))
-
+    if ( source === 'line' ) { polyline.setLatLngs([top_marker.getLatLng(),bottom_marker.getLatLng()]); }
     redrawContours();
 }
 function onRightMapClick(e) {
@@ -76,7 +79,6 @@ if ( source === 'point' ) {
         icon:customIcon // tried but didn't make something good - worth continuing with!
     }).addTo(map);//.bindPopup("I am an orange leaf.");
     map.setView([top_marker._latlng.lat,top_marker._latlng.lng], 17) // zoom the map to the polygon
-
 }
 else if ( source === 'line' ) {
     map.on('click', onLeftMapClick);
@@ -102,6 +104,16 @@ else if ( source === 'line' ) {
     var bottom_marker = L.marker(initial_loc2,{
         icon:bottom_icon
     }).addTo(map);
+
+    polyline = L.polyline([top_marker._latlng,bottom_marker._latlng], {
+        color: '#FFF',
+        weight: 5,
+        // stroke: true,
+        // opacity: 1.0,
+        // fill: true,
+        // className: 'fake_class'
+    }).addTo(map);
+
     map.setView([(top_marker._latlng.lat + bottom_marker._latlng.lat)/2.,(top_marker._latlng.lng + bottom_marker._latlng.lng)/2.], 15)
 }
 else if ( source === 'area' ) {
@@ -138,91 +150,109 @@ function redrawContoursFromLine() {
     clean_polygons()
     console.log('this is a line source')
     var si = stability.selectedIndex;
-    var dx;
+    // var dx;
     var z = parseFloat(delta.value);
     var U = Math.sqrt(u[0]*u[0] + u[1]*u[1]);
-    var theta = -Math.atan2(u[1],u[0]);
-    var buoyancy_flux = 9.81*v_s.value*d_s.value*d_s.value*(T_s.value - T_a.value)/(4*(T_s.value + 273.15));
-    var concs = concentration_contours.value.split(';');
+    var wind_theta = -Math.atan2(u[1],u[0]); // angle of wind to N/E/S/W
 
-    var els = document.querySelectorAll(".buoyancy");
-    if ( buoyancy_flux >= 0 ) { bg_color = '#FFFFFF'; font_color = '#000000' }
-    else { var bg_color = '#363636'; font_color = '#FFFFFF'}
-    for (var j = 0; j < els.length; j++) {
-        els[j].style.backgroundColor = bg_color;
-        els[j].style.color = font_color;
-    }
+    nx = 50;
+    ny = 50;
+    var bounds = map.getBounds();
+    var data = new Array(nx*ny);
 
-    for (var i=0; i<concs.length; i++ ) {
-        var conc = parseFloat(concs[i])*1e-6; // convert to micrograms!
-        var col = colors[i];
-        var x_p_vertices = [];
-        var x_m_vertices = [];
-        var y_p_vertices = [];
-        var y_m_vertices = [];
-        var x = 0.0;
-        var valid = true;
-        while ( valid ) {
-            if ( x < 100 ) { dx = 1.0; }
-            else if ( x < 1e3 ) { dx = 1e0; }
-            else if ( x < 1e4 ) { dx = 1e1; }
-            else if ( x < 1e5 ) { dx = 1e2; }
-            // else if ( x < 1e6 ) { dx = 1e3; }
-            else { valid = false; }
-            var lnx = Math.log(x);
-            // sigma_y and sigma_z from here: http://dii.unipd.it/-paolo.canu/files/FdT/Point%20Source%20Dispersion%20Parameters.pdf
-            var sigma_y = Math.exp(Iy[si] + Jy[si]*lnx + Ky[si]*lnx*lnx);
-            var sigma_z = Math.exp(Iz[si] + Jz[si]*lnx + Kz[si]*lnx*lnx);
-            x += dx;
-            var delta_h = 1.6*Math.pow(buoyancy_flux,1./3.)*Math.pow(x,2./3.)/U;
-            if ( isFinite(delta_h) ) { var H = parseFloat(h.value) + delta_h; }
-            else { var H = parseFloat(h.value); }
+    var A = 1e5; // A = Q/(2*sqrt(2*pi)*u)
+    // var stability = 'A';
+    // var theta = 30*Math.PI/180.; // angle counter-clockwise from direction perpendicular to road to the wind direction
 
-            // Solve for constant concentration value
-            var RHS = conc/parseFloat(q.value)*2*Math.PI*U*sigma_y*sigma_z/( Math.exp(-(z-H)*(z-H)/2/sigma_z/sigma_z) + Math.exp(-(z+H)*(z+H)/2/sigma_z/sigma_z) );
-            var y_plus = Math.sqrt(-sigma_y*sigma_y*Math.log(RHS))
-            if ( !isFinite(y_plus) && x > 1000 ) { // HACK: SHOULD CHECK FOR MAX VALUE AT GROUND LEVEL INSTEAD USING KNOWN FORMULA
-                valid = false;
-            }
-            else if ( isFinite(y_plus) ) {
-                lat_p = top_marker._latlng.lat + (-x*Math.sin(theta) + y_plus*Math.cos(theta))/111111.;
-                lon_p = top_marker._latlng.lng + ( x*Math.cos(theta) + y_plus*Math.sin(theta))/(111111.*Math.cos(top_marker._latlng.lat*Math.PI/180.));
+    var sqrt_2 = Math.sqrt(2);
+    // delta_x = (bounds.getEast() - bounds.getWest())/nx/111111.; // pixel spacing in metres
+    // delta_y = (bounds.getNorth() - bounds.getSouth())/ny/(111111.*Math.cos(top_marker._latlng.lat*Math.PI/180.)); // pixels per metre
 
-                lat_m = top_marker._latlng.lat + (-x*Math.sin(theta) - y_plus*Math.cos(theta))/111111.;
-                lon_m = top_marker._latlng.lng + ( x*Math.cos(theta) - y_plus*Math.sin(theta))/(111111.*Math.cos(top_marker._latlng.lat*Math.PI/180.));
+    var x_1 = haversineDistance([top_marker._latlng.lat,      bounds.getWest()],[top_marker._latlng.lat,top_marker._latlng.lng])
+    var y_1 = haversineDistance([top_marker._latlng.lat,top_marker._latlng.lng],[bounds.getSouth(),     top_marker._latlng.lng])
+    var x_2 = haversineDistance([bottom_marker._latlng.lat,      bounds.getWest()],[bottom_marker._latlng.lat,bottom_marker._latlng.lng])
+    var y_2 = haversineDistance([bottom_marker._latlng.lat,bottom_marker._latlng.lng],[bounds.getSouth(),     bottom_marker._latlng.lng])
 
-                x_p_vertices.push(lat_p);
-                x_m_vertices.push(lat_m);
-                y_p_vertices.push(lon_p);
-                y_m_vertices.push(lon_m);
-            }
-            else {
-                if ( x_p_vertices.length > 0 ) { // this was a stroke of genius - never edit this section
-                    var x_all = x_p_vertices.concat(x_m_vertices.reverse());
-                    var y_all = y_p_vertices.concat(y_m_vertices.reverse());
-                    polygons.push(L.polygon(transpose([x_all,y_all]), {
-                        color: col,
-                    }).addTo(map));
+    alpha = Math.atan2(y_2 - y_1, x_2 - x_1); // slope of the road
+    cos_alpha = Math.cos(alpha);
+    sin_alpha = Math.sin(alpha);
+    var theta = wind_theta - Math.PI/2.;
+    var cos_theta = Math.cos(theta);
+    var sin_theta = Math.sin(theta);
+    console.log('alpha is ' + String(alpha*180/Math.PI) + ' degrees')
+    console.log('theta is ' + String(theta*180/Math.PI) + ' degrees')
 
-                    var x_p_vertices = [];
-                    var x_m_vertices = [];
-                    var y_p_vertices = [];
-                    var y_m_vertices = [];
-                }
-            }
+    console.log('stack 1 at: ' + String(x_1) + ' and ' + String(y_1))
+    console.log('stack 2 at: ' + String(x_2) + ' and ' + String(y_2))
+
+    var centre_x = (x_1 + x_2)/2.;
+    var centre_y = (y_1 + y_2)/2.;
+
+    console.log('center at: ' + String(centre_x) + ' and ' + String(centre_y))
+
+    distance_x = haversineDistance([bounds.getEast(),top_marker._latlng.lng],[bounds.getWest(),top_marker._latlng.lng])
+    distance_y = haversineDistance([top_marker._latlng.lat,bounds.getSouth()],[top_marker._latlng.lat,bounds.getNorth()])
+    delta_x = distance_x/nx;
+    delta_y = distance_y/ny;
+
+    for (var i = 0; i < nx; i++) { // for each pixel
+        for ( var j = 0; j < ny; j++ ) {
+            var y =  cos_alpha*(i*delta_x - centre_x) + sin_alpha*((ny-j)*delta_y - centre_y); // in SOURCE coordinate system
+            var x = -sin_alpha*(i*delta_x - centre_x) + cos_alpha*((ny-j)*delta_y - centre_y); // in SOURCE coordinate system
+
+            var d_eff = x/cos_theta; // Equation 5
+            var d_1   = (x - x_1 + centre_x)*cos_theta + (y - y_1 + centre_y)*sin_theta; // Equation 6 (in source coord system)
+            var d_2   = (x - x_2 + centre_x)*cos_theta + (y - y_2 + centre_y)*sin_theta; // Equation 6  (in source coord system)
+
+            var sigma_z_deff = sigma_z(d_eff,si);
+            var source_term_1 = erf( ((y - y_1 + centre_y)*cos_theta - (x + centre_x)*sin_theta)/(sqrt_2*sigma_y(d_1,si)) );
+            var source_term_2 = erf( ((y - y_2 + centre_y)*cos_theta - (x + centre_x)*sin_theta)/(sqrt_2*sigma_y(d_2,si)) );
+
+            var C = A/(cos_theta*sigma_z_deff)*Math.exp(-z*z/2/sigma_z_deff/sigma_z_deff)*( source_term_2 - source_term_1 ); // Equation 7
+            if ( isNaN(C) ) { data[i+j*nx] = 0; }
+            else { data[i+j*nx] = source_term_1 - source_term_2; }
+            // data[i + j*nx] = d_eff;
+
         }
-        // var x_rev =
-        var x_all = x_p_vertices.concat(x_m_vertices.reverse());
-        var y_all = y_p_vertices.concat(y_m_vertices.reverse());
-        polygons.push(L.polygon(transpose([x_all,y_all]), {
-            color: col,
-        }).addTo(map));
-        // console.log(transpose([x_all,y_all]))
+
+        // console.log(d_eff,si,sigma_z_deff)
+        // data[index] = y
     }
-    legend_div.innerHTML = "<h4>Concentration</h4>";
-    for (var i=0; i<concs.length; i++ ) {
-        legend_div.innerHTML += '<i style="background: ' + colors[i] + '"></i><span>' + concs[i] + ' &micro;g/m<sup>3</sup></span><br>';
-    }
+    console.log(data)
+    update_overlay(data, chroma.scale('RdGy'))
+
+    // legend_div.innerHTML = "<h4>Concentration</h4>";
+    legend_div.innerHTML = "<h4>Legend</h4>";
+    legend_div.innerHTML += '<i style="background: ' + top_marker_color + '"></i><span>Start of road (left click)</span><br>';
+    legend_div.innerHTML += '<i style="background: ' + bottom_marker_color + '"></i><span>End of road (right click) </span><br>';
+    // for (var i=0; i<concs.length; i++ ) {
+        // legend_div.innerHTML += '<i style="background: ' + colors[i] + '"></i><span>' + concs[i] + ' &micro;g/m<sup>3</sup></span><br>';
+    // }
+}
+
+function update_overlay(array, colorscale)
+{
+    if (heatmaplayer) map.removeLayer(heatmaplayer) ;
+    var bounds = map.getBounds();
+    let p = {
+        nCols: nx,
+        nRows: ny,
+        xllCorner: bounds._southWest.lng,
+        yllCorner: bounds._southWest.lat,
+        cellXSize: (bounds._northEast.lng-bounds._southWest.lng)/nx,
+        cellYSize: (bounds._northEast.lat-bounds._southWest.lat)/ny,
+    };
+    p.zs = array ;
+    colorscale.domain([Math.min(...array),Math.max(...array)])
+    // var opac = document.getElementById('overlayopacity').value ;
+
+    s = new L.ScalarField(p) ;
+    const layvar = L.canvasLayer.scalarField(s, {
+                color: colorscale,
+                opacity: 0.5
+            });
+    heatmaplayer = layvar.addTo(map);
+    console.log("done") ;
 }
 
 function redrawContoursFromPoint() {
@@ -252,13 +282,12 @@ function redrawContoursFromPoint() {
         var y_m_vertices = [];
         var x = 0.0;
         var valid = true;
-        while ( valid ) {
-            if ( x < 100 ) { dx = 1.0; }
-            else if ( x < 1e3 ) { dx = 1e0; }
-            else if ( x < 1e4 ) { dx = 1e1; }
-            else if ( x < 1e5 ) { dx = 1e2; }
-            // else if ( x < 1e6 ) { dx = 1e3; }
-            else { valid = false; }
+
+        dx = 2e5*Math.pow(2,-map.getZoom());
+        max_draw = 1e3*dx;
+
+        while ( x < max_draw ) {
+
             var lnx = Math.log(x);
             // sigma_y and sigma_z from here: http://dii.unipd.it/-paolo.canu/files/FdT/Point%20Source%20Dispersion%20Parameters.pdf
             var sigma_y = Math.exp(Iy[si] + Jy[si]*lnx + Ky[si]*lnx*lnx);
@@ -322,10 +351,19 @@ legend.onAdd = function(map) {
   legend_div = L.DomUtil.create("div", "legend");
   var concs = concentration_contours.value.split(';');
 
-  legend_div.innerHTML += "<h4>Concentration</h4>";
-  for (var i=0; i<concs.length; i++ ) {
-      legend_div.innerHTML += '<i style="background: ' + colors[i] + '"></i><span>' + concs[i] + ' &micro;g/m<sup>3</sup></span><br>';
+  if ( source === 'point' ) {
+      legend_div.innerHTML += "<h4>Concentration</h4>";
+      for (var i=0; i<concs.length; i++ ) {
+          legend_div.innerHTML += '<i style="background: ' + colors[i] + '"></i><span>' + concs[i] + ' &micro;g/m<sup>3</sup></span><br>';
+      }
   }
+  else if ( source === 'line' ) {
+      legend_div.innerHTML = "<h4>Legend</h4>";
+      legend_div.innerHTML += '<i style="background: ' + top_marker_color + '"></i><span>Start of road (left click)</span><br>';
+      legend_div.innerHTML += '<i style="background: ' + bottom_marker_color + '"></i><span>End of road (right click) </span><br>';
+
+  }
+
 
 
 
@@ -333,7 +371,9 @@ legend.onAdd = function(map) {
 };
 
 legend.addTo(map);
-
+map.on('zoomend', function() {
+    redrawContours();
+});
 
 
 // MAKE WIND ROSE ETC BELOW HERE
@@ -407,3 +447,54 @@ function getCursorPosition_d(d, event) {
 
     return [x, y];
 }
+
+/**
+  * Calculates the haversine distance between point A, and B.
+  * @param {number[]} latlngA [lat, lng] point A
+  * @param {number[]} latlngB [lat, lng] point B
+  */
+ const haversineDistance = ([lat1, lon1], [lat2, lon2]) => {
+   const toRadian = angle => (Math.PI / 180) * angle;
+   const distance = (a, b) => (Math.PI / 180) * (a - b);
+   const RADIUS_OF_EARTH_IN_M = 6371000;
+
+   const dLat = distance(lat2, lat1);
+   const dLon = distance(lon2, lon1);
+
+   lat1 = toRadian(lat1);
+   lat2 = toRadian(lat2);
+
+   // Haversine Formula
+   const a =
+     Math.pow(Math.sin(dLat / 2), 2) +
+     Math.pow(Math.sin(dLon / 2), 2) * Math.cos(lat1) * Math.cos(lat2);
+   const c = 2 * Math.asin(Math.sqrt(a));
+
+   let finalDistance = RADIUS_OF_EARTH_IN_M * c;
+
+   return finalDistance;
+ };
+
+ function erf(x) {
+     // https://en.wikipedia.org/wiki/Error_function#Numerical_approximations
+     var t = 1.0/(1.0 + 0.3275911*Math.abs(x));
+     var retval = 1.0 - (0.254829592*t -0.284496736*t*t + 1.421413741*t*t*t -1.453152027*t*t*t*t + 1.061405429*t*t*t*t*t)*Math.exp(-x*x);
+     if ( x > 0 ) { return retval }
+     else { return -retval }
+ }
+
+ function sigma_y(x,si) { // NOTE: ONLY IMPLEMENTED URBAN EQUATIONS!!! // Table A.1
+     if ( x <= 1e-5 ) { return 0; }
+     else if ( si< 2 )      { return 0.32*x*Math.pow(1 + 0.0004*x, -0.5) } // A or B
+     else if ( si === 2 )                      { return 0.22*x*Math.pow(1 + 0.0004*x, -0.5) } // C
+     else if ( si === 3 )                      { return 0.16*x*Math.pow(1 + 0.0004*x, -0.5) } // D
+     else if ( si > 3 ) { return 0.11*x*Math.pow(1 + 0.0004*x, -0.5) } // E or F
+ }
+
+ function sigma_z(x,si) { // NOTE: ONLY IMPLEMENTED URBAN EQUATIONS!!!
+     if ( x < 1e-5 ) { return 0; }
+     else if ( si < 2 )      { return 0.24*x*Math.pow(1 + 0.0010*x, 0.5)  } // A or B
+     else if ( si === 'C' )                      { return 0.20*x } // C
+     else if ( si === 'D' )                      { return 0.14*x*Math.pow(1 + 0.0003*x, -0.5) } // D
+     else if ( si === 'E' || si === 'F' ) { return 0.08*x*Math.pow(1 + 0.0015*x, -1)   } // E or F
+ }
