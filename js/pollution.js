@@ -240,14 +240,15 @@ function redrawContoursFromLine() {
     legend_div.innerHTML = "<h4>Legend</h4>";
     legend_div.innerHTML += '<i style="background: ' + top_marker_color + '"></i><span>Start of road (left click)</span><br>';
     legend_div.innerHTML += '<i style="background: ' + bottom_marker_color + '"></i><span>End of road (right click) </span><br>';
-    legend_div.innerHTML += "<h4>Concentration</h4>";
+    legend_div.innerHTML += "<h4>Concentration (&micro;g/m<sup>3</sup>)</h4>";
     var concs = concentration_contours.value.split(';');
     for (var i=0; i<concs.length; i++ ) {
-        if ( i == 0 ) { var prefix = "<"; }
-        else if ( i == concs.length-1 ) { var prefix = ">"; }
-        else { var prefix = ''; }
 
-        legend_div.innerHTML += '<i style="background: ' + colors[i] + '"></i><span>' + prefix + concs[i] + ' &micro;g/m<sup>3</sup></span><br>';
+        if ( i == 0 ) { var conc_string = ' c < ' + concs.at(0).trim(); }
+        else if ( i == concs.length-1 ) { var conc_string = ' c ≥ ' + concs.at(-1).trim(); }
+        else { var conc_string = concs.at(i-1).trim() + ' &lt; c ≤ ' + concs.at(i).trim(); }
+
+        legend_div.innerHTML += '<i style="background: ' + colors[i] + '"></i><span>' + conc_string + ' </span><br>';
     }
 }
 
