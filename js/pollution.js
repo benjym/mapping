@@ -65,6 +65,8 @@ else {
              divsToHide[i].style.visibility = "hidden"; // or
              divsToHide[i].style.display = "none"; // depending on what you're doing
          }
+         colors.splice(2,1); // remove the unfortunate green colour
+         colors.unshift(chroma('white').alpha(0.)); // make first colour transparent
          concentration_contours.value = "0.0001; 0.001; 0.1; 1; 10";
          document.getElementById("source-title").innerHTML = "Source pollutant emission rate (g/s/m):";
 
@@ -87,6 +89,7 @@ function onRightMapClick(e) {
 
 if ( source === 'point' ) {
     map.on('click', onLeftMapClick);
+    map.on('ondragend', onLeftMapClick);
     var top_marker = L.marker(initial_loc1,{
         icon:customIcon // tried but didn't make something good - worth continuing with!
     }).addTo(map);//.bindPopup("I am an orange leaf.");
@@ -94,6 +97,7 @@ if ( source === 'point' ) {
 }
 else if ( source === 'line' ) {
     map.on('click', onLeftMapClick);
+    map.on('ondragend', onLeftMapClick);
     map.on('contextmenu', onRightMapClick);
     var size = 60;
     var top_icon = L.icon({
@@ -181,6 +185,12 @@ function redrawContoursFromLine() {
     var x_2 = bottom_marker._latlng.distanceTo( L.latLng(bottom_marker._latlng.lat, bounds.getWest()) );
     var y_2 = bottom_marker._latlng.distanceTo( L.latLng(bounds.getSouth(),         bottom_marker._latlng.lng) );
 
+    // check if markers are inside domain and flip sign if outside
+    if ( top_marker._latlng.lng < bounds.getWest() ) { x_1 = -x_1; }
+    if ( top_marker._latlng.lat < bounds.getSouth() ) { y_1 = -y_1; }
+    if ( bottom_marker._latlng.lng < bounds.getWest() ) { x_2 = -x_2; }
+    if ( bottom_marker._latlng.lat < bounds.getSouth() ) { y_2 = -y_2; }
+
     alpha = Math.atan2(y_2 - y_1, x_2 - x_1); // slope of the road
     cos_alpha = Math.cos(alpha);
     sin_alpha = Math.sin(alpha);
@@ -248,11 +258,17 @@ function redrawContoursFromLine() {
     var concs = concentration_contours.value.split(';');
     for (var i=0; i<concs.length; i++ ) {
 
-        if ( i == 0 ) { var conc_string = ' c < ' + concs.at(0).trim(); }
-        else if ( i == concs.length-1 ) { var conc_string = ' c ≥ ' + concs.at(-1).trim(); }
-        else { var conc_string = concs.at(i-1).trim() + ' &lt; c ≤ ' + concs.at(i).trim(); }
+        if ( i == 0 ) { } // don't add anything to legend for lowest colours var conc_string = ' c < ' + concs.at(0).trim(); }
+        else if ( i == concs.length-1 ) {
+            var conc_string = ' c ≥ ' + concs.at(-1).trim();
+            legend_div.innerHTML += '<i style="background: ' + colors[i] + '"></i><span>' + conc_string + ' </span><br>';
+        }
+        else {
+            var conc_string = concs.at(i-1).trim() + ' &lt; c ≤ ' + concs.at(i).trim();
+            legend_div.innerHTML += '<i style="background: ' + colors[i] + '"></i><span>' + conc_string + ' </span><br>';
+        }
 
-        legend_div.innerHTML += '<i style="background: ' + colors[i] + '"></i><span>' + conc_string + ' </span><br>';
+
     }
 }
 
