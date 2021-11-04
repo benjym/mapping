@@ -56,7 +56,7 @@ else {
          initial_loc1 = [-33.82664869064233, 151.00486734394406];
          initial_loc2 = [-33.865001570768946,151.09415964403595];
          default_zoom = 13;
-         map.setZoom(default_zoom);
+         // map.setZoom(default_zoom);
          if ( urlParams.has("loc2") ) {
              initial_loc2 = urlParams.get("loc2").split(",");
          }
@@ -158,6 +158,8 @@ function clean_polygons() {
 }
 
 function redrawContoursFromLine() {
+    // model stolen from here: An improved line source model for air pollutant dispersion from roadway traffic
+    // Régis Briant*, Irène Korsakissok, Christian Seigneur
     clean_polygons()
     console.log('this is a line source')
     var si = stability.selectedIndex;
@@ -171,16 +173,13 @@ function redrawContoursFromLine() {
     var bounds = map.getBounds();
     var data = new Array(nx*ny);
 
-    // var A = 1e5; // A = Q/(2*sqrt(2*pi)*u)
     var A = parseFloat(q.value)/(2*Math.sqrt(2*Math.PI)*U);
-    // console.log(A)
-
     var sqrt_2 = Math.sqrt(2);
 
-    var x_1 = top_marker._latlng.distanceTo( L.latLng(top_marker._latlng.lat, bounds.getWest()) );
-    var y_1 = top_marker._latlng.distanceTo( L.latLng(bounds.getSouth(), top_marker._latlng.lng) );
+    var x_1 = top_marker._latlng.distanceTo(    L.latLng(top_marker._latlng.lat,    bounds.getWest()) );
+    var y_1 = top_marker._latlng.distanceTo(    L.latLng(bounds.getSouth(),         top_marker._latlng.lng) );
     var x_2 = bottom_marker._latlng.distanceTo( L.latLng(bottom_marker._latlng.lat, bounds.getWest()) );
-    var y_2 = bottom_marker._latlng.distanceTo( L.latLng(bounds.getSouth(), bottom_marker._latlng.lng) );
+    var y_2 = bottom_marker._latlng.distanceTo( L.latLng(bounds.getSouth(),         bottom_marker._latlng.lng) );
 
     alpha = Math.atan2(y_2 - y_1, x_2 - x_1); // slope of the road
     cos_alpha = Math.cos(alpha);
@@ -188,16 +187,9 @@ function redrawContoursFromLine() {
     var theta = alpha + wind_theta + Math.PI/2.;
     var cos_theta = Math.cos(theta);
     var sin_theta = Math.sin(theta);
-    // console.log('alpha is ' + String(alpha*180/Math.PI) + ' degrees')
-    // console.log('theta is ' + String(theta*180/Math.PI) + ' degrees')
-
-    // console.log('stack 1 at: ' + String(x_1) + ' and ' + String(y_1))
-    // console.log('stack 2 at: ' + String(x_2) + ' and ' + String(y_2))
 
     var centre_x = (x_1 + x_2)/2.;
     var centre_y = (y_1 + y_2)/2.;
-
-    // console.log('center at: ' + String(centre_x) + ' and ' + String(centre_y))
 
     distance_x = map.distance(
         L.latLng(bounds.getEast(),top_marker._latlng.lng),
@@ -217,10 +209,7 @@ function redrawContoursFromLine() {
 
             var d_eff = x/cos_theta; // Equation 5
             var d_1   = (x)*cos_theta + (y - y_1 + centre_y)*sin_theta; // Equation 6 (in source coord system)
-            var d_2   = (x)*cos_theta + (y - y_2 + centre_y)*sin_theta; // Equation 6  (in source coord system)
-            // console.log
-            // var d_1 = x - x_1 + centre_x;
-            // var d_2 = x - x_2 + centre_x;
+            var d_2   = (x)*cos_theta + (y - y_2 + centre_y)*sin_theta; // Equation 6 (in source coord system)
 
             var sigma_z_deff = sigma_z(d_eff,si);
             // if ( d_1 > 0 ) {
@@ -236,27 +225,19 @@ function redrawContoursFromLine() {
                 // var source_term_2 = -Math.sign(sin_theta);
             // }
             var C = A/(cos_theta*sigma_z_deff)*Math.exp(-z*z/2/sigma_z_deff/sigma_z_deff)*( source_term_2 - source_term_1 ); // Equation 7
-            // var C = source_term_1;
+
             if ( isNaN(C) || !isFinite(C) ) { data[i+j*nx] = -999; }
             else { data[i+j*nx] = C; }
-            // data[i+j*nx] = d_1;
-            // data[i+j*nx] = source_term_2 - source_term_1;
-            // data[i + j*nx] = sigma_z_deff;
-
             // data[i+j*nx] = x;
 
         }
-
-        // console.log(d_eff,si,sigma_z_deff)
-        // data[index] = y
     }
-    // console.log(data)
     update_overlay(data)
 
-    // legend_div.innerHTML = "<h4>Concentration</h4>";
     legend_div.innerHTML = "<h4>Legend</h4>";
     legend_div.innerHTML += '<i style="background: ' + top_marker_color + '"></i><span>Start of road (left click)</span><br>';
     legend_div.innerHTML += '<i style="background: ' + bottom_marker_color + '"></i><span>End of road (right click) </span><br>';
+    legend_div.innerHTML += "<h4>Concentration</h4>";
     var concs = concentration_contours.value.split(';');
     for (var i=0; i<concs.length; i++ ) {
         if ( i == 0 ) { var prefix = "<"; }
