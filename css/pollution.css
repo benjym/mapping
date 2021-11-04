@@ -4,7 +4,8 @@
    background-color: #FFFFFF;
    display: flex;
    align-items: stretch;
-   /* height:100%; */
+   height: auto;
+   min-height: 100vh;
 }
 .column {
     /* flex: 1; */
