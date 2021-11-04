@@ -38,6 +38,7 @@ var nx, ny, delta_x, delta_y;
 var heatmaplayer;
 var initial_loc1, initial_loc2;
 var polyline;
+var default_zoom = 17;
 const urlParams = new URLSearchParams(window.location.search);
 if ( urlParams.has('source') ) {
     source = urlParams.get('source');
@@ -51,13 +52,23 @@ else {
  }
  else {
      if ( source == 'point' ) { initial_loc1 = [-33.891,151.1935]; }
+     else if ( source === 'line' ) {
+         initial_loc1 = [-33.82664869064233, 151.00486734394406];
+         initial_loc2 = [-33.865001570768946,151.09415964403595];
+         default_zoom = 13;
+         map.setZoom(default_zoom);
+         if ( urlParams.has("loc2") ) {
+             initial_loc2 = urlParams.get("loc2").split(",");
+         }
+         var divsToHide = document.getElementsByClassName("point-only"); //divsToHide is an array
+         for (var i = 0; i < divsToHide.length; i++){
+             divsToHide[i].style.visibility = "hidden"; // or
+             divsToHide[i].style.display = "none"; // depending on what you're doing
+         }
+         concentration_contours.value = "0.0001; 0.001; 0.1; 1; 10";
+
+     }
      else { initial_loc1 = [-34.33606548328852,150.88733074376404]; }
- }
- if ( urlParams.has("loc2") ) {
-     initial_loc2 = urlParams.get("loc2").split(",");
- }
- else {
-     initial_loc2 = [-34.33680965830653,150.88973520047998];
  }
 
 
@@ -78,7 +89,7 @@ if ( source === 'point' ) {
     var top_marker = L.marker(initial_loc1,{
         icon:customIcon // tried but didn't make something good - worth continuing with!
     }).addTo(map);//.bindPopup("I am an orange leaf.");
-    map.setView([top_marker._latlng.lat,top_marker._latlng.lng], 17) // zoom the map to the polygon
+    map.setView([top_marker._latlng.lat,top_marker._latlng.lng], default_zoom) // zoom the map to the polygon
 }
 else if ( source === 'line' ) {
     map.on('click', onLeftMapClick);
@@ -114,7 +125,7 @@ else if ( source === 'line' ) {
         // className: 'fake_class'
     }).addTo(map);
 
-    map.setView([(top_marker._latlng.lat + bottom_marker._latlng.lat)/2.,(top_marker._latlng.lng + bottom_marker._latlng.lng)/2.], 15)
+    map.setView([(top_marker._latlng.lat + bottom_marker._latlng.lat)/2.,(top_marker._latlng.lng + bottom_marker._latlng.lng)/2.], default_zoom)
 }
 else if ( source === 'area' ) {
     map.on('click', onLeftMapClick);
@@ -155,45 +166,49 @@ function redrawContoursFromLine() {
     var U = Math.sqrt(u[0]*u[0] + u[1]*u[1]);
     var wind_theta = -Math.atan2(u[1],u[0]); // angle of wind to N/E/S/W
 
-    nx = 50;
-    ny = 50;
+    nx = 100;
+    ny = 100;
     var bounds = map.getBounds();
     var data = new Array(nx*ny);
 
-    var A = 1e5; // A = Q/(2*sqrt(2*pi)*u)
-    // var stability = 'A';
-    // var theta = 30*Math.PI/180.; // angle counter-clockwise from direction perpendicular to road to the wind direction
+    // var A = 1e5; // A = Q/(2*sqrt(2*pi)*u)
+    var A = parseFloat(q.value)/(2*Math.sqrt(2*Math.PI)*U);
+    // console.log(A)
 
     var sqrt_2 = Math.sqrt(2);
-    // delta_x = (bounds.getEast() - bounds.getWest())/nx/111111.; // pixel spacing in metres
-    // delta_y = (bounds.getNorth() - bounds.getSouth())/ny/(111111.*Math.cos(top_marker._latlng.lat*Math.PI/180.)); // pixels per metre
 
-    var x_1 = haversineDistance([top_marker._latlng.lat,      bounds.getWest()],[top_marker._latlng.lat,top_marker._latlng.lng])
-    var y_1 = haversineDistance([top_marker._latlng.lat,top_marker._latlng.lng],[bounds.getSouth(),     top_marker._latlng.lng])
-    var x_2 = haversineDistance([bottom_marker._latlng.lat,      bounds.getWest()],[bottom_marker._latlng.lat,bottom_marker._latlng.lng])
-    var y_2 = haversineDistance([bottom_marker._latlng.lat,bottom_marker._latlng.lng],[bounds.getSouth(),     bottom_marker._latlng.lng])
+    var x_1 = top_marker._latlng.distanceTo( L.latLng(top_marker._latlng.lat, bounds.getWest()) );
+    var y_1 = top_marker._latlng.distanceTo( L.latLng(bounds.getSouth(), top_marker._latlng.lng) );
+    var x_2 = bottom_marker._latlng.distanceTo( L.latLng(bottom_marker._latlng.lat, bounds.getWest()) );
+    var y_2 = bottom_marker._latlng.distanceTo( L.latLng(bounds.getSouth(), bottom_marker._latlng.lng) );
 
     alpha = Math.atan2(y_2 - y_1, x_2 - x_1); // slope of the road
     cos_alpha = Math.cos(alpha);
     sin_alpha = Math.sin(alpha);
-    var theta = wind_theta - Math.PI/2.;
+    var theta = alpha + wind_theta + Math.PI/2.;
     var cos_theta = Math.cos(theta);
     var sin_theta = Math.sin(theta);
-    console.log('alpha is ' + String(alpha*180/Math.PI) + ' degrees')
-    console.log('theta is ' + String(theta*180/Math.PI) + ' degrees')
+    // console.log('alpha is ' + String(alpha*180/Math.PI) + ' degrees')
+    // console.log('theta is ' + String(theta*180/Math.PI) + ' degrees')
 
-    console.log('stack 1 at: ' + String(x_1) + ' and ' + String(y_1))
-    console.log('stack 2 at: ' + String(x_2) + ' and ' + String(y_2))
+    // console.log('stack 1 at: ' + String(x_1) + ' and ' + String(y_1))
+    // console.log('stack 2 at: ' + String(x_2) + ' and ' + String(y_2))
 
     var centre_x = (x_1 + x_2)/2.;
     var centre_y = (y_1 + y_2)/2.;
 
-    console.log('center at: ' + String(centre_x) + ' and ' + String(centre_y))
+    // console.log('center at: ' + String(centre_x) + ' and ' + String(centre_y))
 
-    distance_x = haversineDistance([bounds.getEast(),top_marker._latlng.lng],[bounds.getWest(),top_marker._latlng.lng])
-    distance_y = haversineDistance([top_marker._latlng.lat,bounds.getSouth()],[top_marker._latlng.lat,bounds.getNorth()])
-    delta_x = distance_x/nx;
-    delta_y = distance_y/ny;
+    distance_x = map.distance(
+        L.latLng(bounds.getEast(),top_marker._latlng.lng),
+        L.latLng(bounds.getWest(),top_marker._latlng.lng)
+    )
+    distance_y = map.distance(
+        L.latLng(top_marker._latlng.lat,bounds.getSouth()),
+        L.latLng(top_marker._latlng.lat,bounds.getNorth())
+    )
+    delta_x = distance_x/(nx+1)/1.2; // HACK: NO IDEA WHY I NEED THE 1.2 FACTOR!!!
+    delta_y = distance_y/(ny+1)*1.2; // HACK: NO IDEA WHY I NEED THE 1.2 FACTOR!!!
 
     for (var i = 0; i < nx; i++) { // for each pixel
         for ( var j = 0; j < ny; j++ ) {
@@ -201,36 +216,58 @@ function redrawContoursFromLine() {
             var x = -sin_alpha*(i*delta_x - centre_x) + cos_alpha*((ny-j)*delta_y - centre_y); // in SOURCE coordinate system
 
             var d_eff = x/cos_theta; // Equation 5
-            var d_1   = (x - x_1 + centre_x)*cos_theta + (y - y_1 + centre_y)*sin_theta; // Equation 6 (in source coord system)
-            var d_2   = (x - x_2 + centre_x)*cos_theta + (y - y_2 + centre_y)*sin_theta; // Equation 6  (in source coord system)
+            var d_1   = (x)*cos_theta + (y - y_1 + centre_y)*sin_theta; // Equation 6 (in source coord system)
+            var d_2   = (x)*cos_theta + (y - y_2 + centre_y)*sin_theta; // Equation 6  (in source coord system)
+            // console.log
+            // var d_1 = x - x_1 + centre_x;
+            // var d_2 = x - x_2 + centre_x;
 
             var sigma_z_deff = sigma_z(d_eff,si);
-            var source_term_1 = erf( ((y - y_1 + centre_y)*cos_theta - (x + centre_x)*sin_theta)/(sqrt_2*sigma_y(d_1,si)) );
-            var source_term_2 = erf( ((y - y_2 + centre_y)*cos_theta - (x + centre_x)*sin_theta)/(sqrt_2*sigma_y(d_2,si)) );
-
+            // if ( d_1 > 0 ) {
+                var source_term_1 = erf( ((y - y_1 + centre_y)*cos_theta - x*sin_theta)/(sqrt_2*sigma_y(d_1,si)) );
+            // }
+            // else {
+                // var source_term_1 = -Math.sign(sin_theta);
+            // }
+            // if ( d_2 > 0 ) {
+            var source_term_2 = erf( ((y - y_2 + centre_y)*cos_theta - x*sin_theta)/(sqrt_2*sigma_y(d_2,si)) );
+            // }
+            // else {
+                // var source_term_2 = -Math.sign(sin_theta);
+            // }
             var C = A/(cos_theta*sigma_z_deff)*Math.exp(-z*z/2/sigma_z_deff/sigma_z_deff)*( source_term_2 - source_term_1 ); // Equation 7
-            if ( isNaN(C) ) { data[i+j*nx] = 0; }
-            else { data[i+j*nx] = source_term_1 - source_term_2; }
-            // data[i + j*nx] = d_eff;
+            // var C = source_term_1;
+            if ( isNaN(C) || !isFinite(C) ) { data[i+j*nx] = -999; }
+            else { data[i+j*nx] = C; }
+            // data[i+j*nx] = d_1;
+            // data[i+j*nx] = source_term_2 - source_term_1;
+            // data[i + j*nx] = sigma_z_deff;
+
+            // data[i+j*nx] = x;
 
         }
 
         // console.log(d_eff,si,sigma_z_deff)
         // data[index] = y
     }
-    console.log(data)
-    update_overlay(data, chroma.scale('RdGy'))
+    // console.log(data)
+    update_overlay(data)
 
     // legend_div.innerHTML = "<h4>Concentration</h4>";
     legend_div.innerHTML = "<h4>Legend</h4>";
     legend_div.innerHTML += '<i style="background: ' + top_marker_color + '"></i><span>Start of road (left click)</span><br>';
     legend_div.innerHTML += '<i style="background: ' + bottom_marker_color + '"></i><span>End of road (right click) </span><br>';
-    // for (var i=0; i<concs.length; i++ ) {
-        // legend_div.innerHTML += '<i style="background: ' + colors[i] + '"></i><span>' + concs[i] + ' &micro;g/m<sup>3</sup></span><br>';
-    // }
+    var concs = concentration_contours.value.split(';');
+    for (var i=0; i<concs.length; i++ ) {
+        if ( i == 0 ) { var prefix = "<"; }
+        else if ( i == concs.length-1 ) { var prefix = ">"; }
+        else { var prefix = ''; }
+
+        legend_div.innerHTML += '<i style="background: ' + colors[i] + '"></i><span>' + prefix + concs[i] + ' &micro;g/m<sup>3</sup></span><br>';
+    }
 }
 
-function update_overlay(array, colorscale)
+function update_overlay(array)
 {
     if (heatmaplayer) map.removeLayer(heatmaplayer) ;
     var bounds = map.getBounds();
@@ -239,11 +276,21 @@ function update_overlay(array, colorscale)
         nRows: ny,
         xllCorner: bounds._southWest.lng,
         yllCorner: bounds._southWest.lat,
-        cellXSize: (bounds._northEast.lng-bounds._southWest.lng)/nx,
-        cellYSize: (bounds._northEast.lat-bounds._southWest.lat)/ny,
+        cellXSize: (bounds.getEast()-bounds.getWest())/nx,
+        cellYSize: (bounds.getNorth()-bounds.getSouth())/ny,
     };
     p.zs = array ;
-    colorscale.domain([Math.min(...array),Math.max(...array)])
+    var concs = concentration_contours.value.split(';');
+    colorscale = chroma.scale(colors.slice(0,concs.length))
+    colorscale.domain([Math.max(...concs),Math.min(...concs)])
+    // chroma.limits();
+    // console.log(Math.max(...array))
+    // colorscale.domain([-100,100])
+
+    concs.push(Math.max(...concs));
+    concs.unshift(0);
+    colorscale.classes(concs);
+
     // var opac = document.getElementById('overlayopacity').value ;
 
     s = new L.ScalarField(p) ;
@@ -252,7 +299,6 @@ function update_overlay(array, colorscale)
                 opacity: 0.5
             });
     heatmaplayer = layvar.addTo(map);
-    console.log("done") ;
 }
 
 function redrawContoursFromPoint() {
@@ -484,17 +530,17 @@ function getCursorPosition_d(d, event) {
  }
 
  function sigma_y(x,si) { // NOTE: ONLY IMPLEMENTED URBAN EQUATIONS!!! // Table A.1
-     if ( x <= 1e-5 ) { return 0; }
-     else if ( si< 2 )      { return 0.32*x*Math.pow(1 + 0.0004*x, -0.5) } // A or B
-     else if ( si === 2 )                      { return 0.22*x*Math.pow(1 + 0.0004*x, -0.5) } // C
-     else if ( si === 3 )                      { return 0.16*x*Math.pow(1 + 0.0004*x, -0.5) } // D
-     else if ( si > 3 ) { return 0.11*x*Math.pow(1 + 0.0004*x, -0.5) } // E or F
+     if ( x <= 1e-5 )     { return 0; }
+     else if ( si< 2 )    { return 0.32*x*Math.pow(1 + 0.0004*x, -0.5) } // A or B
+     else if ( si === 2 ) { return 0.22*x*Math.pow(1 + 0.0004*x, -0.5) } // C
+     else if ( si === 3 ) { return 0.16*x*Math.pow(1 + 0.0004*x, -0.5) } // D
+     else if ( si > 3 )   { return 0.11*x*Math.pow(1 + 0.0004*x, -0.5) } // E or F
  }
 
  function sigma_z(x,si) { // NOTE: ONLY IMPLEMENTED URBAN EQUATIONS!!!
-     if ( x < 1e-5 ) { return 0; }
-     else if ( si < 2 )      { return 0.24*x*Math.pow(1 + 0.0010*x, 0.5)  } // A or B
-     else if ( si === 'C' )                      { return 0.20*x } // C
-     else if ( si === 'D' )                      { return 0.14*x*Math.pow(1 + 0.0003*x, -0.5) } // D
-     else if ( si === 'E' || si === 'F' ) { return 0.08*x*Math.pow(1 + 0.0015*x, -1)   } // E or F
+     if ( x < 1e-5 )      { return 0; }
+     else if ( si < 2 )   { return 0.24*x*Math.pow(1 + 0.0010*x, 0.5)  } // A or B
+     else if ( si === 2 ) { return 0.20*x } // C
+     else if ( si === 3 ) { return 0.14*x*Math.pow(1 + 0.0003*x, -0.5) } // D
+     else if ( si > 3 )   { return 0.08*x*Math.pow(1 + 0.0015*x, -1)   } // E or F
  }
