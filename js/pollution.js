@@ -66,6 +66,7 @@ else {
              divsToHide[i].style.display = "none"; // depending on what you're doing
          }
          concentration_contours.value = "0.0001; 0.001; 0.1; 1; 10";
+         document.getElementById("source-title").innerHTML = "Source pollutant emission rate (g/s/m):";
 
      }
      else { initial_loc1 = [-34.33606548328852,150.88733074376404]; }

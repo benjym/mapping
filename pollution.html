@@ -40,7 +40,7 @@
                 <option id="F" value="F">F</option>
             </select>
             <span class="point-only">Source height above ground (m): <input onchange="redrawContours()" type="number" id="h" value="30" min="0"/></span>
-            Source pollutant emission rate (g/s): <input onchange="redrawContours()" type="number" id="q" value="1" min="0"/>
+            <span id="source-title">Source pollutant emission rate (g/s):</span> <input onchange="redrawContours()" type="number" id="q" value="1" min="0"/>
             Viewing height above ground (m): <input onchange="redrawContours()" type="number" id="delta" value="0" min="0" />
             <span class="point-only">Ambient temperature (&deg;C): <input onchange="redrawContours()" class="buoyancy" type="number" id="T_a" value="25" min="-273"/></span>
             <span class="point-only">Stack temperature (&deg;C): <input onchange="redrawContours()" class="buoyancy" type="number" id="T_s" value="25" min="-273"/></span>
