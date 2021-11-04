@@ -70,6 +70,14 @@ else {
          concentration_contours.value = "0.0001; 0.001; 0.1; 1; 10";
          document.getElementById("source-title").innerHTML = "Source pollutant emission rate (g/s/m):";
 
+         // update the wind stability categories
+         var arrOptions = [];
+        arrOptions.push("<option value='A-B' selected>A or B</option>");
+        arrOptions.push("<option value='C'>C</option>");
+        arrOptions.push("<option value='D'>D</option>");
+        arrOptions.push("<option value='E-F'>E or F</option>");
+        document.getElementById("stability").innerHTML = arrOptions.join();
+
      }
      else { initial_loc1 = [-34.33606548328852,150.88733074376404]; }
  }
@@ -536,16 +544,16 @@ function getCursorPosition_d(d, event) {
 
  function sigma_y(x,si) { // NOTE: ONLY IMPLEMENTED URBAN EQUATIONS!!! // Table A.1
      if ( x <= 1e-5 )     { return 0; }
-     else if ( si< 2 )    { return 0.32*x*Math.pow(1 + 0.0004*x, -0.5) } // A or B
-     else if ( si === 2 ) { return 0.22*x*Math.pow(1 + 0.0004*x, -0.5) } // C
-     else if ( si === 3 ) { return 0.16*x*Math.pow(1 + 0.0004*x, -0.5) } // D
-     else if ( si > 3 )   { return 0.11*x*Math.pow(1 + 0.0004*x, -0.5) } // E or F
+     else if ( si === 0 ) { return 0.32*x*Math.pow(1 + 0.0004*x, -0.5) } // A or B
+     else if ( si === 1 ) { return 0.22*x*Math.pow(1 + 0.0004*x, -0.5) } // C
+     else if ( si === 2 ) { return 0.16*x*Math.pow(1 + 0.0004*x, -0.5) } // D
+     else if ( si === 3 ) { return 0.11*x*Math.pow(1 + 0.0004*x, -0.5) } // E or F
  }
 
  function sigma_z(x,si) { // NOTE: ONLY IMPLEMENTED URBAN EQUATIONS!!!
      if ( x < 1e-5 )      { return 0; }
-     else if ( si < 2 )   { return 0.24*x*Math.pow(1 + 0.0010*x, 0.5)  } // A or B
-     else if ( si === 2 ) { return 0.20*x } // C
-     else if ( si === 3 ) { return 0.14*x*Math.pow(1 + 0.0003*x, -0.5) } // D
-     else if ( si > 3 )   { return 0.08*x*Math.pow(1 + 0.0015*x, -1)   } // E or F
+     else if ( si === 0 ) { return 0.24*x*Math.pow(1 + 0.0010*x, 0.5)  } // A or B
+     else if ( si === 1 ) { return 0.20*x } // C
+     else if ( si === 2 ) { return 0.14*x*Math.pow(1 + 0.0003*x, -0.5) } // D
+     else if ( si === 3 ) { return 0.08*x*Math.pow(1 + 0.0015*x, -1)   } // E or F
  }
