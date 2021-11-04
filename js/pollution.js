@@ -220,11 +220,13 @@ function redrawContoursFromLine() {
             // }
             // if ( d_2 > 0 ) {
             var source_term_2 = erf( ((y - y_2 + centre_y)*cos_theta - x*sin_theta)/(sqrt_2*sigma_y(d_2,si)) );
+
+            if ( y_1 > y_2 ) { [source_term_1,source_term_2] = [source_term_2,source_term_1]}
             // }
             // else {
                 // var source_term_2 = -Math.sign(sin_theta);
             // }
-            var C = A/(cos_theta*sigma_z_deff)*Math.exp(-z*z/2/sigma_z_deff/sigma_z_deff)*( source_term_2 - source_term_1 ); // Equation 7
+            var C = A/(cos_theta*sigma_z_deff)*Math.exp(-z*z/2/sigma_z_deff/sigma_z_deff)*( source_term_1 - source_term_2 ); // Equation 7
 
             if ( isNaN(C) || !isFinite(C) ) { data[i+j*nx] = -999; }
             else { data[i+j*nx] = C; }
