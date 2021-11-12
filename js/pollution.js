@@ -67,7 +67,7 @@ else {
          }
          colors.splice(2,1); // remove the unfortunate green colour
          colors.unshift(chroma('white').alpha(0.)); // make first colour transparent
-         concentration_contours.value = "0.0001; 0.001; 0.1; 1; 10";
+         concentration_contours.value = "0.01; 0.1; 1; 10";
          document.getElementById("source-title").innerHTML = "Source pollutant emission rate (g/s/m):";
 
          // update the wind stability categories
@@ -252,7 +252,7 @@ function redrawContoursFromLine() {
             var C = A/(cos_theta*sigma_z_deff)*Math.exp(-z*z/2/sigma_z_deff/sigma_z_deff)*( source_term_1 - source_term_2 ); // Equation 7
 
             if ( isNaN(C) || !isFinite(C) ) { data[i+j*nx] = -999; }
-            else { data[i+j*nx] = C; }
+            else { data[i+j*nx] = C*1000; } // convert from g to µg
             // data[i+j*nx] = d_1;
 
         }
