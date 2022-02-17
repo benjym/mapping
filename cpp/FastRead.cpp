@@ -55,7 +55,7 @@ int elevation (double ne_lat, double ne_lng, double sw_lat, double sw_lng, int n
         endlat = flooring_lat(sw_lat, downsampling[idx].first) ; 
         endlon = ceiling_lon (ne_lng, downsampling[idx].first) ; 
         ntiles = (beglat-endlat)/downsampling[idx].first * (endlon-beglon)/downsampling[idx].first ; 
-    } while (ntiles > tilefallback && idx<downsampling.size()) ; 
+    } while (ntiles > tilefallback && idx+1<downsampling.size()) ; 
     
     printf("[%d %d %d %d %d %d]\n", beglat, endlat, beglon, endlon, ntiles, idx) ; 
     for (int j=beglat, nnycum = 0 ; j>endlat ; j -= downsampling[idx].first)

@@ -392,8 +392,20 @@ map.on('click', onLeftMapClick);
 map.on('contextmenu', onRightMapClick);
 map.on('moveend',function(e){
   var location=map.getCenter() ;
+  
+  if (location.lat>90 || location.lat<-90 || location.lng<-180 || location.lng>180)
+  {
+      while (location.lat>90)   location.lat-=180 ;
+      while (location.lat<-90)  location.lat+=180 ;
+      while (location.lng>180)  location.lng-=360 ;
+      while (location.lng<-180) location.lng+=360 ;
+       console.log(location)
+      map.setView([location.lat, location.lng]) ; 
+  }
+  
   document.getElementById("latitude").value = location.lat.toFixed(5).toString() ;
   document.getElementById("longitude").value = location.lng.toFixed(5).toString() ;
+  
   bounds = map.getBounds() ;
   console.log(map.getCenter()) ;
   //const response = fetch( proxy_server + topo_server_region + bounds._northEast.lat +','+ bounds._northEast.lng+ ';' + bounds._southWest.lat + ',' + bounds._southWest.lng + ';' + ny + ',' + nx + '&reorder' , {}) https://data.scigem.com:5000/
