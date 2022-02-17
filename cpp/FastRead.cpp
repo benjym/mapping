@@ -7,13 +7,21 @@
 #include <string>
 #include <cassert>
 #include <filesystem>
+#include "Colormaps.h"
+
+#include <png++/png.hpp>
+
 using namespace std ; 
+
+int generate_imgfile (std::string res, double width, double height, int dpi, double center_lat, double center_lng, double extent_lng, double * colormap, double smax=1, double smin=1) ; 
 
 //--------------------------------------------------------
 int flooring_lon (double lon, int ds) { return (floor((lon - (-180))/double(ds))*ds + (-180)) ; }
 int ceiling_lon (double lon, int ds)  { return (ceil ((lon - (-180))/double(ds))*ds + (-180)) ; }
 int flooring_lat (double lat, int ds) { return (floor((lat - (-90))/double(ds))*ds + (-90)) ; }
 int ceiling_lat (double lat, int ds)  { return (ceil ((lat - (-90))/double(ds))*ds + (-90)) ; }
+
+double clip (double v, double mmin, double mmax) { return (std::max(std::min(v,mmax),mmin)) ; }
 //--------------------------------------------------------
 std::string tilename (double lat, double lon, std::pair<int,std::string> ds)
 {
@@ -25,13 +33,18 @@ std::string tilename (double lat, double lon, std::pair<int,std::string> ds)
  return (name) ;     
 }
 //--------------------------------------------------------
-int elevation (double ne_lat, double ne_lng, double sw_lat, double sw_lng, int ny, int nx, float * pafScanline)
+int elevation (double ne_lat, double ne_lng, double sw_lat, double sw_lng, int ny, int nx, float * pafScanline, int tilefallback=8, GDALRIOResampleAlg resamplingalgo=GRIORA_Bilinear)
 {
     GDALRasterIOExtraArg extraargs ;
     INIT_RASTERIO_EXTRA_ARG(extraargs) ; 
-    extraargs.eResampleAlg = GRIORA_Bilinear ; 
+    extraargs.eResampleAlg = resamplingalgo ; 
     
     std::vector <std::pair<int,std::string>> downsampling = {{1,"extracted"}, {4, "quarter"}, {16, "sixteenth"}, {64, "sixtyfourth"}} ; 
+    
+    ne_lat=clip(ne_lat, -90, 90) ;
+    ne_lng=clip(ne_lng, -180, 180) ;
+    sw_lat=clip(sw_lat, -90, 90) ;
+    sw_lng=clip(sw_lng, -180, 180) ;
     
     int ntiles = 0 ; int idx = -1 ; 
     int beglat, beglon, endlat, endlon ;
@@ -42,7 +55,7 @@ int elevation (double ne_lat, double ne_lng, double sw_lat, double sw_lng, int n
         endlat = flooring_lat(sw_lat, downsampling[idx].first) ; 
         endlon = ceiling_lon (ne_lng, downsampling[idx].first) ; 
         ntiles = (beglat-endlat)/downsampling[idx].first * (endlon-beglon)/downsampling[idx].first ; 
-    } while (ntiles > 8 && idx<downsampling.size()) ; 
+    } while (ntiles > tilefallback && idx<downsampling.size()) ; 
     
     printf("[%d %d %d %d %d %d]\n", beglat, endlat, beglon, endlon, ntiles, idx) ; 
     for (int j=beglat, nnycum = 0 ; j>endlat ; j -= downsampling[idx].first)
@@ -53,13 +66,18 @@ int elevation (double ne_lat, double ne_lng, double sw_lat, double sw_lng, int n
             GDALDataset  *poDataset;
             GDALAllRegister();
             auto filename = tilename(j-downsampling[idx].first, i, downsampling[idx]) ; // Lower left corner for COP30M DEM
-            if (!std::filesystem::exists(filename))
+            FILE * out = fopen(filename.c_str(), "r") ; 
+            if (out == nullptr)
             {
                 printf("Cannot find the required file %s. \n", filename.c_str()) ;
-                continue ; 
+                filename = "/media/franz/Koala2/COP30M/"+downsampling[idx].second+"/empty.tif" ; 
+                poDataset = (GDALDataset *) GDALOpen(filename.c_str(), GA_ReadOnly);
             }
             else
+            {
+                fclose(out) ; 
                 poDataset = (GDALDataset *) GDALOpen(filename.c_str(), GA_ReadOnly);
+            }
             
             double adfGeoTransform[6] ;  
             poDataset->GetGeoTransform( adfGeoTransform );
@@ -90,42 +108,12 @@ int elevation (double ne_lat, double ne_lng, double sw_lat, double sw_lng, int n
         }
         nnycum += nny ; 
     }
-    
-    
-    
-    /*
-    
-    if (floor(ne_lat) != floor(sw_lat) || floor(ne_lng) != floor(sw_lng))
-    {
-        //printf("Not implemented yet") ; 
-        return 0 ; 
-    }
-    else 
-    {
-        GDALDataset  *poDataset;
-        GDALAllRegister();
-        auto filename = tilename(sw_lat, sw_lng) ; // Lower left corner for COP30M DEM
-        poDataset = (GDALDataset *) GDALOpen(filename.c_str(), GA_ReadOnly);
-        if (poDataset == nullptr) { printf("Cannot find the required file. ") ; return 0 ; }
-        
-        double adfGeoTransform[6] ;  
-        poDataset->GetGeoTransform( adfGeoTransform );
-        int nx_geotiff = (ne_lng-sw_lng)/adfGeoTransform[1] ; 
-        int ny_geotiff = (ne_lat-sw_lat)/(-adfGeoTransform[5]) ; 
-        int nx_offset = round((sw_lng-floor(sw_lng))/adfGeoTransform[1]) ; 
-        int ny_offset = round((ne_lat-ceil(ne_lat))/(adfGeoTransform[5])) ;
-        
-        assert((sizeof(GDT_Float32)==sizeof(float)));
-        //printf("%d %d %d %d %g %g %s\n", nx_geotiff, ny_geotiff, nx_offset, ny_offset, adfGeoTransform[1], adfGeoTransform[5], filename.c_str()); fflush(stdout) ; 
-        auto res = poDataset->RasterIO( GF_Read, nx_offset, ny_offset, nx_geotiff, ny_geotiff, (void *)pafScanline, nx, ny, GDT_Float32, 1, NULL, 0, 0, 0, &extraargs);
-        //for (int i=0 ; i<nx*ny ; i++) printf("%g ", pafScanline[i]) ; 
-        return 5 ; 
-    } */
     return 0 ; 
 }
 
 int main (int argc, char * argv[])
 {
+    /*
 int nx = 10 ;
 int ny = 10 ; 
 int nn = nx*ny ; 
@@ -137,9 +125,93 @@ printf("//") ;
 elevation( -34, 160, -36, 150,  ny, nx, elevationarray) ;  
 
 
-elevation( 60, 116, 35, 100,  ny, nx, elevationarray) ;  
+elevation( 60, 116, 35, 100,  ny, nx, elevationarray) ;  */
 //for (int i=0 ; i<nx*ny ; i++) printf("%f ", elevationarray[i]) ; 
 
 //printf("%d %d %d |", flooring (150.91146469116214, 1), flooring (150.91146469116214, 4), flooring (150.91146469116214, 16)) ; 
 //printf(" %d %d %d ", flooring (-150.91146469116214, 1), flooring (-150.91146469116214, 4), flooring (-150.91146469116214, 16)) ; 
+
+//generate_imgfile (148,105, 300, -9.0882278, 168.2249543, -55.3228175, 72.2460938) ; 
+
+//generate_imgfile (148, 105, 600, -27.5, 133, 47, inferno, 0.8) ; //AUS not too bad
+double w = 6*25.4 ; 
+double h = 4*25.4 ;
+
+// FR 
+// generate_imgfile ("France.png", w, h, 600, 46.1, (9.8678344+-5.4534286)/2, (9.8678344+5.4534286), inferno, 4.) ;
+// //AU
+generate_imgfile ("Result2.5.png", w, h, 600, -27.5, 133, 48.5, inferno, 2.5) ;
+// 
+// generate_imgfile ("SouthAmerica.png", w, h, 600, -7, -58, 48, inferno, 3.5) ; 
+// generate_imgfile ("WestUS.png", w, h, 600, 40, -114, 23, inferno, 1.5) ;
+// generate_imgfile ("Alps.png", w, h, 600, 45, 10.5, 12, inferno, 2.5) ;
+// generate_imgfile ("UK.png", h, w, 600, 54, -2.5, 8.5, inferno, 3) ;
+// generate_imgfile ("Scandinavia.png", w, h, 600, 61, 10, 10.5, inferno, 2) ;
+// 
+// generate_imgfile ("Poitiers.png", w, h, 600, 46.5, 0.5, 2, inferno, 1.5) ;
+// generate_imgfile ("Provence.png", w, h, 600, 43.7, 6, 2, inferno, 2) ;
+// 
+// 
+// generate_imgfile ("Himalaya.png", w, h, 600, 30, 87, 45, inferno, 2) ;
+//generate_imgfile ("Japan.png", w, h, 600, 38, 136, 21, inferno, 2) ;
+//generate_imgfile ("NewZealand.png", w, h, 600, -42, 172.5, 16, inferno, 2) ;
+//generate_imgfile ("Indonesia.png", w, h, 600, -5, 141.5, 20, inferno, 2) ;
+
+//generate_imgfile (148, 105, 300, -33, 130, 20, inferno) ; 
+//generate_imgfile (148, 105, 300, (-31.41012107729496+-43.89806875124803)/2, (161.27929687500003+131.19873046875003)/2, 30, inferno) ; 
 }
+
+
+
+
+
+int generate_imgfile (std::string res, double width, double height, int dpi, double center_lat, double center_lng, double extent_lng, double * colormap, double smax, double smin) //width & height in mm
+{
+ int nx = round(width/25.4*dpi) ; 
+ int ny = round(height/25.4*dpi) ; 
+ if (nx%2==1) nx-- ; 
+ if (ny%2==1) ny-- ; // I don't want odd number, not sure why.
+ 
+ float * elevationarray = (float *) malloc(sizeof(float)*nx*ny); 
+ 
+ double ratio = height/width ; 
+ double ne_lng = center_lng + extent_lng/2. ;
+ double sw_lng = center_lng - extent_lng/2. ; 
+ double ne_lat = center_lat + extent_lng*ratio/2.0 ; 
+ double sw_lat = center_lat - extent_lng*ratio/2.0 ; 
+ 
+ elevation (ne_lat, ne_lng, sw_lat, sw_lng, ny, nx, elevationarray, 1000, GRIORA_Average) ; 
+ 
+ double min=10000000, max=-10000000 ; 
+ 
+ for (int i=0 ; i<nx*ny ; i++)
+ {
+   if (elevationarray[i]>max) max=elevationarray[i] ; 
+   if (elevationarray[i]<min) min=elevationarray[i] ;
+ }
+ //min*=smin ; 
+ //max*=smax ; 
+ printf("Max: %g | Min:%g", min, max) ; 
+ min=0 ; 
+ for (int i=0 ; i<nx*ny ; i++)
+ {
+    elevationarray[i]=elevationarray[i]<0?0:elevationarray[i] ; 
+    elevationarray[i]=(elevationarray[i]-min)/(max-min) ; 
+    elevationarray[i] = 1-pow((1-elevationarray[i]), smax) ; 
+ }
+ png::image< png::rgb_pixel > image(nx, ny);
+ for (int i=0 ; i<nx*ny ; i++)
+ {
+    int coloridx = clip(round(elevationarray[i]*256), 0, 255) ; 
+    image[i/nx][i%nx] = png::rgb_pixel(colormap[3*coloridx]*256,colormap[3*coloridx+1]*256,colormap[3*coloridx+2]*256);
+ }
+ image.write(res.c_str());
+ 
+ free (elevationarray) ;
+ return 0 ; 
+}
+
+
+
+
+
