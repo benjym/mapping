@@ -279,7 +279,7 @@ function update_overlay_info ()
     var overlaytype = document.getElementById('overlay').value ;
 
     var CVD = document.getElementById('colourblind').checked ;
-    if (overlaytype != "None") 
+    if (overlaytype != "None")
     {
         var overlaydata ;
         var colorscale ;
@@ -289,32 +289,32 @@ function update_overlay_info ()
             var max_v = elevation.reduce(function(a, b) { return Math.max(a, b);}, 0);
             var min_v = elevation.reduce(function(a, b) { return Math.min(a, b);}, 0);
             if (CVD) {
-                document.getElementById('colorbar').src = 'resources/Colorbar-Cividis.png' ; 
-                colorscale = chroma.scale(cividis).domain([min_v, max_v]) 
-                
+                document.getElementById('colorbar').src = 'resources/Colorbar-Cividis.png' ;
+                colorscale = chroma.scale(cividis).domain([min_v, max_v])
+
             } else {
-                document.getElementById('colorbar').src = 'resources/Colorbar-NavyYellow-lch.png' ; 
+                document.getElementById('colorbar').src = 'resources/Colorbar-NavyYellow-lch.png' ;
                 colorscale = chroma.scale(['navy','yellow']).mode('lch').domain([min_v, max_v]).correctLightness()
             }
-            document.getElementById('colorbar').hidden = false ; 
-            document.getElementById('caxis_low').value = Math.round(min_v); document.getElementById('caxis_low').hidden = false ; 
-            document.getElementById('caxis_high').value = Math.round(max_v) ; document.getElementById('caxis_high').hidden = false ; 
+            document.getElementById('colorbar').hidden = false ;
+            document.getElementById('caxis_low').value = Math.round(min_v) + " "; document.getElementById('caxis_low').hidden = false ;
+            document.getElementById('caxis_high').value = " " + Math.round(max_v) ; document.getElementById('caxis_high').hidden = false ;
             console.log(document.getElementById('caxis_high').value)
             update_overlay(elevation, colorscale) ;
         }
         else if (overlaytype=="slpangle")
         {
-            if (CVD) {   
-                document.getElementById('colorbar').src = 'resources/Colorbar-Cividis.png' ; 
-                colorscale = chroma.scale(cividis).domain([0, Math.PI/3.]) 
+            if (CVD) {
+                document.getElementById('colorbar').src = 'resources/Colorbar-Cividis.png' ;
+                colorscale = chroma.scale(cividis).domain([0, Math.PI/3.])
             } else {
-                document.getElementById('colorbar').src = 'resources/Colorbar-NavyYellow-lch.png' ; 
+                document.getElementById('colorbar').src = 'resources/Colorbar-NavyYellow-lch.png' ;
                 colorscale = chroma.scale(['navy','yellow']).mode('lch').domain([0, Math.PI/3.]).correctLightness()
             }
-            document.getElementById('colorbar').hidden = false ; 
-            document.getElementById('caxis_low').value = "0"; document.getElementById('caxis_low').hidden = false ; 
-            document.getElementById('caxis_high').value = "60°" ; document.getElementById('caxis_high').hidden = false ; 
-            update_overlay(slope, colorscale) ; 
+            document.getElementById('colorbar').hidden = false ;
+            document.getElementById('caxis_low').value = "0 "; document.getElementById('caxis_low').hidden = false ;
+            document.getElementById('caxis_high').value = " 60°" ; document.getElementById('caxis_high').hidden = false ;
+            update_overlay(slope, colorscale) ;
         }
         else if (overlaytype=="slpdirection")
         {
@@ -327,39 +327,39 @@ function update_overlay_info ()
             var max_v = height_slope.reduce(function(a, b) { return Math.max(a, b);}, 0);
 
             if (CVD) {
-                document.getElementById('colorbar').src = 'resources/Colorbar-Cividis.png' ; 
+                document.getElementById('colorbar').src = 'resources/Colorbar-Cividis.png' ;
                 colorscale = chroma.scale(cividis).domain([0, max_v])
             } else {
                 colorscale = chroma.scale(['navy','yellow']).mode('lch').domain([0, max_v]).correctLightness()
-                document.getElementById('colorbar').src = 'resources/Colorbar-NavyYellow-lch.png' ; 
+                document.getElementById('colorbar').src = 'resources/Colorbar-NavyYellow-lch.png' ;
             }
-            document.getElementById('colorbar').hidden = false ; 
-            document.getElementById('caxis_low').value = 0; document.getElementById('caxis_low').hidden = false ; 
-            document.getElementById('caxis_high').value = Math.round(max_v)+"m" ; document.getElementById('caxis_high').hidden = false ;
-            update_overlay(height_slope, colorscale) ; 
+            document.getElementById('colorbar').hidden = false ;
+            document.getElementById('caxis_low').value = "0 "; document.getElementById('caxis_low').hidden = false ;
+            document.getElementById('caxis_high').value = " " + Math.round(max_v)+"m" ; document.getElementById('caxis_high').hidden = false ;
+            update_overlay(height_slope, colorscale) ;
         }
         else if (overlaytype == "slpFs")
         {
             //colorscale = chroma.scale(['navy','yellow']).mode('lch').domain([0, 10]).correctLightness()
             if (CVD) {
-                document.getElementById('colorbar').src = 'resources/Colorbar-CividisFs.png' ; 
+                document.getElementById('colorbar').src = 'resources/Colorbar-CividisFs.png' ;
                 colorscale = chroma.scale(cividisrev).domain([0., 1., 10.])
-            } else {   
+            } else {
                 colorscale = chroma.scale(['red','yellow', 'green']).domain([0., 1., 10.])
                 document.getElementById('colorbar').src = 'resources/RdYlGr.png' ;
             }
-            document.getElementById('colorbar').hidden = false ;  
-            document.getElementById('caxis_low').value = "0"; document.getElementById('caxis_low').hidden = false ; 
-            document.getElementById('caxis_high').value = "10" ; document.getElementById('caxis_high').hidden = false ; 
-            compute_slopefs(colorscale); 
+            document.getElementById('colorbar').hidden = false ;
+            document.getElementById('caxis_low').value = "0 "; document.getElementById('caxis_low').hidden = false ;
+            document.getElementById('caxis_high').value = " 10" ; document.getElementById('caxis_high').hidden = false ;
+            compute_slopefs(colorscale);
         }
     }
     else
     {
-        document.getElementById('colorbar').hidden = true ; 
-        document.getElementById('caxis_low').hidden = true ; 
-        document.getElementById('caxis_high').hidden = true ; 
-        if (heatmaplayer) map.removeLayer(heatmaplayer) ; 
+        document.getElementById('colorbar').hidden = true ;
+        document.getElementById('caxis_low').hidden = true ;
+        document.getElementById('caxis_high').hidden = true ;
+        if (heatmaplayer) map.removeLayer(heatmaplayer) ;
     }
     //document.getElementById("waitingwheel").hidden = true ;
 }
@@ -392,7 +392,7 @@ map.on('click', onLeftMapClick);
 map.on('contextmenu', onRightMapClick);
 map.on('moveend',function(e){
   var location=map.getCenter() ;
-  
+
   if (location.lat>90 || location.lat<-90 || location.lng<-180 || location.lng>180)
   {
       while (location.lat>90)   location.lat-=180 ;
@@ -400,12 +400,12 @@ map.on('moveend',function(e){
       while (location.lng>180)  location.lng-=360 ;
       while (location.lng<-180) location.lng+=360 ;
        console.log(location)
-      map.setView([location.lat, location.lng]) ; 
+      map.setView([location.lat, location.lng]) ;
   }
-  
+
   document.getElementById("latitude").value = location.lat.toFixed(5).toString() ;
   document.getElementById("longitude").value = location.lng.toFixed(5).toString() ;
-  
+
   bounds = map.getBounds() ;
   console.log(map.getCenter()) ;
   //const response = fetch( proxy_server + topo_server_region + bounds._northEast.lat +','+ bounds._northEast.lng+ ';' + bounds._southWest.lat + ',' + bounds._southWest.lng + ';' + ny + ',' + nx + '&reorder' , {}) https://data.scigem.com:5000/
