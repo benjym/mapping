@@ -151,7 +151,7 @@ Array.from(mapelements).forEach(function(mapelement) {
       mapelement.addEventListener('change', update_map);
     });
 document.getElementById("download").addEventListener('click', download_data);
-
+document.getElementById("map").addEventListener('change', get_elevation_data_from_server);
 
 function download_data() {
     var csv = elev.map(function(d){
@@ -192,6 +192,13 @@ function update_map ()
     var lat=document.getElementById("latitude").value ;
     var long=document.getElementById("longitude").value ;
     map.setView([lat, long])
+    update_bounds();
+}
+
+function update_bounds() {
+    bounds = map.getBounds() ;
+    dy = (bounds._northEast.lat-bounds._southWest.lat)/ny ;
+    dx = (bounds._northEast.lng-bounds._southWest.lng)/nx ;
 }
 
 function update_FoS() {
@@ -229,9 +236,11 @@ var direction=[] ;
 var slope=[] ;
 var slopefs=[] ;
 var height_slope ;
-var bounds = map.getBounds() ;
-var dy = (bounds._northEast.lat-bounds._southWest.lat)/ny ;
-var dx = (bounds._northEast.lng-bounds._southWest.lng)/nx ;
+let bounds, dy, dx;
+update_bounds();
+
+
+
 $.ajax({
         type: "GET",
         url: "resources/InitElevation.csv",
@@ -251,6 +260,7 @@ function processData(allText) {
 
 function update_overlay(array, colorscale)
 {
+    update_bounds();
     if (heatmaplayer) map.removeLayer(heatmaplayer) ;
     let p = {
         nCols: nx,
@@ -275,7 +285,6 @@ function update_overlay(array, colorscale)
 function update_overlay_info ()
 {
     //document.getElementById("waitingwheel").hidden = false ;
-    bounds = map.getBounds() ;
     var overlaytype = document.getElementById('overlay').value ;
 
     var CVD = document.getElementById('colourblind').checked ;
@@ -390,8 +399,11 @@ function onRightMapClick(e) {
 
 map.on('click', onLeftMapClick);
 map.on('contextmenu', onRightMapClick);
-map.on('moveend',function(e){
+map.on('moveend', get_elevation_data_from_server );
+
+function get_elevation_data_from_server() {
   var location=map.getCenter() ;
+  update_bounds();
 
   if (location.lat>90 || location.lat<-90 || location.lng<-180 || location.lng>180)
   {
@@ -406,7 +418,7 @@ map.on('moveend',function(e){
   document.getElementById("latitude").value = location.lat.toFixed(5).toString() ;
   document.getElementById("longitude").value = location.lng.toFixed(5).toString() ;
 
-  bounds = map.getBounds() ;
+  // bounds = map.getBounds() ;
   console.log(map.getCenter()) ;
   //const response = fetch( proxy_server + topo_server_region + bounds._northEast.lat +','+ bounds._northEast.lng+ ';' + bounds._southWest.lat + ',' + bounds._southWest.lng + ';' + ny + ',' + nx + '&reorder' , {}) https://data.scigem.com:5000/
   //document.getElementById("waitingwheel").hidden = false ;
@@ -423,9 +435,7 @@ map.on('moveend',function(e){
      update_overlay_info() ;
      //document.getElementById("waitingwheel").hidden = true ;
     }) ;
-});
-
-
+}
 
 function transpose(a) {
     return a[0].map(function (_, c) { return a.map(function (r) { return r[c]; }); });
