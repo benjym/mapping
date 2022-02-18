@@ -151,7 +151,18 @@ Array.from(mapelements).forEach(function(mapelement) {
       mapelement.addEventListener('change', update_map);
     });
 document.getElementById("download").addEventListener('click', download_data);
-document.getElementById("map").addEventListener('change', get_elevation_data_from_server);
+// document.getElementById("map").addEventListener('change', get_elevation_data_from_server);
+
+const resizeObserver = new ResizeObserver(entries => {
+  for (let entry of entries) {
+    if(entry.contentBoxSize) {
+        console.log('map window changed size')
+        get_elevation_data_from_server();
+    }
+  }
+});
+
+resizeObserver.observe(document.getElementById("map"));
 
 function download_data() {
     var csv = elev.map(function(d){
@@ -305,9 +316,9 @@ function update_overlay_info ()
                 document.getElementById('colorbar').src = 'resources/Colorbar-NavyYellow-lch.png' ;
                 colorscale = chroma.scale(['navy','yellow']).mode('lch').domain([min_v, max_v]).correctLightness()
             }
-            document.getElementById('colorbar').hidden = false ;
-            document.getElementById('caxis_low').value = Math.round(min_v) + " "; document.getElementById('caxis_low').hidden = false ;
-            document.getElementById('caxis_high').value = " " + Math.round(max_v) ; document.getElementById('caxis_high').hidden = false ;
+            document.getElementById('colorbar-div').hidden = false ;
+            document.getElementById('caxis_low').value = Math.round(min_v) + " ";// document.getElementById('caxis_low').hidden = false ;
+            document.getElementById('caxis_high').value = " " + Math.round(max_v) ;// document.getElementById('caxis_high').hidden = false ;
             console.log(document.getElementById('caxis_high').value)
             update_overlay(elevation, colorscale) ;
         }
@@ -320,9 +331,9 @@ function update_overlay_info ()
                 document.getElementById('colorbar').src = 'resources/Colorbar-NavyYellow-lch.png' ;
                 colorscale = chroma.scale(['navy','yellow']).mode('lch').domain([0, Math.PI/3.]).correctLightness()
             }
-            document.getElementById('colorbar').hidden = false ;
-            document.getElementById('caxis_low').value = "0 "; document.getElementById('caxis_low').hidden = false ;
-            document.getElementById('caxis_high').value = " 60°" ; document.getElementById('caxis_high').hidden = false ;
+            document.getElementById('colorbar-div').hidden = false ;
+            document.getElementById('caxis_low').value = "0 ";// document.getElementById('caxis_low').hidden = false ;
+            document.getElementById('caxis_high').value = " 60°" ;// document.getElementById('caxis_high').hidden = false ;
             update_overlay(slope, colorscale) ;
         }
         else if (overlaytype=="slpdirection")
@@ -342,9 +353,9 @@ function update_overlay_info ()
                 colorscale = chroma.scale(['navy','yellow']).mode('lch').domain([0, max_v]).correctLightness()
                 document.getElementById('colorbar').src = 'resources/Colorbar-NavyYellow-lch.png' ;
             }
-            document.getElementById('colorbar').hidden = false ;
-            document.getElementById('caxis_low').value = "0 "; document.getElementById('caxis_low').hidden = false ;
-            document.getElementById('caxis_high').value = " " + Math.round(max_v)+"m" ; document.getElementById('caxis_high').hidden = false ;
+            document.getElementById('colorbar-div').hidden = false ;
+            document.getElementById('caxis_low').value = "0 ";// document.getElementById('caxis_low').hidden = false ;
+            document.getElementById('caxis_high').value = " " + Math.round(max_v)+"m" ;// document.getElementById('caxis_high').hidden = false ;
             update_overlay(height_slope, colorscale) ;
         }
         else if (overlaytype == "slpFs")
@@ -357,17 +368,17 @@ function update_overlay_info ()
                 colorscale = chroma.scale(['red','yellow', 'green']).domain([0., 1., 10.])
                 document.getElementById('colorbar').src = 'resources/RdYlGr.png' ;
             }
-            document.getElementById('colorbar').hidden = false ;
-            document.getElementById('caxis_low').value = "0 "; document.getElementById('caxis_low').hidden = false ;
-            document.getElementById('caxis_high').value = " 10" ; document.getElementById('caxis_high').hidden = false ;
+            document.getElementById('colorbar-div').hidden = false ;
+            document.getElementById('caxis_low').value = "0 ";// document.getElementById('caxis_low').hidden = false ;
+            document.getElementById('caxis_high').value = " 10" ;// document.getElementById('caxis_high').hidden = false ;
             compute_slopefs(colorscale);
         }
     }
     else
     {
-        document.getElementById('colorbar').hidden = true ;
-        document.getElementById('caxis_low').hidden = true ;
-        document.getElementById('caxis_high').hidden = true ;
+        document.getElementById('colorbar-div').hidden = true ;
+        // document.getElementById('caxis_low').hidden = true ;
+        // document.getElementById('caxis_high').hidden = true ;
         if (heatmaplayer) map.removeLayer(heatmaplayer) ;
     }
     //document.getElementById("waitingwheel").hidden = true ;

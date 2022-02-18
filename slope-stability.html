@@ -69,13 +69,12 @@
             <span>Opacity</span>
             <div class="slider">0 <input type="range" id="overlayopacity" value="0.8" min="0" max="1" step="0.1" oninput="opac_out.value = overlayopacity.value" class="overlayupdater"><output id="opac_out"> 0.8</output> </div><br>
 
-            <div class="slider"><output id="caxis_low" hidden=true>0 </output> <img src='resources/Colorbar-NavyYellow-lch.png' id="colorbar" hidden="false" style="width:75%;height:24px"/><output id="caxis_high" hidden=true> 1</output></div>
-
-            <div>
-                <output id="caxis_low" hidden=true>0 </output> <img src='resources/Colorbar-NavyYellow-lch.png' id="colorbar" style="width:67%;height:24px;vertical-align: middle;" hidden="false" /><output id="caxis_high" hidden=true>1</output>
+            <div id="colorbar-div" hidden=true>
+                <div class="slider"><output id="caxis_low">0 </output> <img src='resources/Colorbar-NavyYellow-lch.png' id="colorbar" style="width:75%;height:24px"/><output id="caxis_high"> 1</output></div>
+                <input type="checkbox" id="colourblind" name="colourblind" value="CVD" class="overlayupdater"><label for="colourblind">Colour blind mode</label>
             </div>
+                <!-- <output id="caxis_low" hidden=true>0 </output> <img src='resources/Colorbar-NavyYellow-lch.png' id="colorbar" style="width:67%;height:24px;vertical-align: middle;" hidden="false" /><output id="caxis_high" hidden=true>1</output> -->
 
-            <input type="checkbox" id="colourblind" name="colourblind" value="CVD" class="overlayupdater"><label for="colourblind">Colour blind mode</label>
 
             <!-- <br> -->
 
