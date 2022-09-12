@@ -11,7 +11,7 @@
     integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
     crossorigin=""></script>
     <script src="https://d3js.org/d3.v6.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/chroma-js/2.1.2/chroma.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.1.2/chroma.min.js"></script>
     <script src="https://ihcantabria.github.io/Leaflet.CanvasLayer.Field/dist/leaflet.canvaslayer.field.js"></script>
     <link rel="icon" href="favicon.ico" type="image/png" sizes="16x16">
     <link rel="preconnect" href="https://fonts.gstatic.com">
@@ -46,7 +46,8 @@
             <span class="point-only">Stack temperature (&deg;C): <input onchange="redrawContours()" class="buoyancy" type="number" id="T_s" value="25" min="-273"/></span>
             <span class="point-only">Stack diameter (m): <input onchange="redrawContours()" class="buoyancy" type="number" id="d_s" value="5" min="0"/></span>
             <span class="point-only">Stack exit velocity (m/s): <input onchange="redrawContours()" class="buoyancy" type="number" id="v_s" value="10" min="0"/></span>
-            Concentrations, separate with ';' (&micro;g/m<sup>3</sup>): <input onchange="redrawContours()" type="text" id="concentration_contours" value="0.1; 1; 10" />
+            <span class="line-only">Resolution: <input onchange="redrawContours()" type="number" id="resolution" value="100" min="20" max="1000"/></span>
+            <span id="concentration-contours-title">Concentrations, separate with ';' (&micro;g/m<sup>3</sup>):</span> <input onchange="redrawContours()" type="text" id="concentration_contours" value="0.1; 1; 10" />
             <!-- <div id="grad"></div> -->
             <!-- <p style="text-align:center"><span style="float:left">< 10<sup>0</sup></span> 10<sup>1</sup></span> <span style="float:right">> 10<sup>2</sup></span></p> -->
             Wind speed and direction:
