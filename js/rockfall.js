@@ -14,7 +14,7 @@ else {
     var initial_loc = [-34.254865, 150.972253];
 }
 window.proxy_server = '';
-window.topo_server = 'https://data.scigem.com:5000/elevation?';// + data_source + '?';
+window.topo_server = 'https://data.scigem-eng.sydney.edu.au/elevation?';// + data_source + '?';
 
 
 var map = L.map('map', {
