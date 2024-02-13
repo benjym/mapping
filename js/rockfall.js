@@ -16,7 +16,7 @@ else {
 window.proxy_server = '';
 window.topo_server = 'https://data.scigem-eng.sydney.edu.au/elevation?';// + data_source + '?';
 window.topo_server_fast = 'https://data.scigem-eng.sydney.edu.au/elevationfast?';
-usefastserver=true ;
+window.usefastserver=true ;
 
 var map = L.map('map', {
     // crs: L.CRS.EPSG4326,
