@@ -303,11 +303,24 @@ async function getHeightFromServer(lat, lon) {
     .then(data => {
       console.log('Got data from: ' + data.dataset)
       var p = 0;
-      for ( var i=0; i<terrainWidth; i++ ) {
-          for ( var j=0; j<terrainDepth; j++ ) {
-              heightData[i*terrainWidth + j] = parseFloat(data.results[0].elevation[j*terrainWidth + i]);
-          }
+
+      if (window.usefastserver)
+      {
+	for ( var i=0; i<terrainWidth; i++ ) {
+	  for ( var j=0; j<terrainDepth; j++ ) {
+	    heightData[i*terrainWidth + j] = parseFloat(data.results[0].elevation[i*terrainDepth + j]);
+	  }
+	}
       }
+      else
+      {    
+	for ( var i=0; i<terrainWidth; i++ ) {
+	  for ( var j=0; j<terrainDepth; j++ ) {
+	    heightData[i*terrainWidth + j] = parseFloat(data.results[0].elevation[j*terrainWidth + i]); //FIXME can only be correct for terrainWidth=terrainDepth
+	  }
+	}
+      }
+	    
       // var midvalue = (heightData[(terrainWidth/2  )*terrainDepth + terrainDepth/2] +
       //                 heightData[(terrainWidth/2  )*terrainDepth + terrainDepth/2-1] +
       //                 heightData[(terrainWidth/2-1)*terrainDepth + terrainDepth/2] +
