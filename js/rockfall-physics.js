@@ -288,7 +288,7 @@ async function getHeightFromServer(lat, lon) {
     // console.log(lon1,lon,lon2);
 
     var path 
-    if (usefastserver)
+    if (window.usefastserver)
     {
         path = window.proxy_server + window.topo_server_fast + "ne_lat=" + String(lat1) + "&ne_lng=" + String(lon1) + "&sw_lat=" + String(lat2) + "&sw_lng=" + String(lon2) + "&nx=" + String(terrainWidth) + "&ny=" + String(terrainDepth)
 	console.log(path)
