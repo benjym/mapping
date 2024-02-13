@@ -286,7 +286,17 @@ async function getHeightFromServer(lat, lon) {
     var lon1 = lon + Math.atan2(Math.sin(3*Math.PI/2.)*Math.sin(d/R)*Math.cos(lat*Math.PI/180),Math.cos(d/R)-Math.sin(lat*Math.PI/180)*Math.sin(lat*Math.PI/180))*180/Math.PI;
     // console.log(lat1,lat,lat2);
     // console.log(lon1,lon,lon2);
-    var path = window.proxy_server + window.topo_server + "region=" + String(lat1) + "," + String(lon1) + ";" + String(lat2) + "," + String(lon2) + ";" + String(terrainWidth) + "," + String(terrainDepth);
+
+    var path 
+    if (usefastserver)
+    {
+        path = window.proxy_server + window.topo_server_fast + "ne_lat=" + String(lat1) + "&ne_lng=" + String(lon1) + "&sw_lat=" + String(lat2) + "&sw_lng=" + String(lon2) + "&nx=" + String(terrainWidth) + "&ny=" + String(terrainDepth)
+	console.log(path)
+    }
+    else
+    {
+    	path = window.proxy_server + window.topo_server + "region=" + String(lat1) + "," + String(lon1) + ";" + String(lat2) + "," + String(lon2) + ";" + String(terrainWidth) + "," + String(terrainDepth);
+    }    
     // var path = "test.json";
     var response = await fetch( path, { } )
     .then( r => r.json() )
