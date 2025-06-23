@@ -62,6 +62,8 @@ if ( urlParams.has("resolution") ) {
 var heightData = new Float32Array( terrainWidth * terrainDepth );
 for (var p=0; p<(terrainWidth*terrainDepth); p++ ) { heightData[p] = 0; p++}
 
+// Get DOM element references
+var restitution, phi, barrier, objectSize, randomness, H, particle_shape;
 
 // var restitution = 0.7;
 // var friction = 0.5;
@@ -75,6 +77,15 @@ Ammo().then( function ( AmmoLib ) {
 } );
 
 function init() {
+	// Get DOM element references
+	restitution = document.getElementById('restitution');
+	phi = document.getElementById('phi');
+	barrier = document.getElementById('barrier');
+	objectSize = document.getElementById('objectSize');
+	randomness = document.getElementById('randomness');
+	H = document.getElementById('H');
+	particle_shape = document.getElementById('particle_shape');
+	
 	initGraphics();
     onWindowResize(); // update bottom row size
 	initPhysics();
@@ -497,23 +508,48 @@ function generateWallObject(lat_ref,lon_ref,lat1,lon1,lat2,lon2) {
     var width = 1;
     var height = 100;
 
-    var lat_mid = (lat1 + lat2)/2.
-    var lon_mid = (lon1 + lon2)/2.
-    // console.log(lat_ref,lon_ref);
-    // console.log(lat_mid,lon_mid);
-    var angle = Math.atan2(lat2 - lat1,lon2 - lon1);
-    var loc = getLocationFromLatLon(lat_ref,lon_ref,lat_mid,lon_mid)
-    // console.log(angle);
-    // console.log(loc);
-    var sx = haversine(lat1,lon1,lat2,lon2);
-    var sy = height; //parseFloat(barrier.value);
+    // Calculate the positions of both endpoints in local coordinates
+    var loc1 = getLocationFromLatLon(lat_ref, lon_ref, lat1, lon1);
+    var loc2 = getLocationFromLatLon(lat_ref, lon_ref, lat2, lon2);
+    
+    // Use geographic midpoint for more accurate positioning
+    var lat_mid = (lat1 + lat2)/2;
+    var lon_mid = (lon1 + lon2)/2;
+    var loc = getLocationFromLatLon(lat_ref, lon_ref, lat_mid, lon_mid);
+    
+    // Calculate distance using haversine (more accurate for geographic coordinates)
+    var sx = haversine(lat1, lon1, lat2, lon2);
+    
+    // Calculate bearing angle from point 1 to point 2
+    // This gives us the proper geographic bearing
+    var dLon = (lon2 - lon1) * Math.PI / 180;
+    var lat1_rad = lat1 * Math.PI / 180;
+    var lat2_rad = lat2 * Math.PI / 180;
+    
+    var y = Math.sin(dLon) * Math.cos(lat2_rad);
+    var x = Math.cos(lat1_rad) * Math.sin(lat2_rad) - 
+            Math.sin(lat1_rad) * Math.cos(lat2_rad) * Math.cos(dLon);
+    
+    var bearing = Math.atan2(y, x);
+    
+    // Convert bearing to Three.js coordinate system
+    // Three.js Y rotation: 0 = facing +Z, π/2 = facing -X, π = facing -Z, 3π/2 = facing +X
+    // Geographic bearing: 0 = North, π/2 = East, π = South, 3π/2 = West
+    // We need to adjust for the coordinate system difference
+    var angle = -bearing + Math.PI/2; // Adjust for coordinate system
+    
+    var sy = height;
     var sz = width;
-    // console.log(sx, sy, sz)
+    
+    // Add small overlap to prevent gaps due to floating point precision
+    sx += 0.01;
+    
     var wallMaterial = new THREE.MeshPhongMaterial( { color: "#E903CD" } );
     var threeObject = new THREE.Mesh( new THREE.BoxBufferGeometry( sx, sy, sz, 1, 1, 1 ), wallMaterial );
     var shape = new Ammo.btBoxShape( new Ammo.btVector3( sx * 0.5, sy * 0.5, sz * 0.5 ) );
     shape.setMargin( margin );
 
+    // Position the wall segment
     threeObject.position.set(loc[0], parseFloat(barrier.value) - height/2., loc[1]);
     threeObject.rotateY(angle);
 
@@ -553,6 +589,13 @@ export function reset_physics() {
         physicsWorld.removeRigidBody( wallBodies[i] );
         scene.remove(staticObjects[i]);
     }
+    
+    // Clear the arrays
+    dynamicObjects.length = 0;
+    btBodies.length = 0;
+    staticObjects.length = 0;
+    wallBodies.length = 0;
+    
     make_wall();
 }
 
