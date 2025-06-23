@@ -32,11 +32,12 @@
 <body>
     <!--<a id="tmp">TMPDL</a>-->
     <div id="wrap">
-        <div class="column left_col">
-            Viewpoint: <input id="latitude" type="number" step=0.00001 min=-90 max=90 style="width:35%;" class="mapupdater" value="-34.33644" />
-                      <input id="longitude" type="number" step=0.00001 min=-180 max=180 style="width:35%;" class="mapupdater" value="150.88853"/><br>
+        <div class="top-row">
+            <div class="column left_col">
+            Viewpoint: <input id="latitude" type="number" step=0.00001 min=-90 max=90 class="mapupdater" value="-34.33644" />
+                      <input id="longitude" type="number" step=0.00001 min=-180 max=180 class="mapupdater" value="150.88853"/><br>
             Model:
-            <select id="stability" class="updater" style="width:50%;">
+            <select id="stability" class="updater">
                 <option value="infinite" selected>Infinite slope</option>
                 <option value="cullman">Cullman's model</option>
                 <option value="taylor-explicit">Taylor charts</option>
@@ -52,11 +53,11 @@
             <span id="watertable">Water table depth d<sub>w</sub> (m)</span>
             <span id="watertable-slider"><div class="slider">0 <input type="range" id="dw" value="10" min="0" max="100" oninput="dw_out.value = dw.value" class="updater"> <output id="dw_out">10 </output></div></span> <br>
 
-            <div style="border:solid;border-color:#ce3d20;padding-bottom:10px;padding-top:10px;"> Factor of safety: <span id="FoS">Unknown</span> &nbsp; <span id="FoSIndicator" style="color:green;">&#11044;</span></div>
+            <div class="safety-indicator"> Factor of safety: <span id="FoS">Unknown</span> &nbsp; <span id="FoSIndicator">&#11044;</span></div>
 
             <br>
             <hr />
-            Overlay: <select id="overlay" class="overlayupdater" style="width:50%;">
+            Overlay: <select id="overlay" class="overlayupdater">
                 <option value="None" selected>None</option>
                 <option value="slpFs">Factor of safety</option>
                 <option value="elevation">Elevation</option>
@@ -64,13 +65,13 @@
                 <!--<option value="slpdirection">Slope direction</option>-->
                 <option value="slpheight">Slope height</option>
 
-            </select><img src="resources/wait.gif" width="32px" id="waitingwheel" hidden=true /><br>
+            </select><img src="resources/wait.gif" id="waitingwheel" hidden=true /><br>
 
             <span>Opacity</span>
             <div class="slider">0 <input type="range" id="overlayopacity" value="0.8" min="0" max="1" step="0.1" oninput="opac_out.value = overlayopacity.value" class="overlayupdater"><output id="opac_out"> 0.8</output> </div><br>
 
             <div id="colorbar-div" hidden=true>
-                <div class="slider"><output id="caxis_low">0 </output> <img src='resources/Colorbar-NavyYellow-lch.png' id="colorbar" style="width:75%;height:24px"/><output id="caxis_high"> 1</output></div>
+                <div class="slider"><output id="caxis_low">0 </output> <img src='resources/Colorbar-NavyYellow-lch.png' id="colorbar"/><output id="caxis_high"> 1</output></div>
                 <input type="checkbox" id="colourblind" name="colourblind" value="CVD" class="overlayupdater"><label for="colourblind">Colour blind mode</label>
             </div>
                 <!-- <output id="caxis_low" hidden=true>0 </output> <img src='resources/Colorbar-NavyYellow-lch.png' id="colorbar" style="width:67%;height:24px;vertical-align: middle;" hidden="false" /><output id="caxis_high" hidden=true>1</output> -->
@@ -83,17 +84,14 @@
 
         </div>
 
-        <div id="map" class="column right_col"></div>
-
-        <div class="column break"></div> <!-- break -->
+            <div id="map" class="column right_col"></div>
+        </div>
 
         <div id="section" class="column bottom_row">
             <!-- <a id="download" href="#" style="color:white"> -->
             <span id="waiting">Loading ...</span>
-            <a id="download" style="color:white" href='#' download="elevation-profile.csv">
-                <!-- Download -->
-                <!-- <i class="fas fa-download fa-2x download_button"></i> -->
-                <img class="download_button" src="resources/download.svg" alt="Download button" style="width:30px"></img>
+            <a id="download" href='#' download="elevation-profile.csv">
+                <img class="download_button" src="resources/download.svg" alt="Download button"></img>
             </a>
             <svg class="d3canvas">
                 <g class="axes">
@@ -106,10 +104,5 @@
             </svg>
         </div>
     </div>
-
-    <canvas width="300" height="300">
-  An alternative text describing what your canvas displays.
-</canvas>
-
 </body>
 </html>
